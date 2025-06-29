@@ -1,0 +1,291 @@
+---
+title: "BreedingNanalysis"
+output: pdf_document
+date: "2023-03-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lmerTest)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(ggthemes)
+library(gapminder)
+library(multcomp)
+library(emmeans)
+library(multcompView)
+library(scales)
+```
+
+#Things to ask Ginny
+- It automatically excludes NA values, but not 0 values, right? 
+- Should we be treating the N rates as "levels" in the models or let them be numerical? - Should I be using lm or lmer? 
+- Is doing a model with all locations' data included oksy or should I be using it as an effect within the model too?
+-
+#Questions
+
+The main question we are trying to answer here is the ideal Nitrogen rate to apply to the intercropped plots for the breeding experiment. 
+
+Variables we have include 1)Nitrogen rate 2)Alfalfa Biomass 3)IWG biomass 4)IWG grain yield 5)location 
+
+#Goals 
+create models for 1)each location and 2)all locations that show interaction between nitrogen rate and a)Alf biomass b)IWG biomass c)grain yield d)total biomass 
+
+#read in csv 
+```{r}
+DataAll<-read.csv(file='MasterDataSpreadsheet  - All locations All years combined.csv', stringsAsFactors = F)
+```
+
+#isolate only intercropped plots and make some easily useable dataframes 
+```{r}
+#need to get rid of empty cells which represent monocrop treatments  
+IntercroppedOnly1<- DataAll[DataAll$Intercropped != "", ]
+#need to get rid of row 31 for Alfbio because of a messed up value (no dry weight was ever recorded so the PlotAlfDryKgHa was a big negative number)
+IntercroppedOnly<-IntercroppedOnly1[-c(31),] # remove row 31
+#need to create a total biomass in Kg/Ha 
+IntercroppedOnly$TotalBioKgHa<-c(as.numeric(IntercroppedOnly$PlotIWGDryKgHa)+as.numeric(IntercroppedOnly$PlotAlfDryKgHa))
+#need to create data frame for each location for ease 
+NyOnly<-subset(IntercroppedOnly, Location == 'NY')
+MnOnly<-subset(IntercroppedOnly, Location == 'MN')
+WiOnly<-subset(IntercroppedOnly, Location == 'WI')
+#need to take out all the 0 values for grain 
+GrainDF<-IntercroppedOnly[IntercroppedOnly$PlotThreshedGrainKgHa!="0",]
+#need to take out harvest 2 data because there won't be any grain data there, then can use these data frames for individual location grain analysis 
+GrainNyOnly<-NyOnly[NyOnly$Harvest!="Fall",] # L changed from 2 to Fall
+GrainMnOnly<-MnOnly[MnOnly$Harvest!="Fall",]
+GrainWiOnly<-WiOnly[WiOnly$Harvest!="Fall",]
+
+```
+
+
+#potentially useful example I used from from Trisoc analysis stuff 
+```{r}
+#mod4 <- lmer(IWGha~Nitrogen*Crop*Location + Location:(1|block.rep),data=ALL_IWGonly) 
+#mod4_N<-emmeans(mod4, ~Nitrogen)
+#pairs(mod4_N)
+```
+
+#Following above example
+#All locations Alf biomass
+```{r}
+# L : should Location be a character or a factor 
+IntercroppedOnly$NRate <- as.factor(IntercroppedOnly$NRate)
+IntercroppedOnly$Rep <- as.factor(IntercroppedOnly$Rep)
+IntercroppedOnly$PlotAlfDryKgHa<-as.numeric(IntercroppedOnly$PlotAlfDryKgHa)
+mod1<-lmer(PlotAlfDryKgHa~NRate*Location*YearCode + (1|Rep), data=IntercroppedOnly) # L this originally was NRate*Location, but I get an error: "boundary (singular) fit: see help('isSingular')" ; so I added YearCode
+mod1N<-emmeans(mod1, ~NRate)
+pairs(mod1N)
+```
+
+#All locations IWG biomass 
+```{r}
+IntercroppedOnly$NRate <- as.factor(IntercroppedOnly$NRate)
+IntercroppedOnly$Rep <- as.factor(IntercroppedOnly$Rep)
+IntercroppedOnly$PlotIWGDryKgHa<-as.numeric(IntercroppedOnly$PlotIWGDryKgHa)
+mod2<-lmer(PlotIWGDryKgHa~NRate*Location*YearCode + (1|Rep), data=IntercroppedOnly) # L this originally was NRate*Location, but I get an error: "boundary (singular) fit: see help('isSingular')" ; so I added YearCode
+mod2N<-emmeans(mod2, ~NRate)
+pairs(mod2N)
+```
+
+#All locations grain yield 
+```{r}
+GrainDF$NRate <- as.factor(GrainDF$NRate)
+GrainDF$Rep <- as.factor(GrainDF$Rep)
+GrainDF$PlotThreshedGrainKgHa<-as.numeric(GrainDF$PlotThreshedGrainKgHa)
+mod3<-lmer(PlotThreshedGrainKgHa~NRate*Location + (1|Rep), data=GrainDF)
+mod3N<-emmeans(mod3, ~NRate)
+pairs(mod3N)
+```
+
+
+#Same as above but split into each individual location (aka location not an interaction factor?)
+#NY ALF biomass (mod1NY), IWG biomass (mod2NY), and Grain yield (mod3NY) compared across Nrates
+```{r}
+NyOnly$NRate <- as.factor(NyOnly$NRate)
+NyOnly$Rep <- as.factor(NyOnly$Rep)
+NyOnly$PlotAlfDryKgHa<-as.numeric(NyOnly$PlotAlfDryKgHa)
+NyOnly$PlotIWGDryKgHa<-as.numeric(NyOnly$PlotIWGDryKgHa)
+GrainNyOnly$NRate <- as.factor(GrainNyOnly$NRate)
+GrainNyOnly$Rep <- as.factor(GrainNyOnly$Rep)
+GrainNyOnly$PlotThreshedGrainKgHa<-as.numeric(GrainNyOnly$PlotThreshedGrainKgHa)
+mod1NY<-lmer(PlotAlfDryKgHa~NRate + (1|Rep), data=NyOnly)
+mod1NNY<-emmeans(mod1NY, ~NRate)
+pairs(mod1NNY)
+mod2NY<-lmer(PlotIWGDryKgHa~NRate + (1|Rep), data=NyOnly)
+mod2NNY<-emmeans(mod2NY, ~NRate)
+pairs(mod2NNY)
+mod3NY<-lmer(PlotThreshedGrainKgHa~NRate + (1|Rep), data=GrainNyOnly)
+mod3NNY<-emmeans(mod3NY, ~NRate)
+pairs(mod3NNY)
+```
+
+#MN ALF biomass (mod1Mn), IWG biomass (mod2Mn), and Grain yield (mod3Mn) compared across Nrates
+```{r}
+MnOnly$NRate <- as.factor(MnOnly$NRate)
+MnOnly$Rep <- as.factor(MnOnly$Rep)
+MnOnly$PlotAlfDryKgHa<-as.numeric(MnOnly$PlotAlfDryKgHa)
+MnOnly$PlotIWGDryKgHa<-as.numeric(MnOnly$PlotIWGDryKgHa)
+GrainMnOnly$NRate <- as.factor(GrainMnOnly$NRate)
+GrainMnOnly$Rep <- as.factor(GrainMnOnly$Rep)
+GrainMnOnly$PlotThreshedGrainKgHa<-as.numeric(GrainMnOnly$PlotThreshedGrainKgHa)
+mod1Mn<-lmer(PlotAlfDryKgHa~NRate + (1|Rep), data=MnOnly)
+mod1NMn<-emmeans(mod1Mn, ~NRate)
+pairs(mod1NMn)
+mod2Mn<-lmer(PlotIWGDryKgHa~NRate + (1|Rep), data=MnOnly)
+mod2NMn<-emmeans(mod2Mn, ~NRate)
+pairs(mod2NMn)
+mod3Mn<-lmer(PlotThreshedGrainKgHa~NRate + (1|Rep), data=GrainMnOnly)
+mod3NMn<-emmeans(mod3Mn, ~NRate)
+pairs(mod3NMn)
+```
+
+#Wi ALF biomass (mod1Wi), IWG biomass (mod2Wi), and Grain yield (mod3Wi) compared across Nrates
+```{r}
+WiOnly$NRate <- as.factor(WiOnly$NRate)
+WiOnly$Rep <- as.factor(WiOnly$Rep)
+WiOnly$PlotAlfDryKgHa<-as.numeric(WiOnly$PlotAlfDryKgHa)
+WiOnly$PlotIWGDryKgHa<-as.numeric(WiOnly$PlotIWGDryKgHa)
+GrainWiOnly$NRate <- as.factor(GrainWiOnly$NRate)
+GrainWiOnly$Rep <- as.factor(GrainWiOnly$Rep)
+GrainWiOnly$PlotThreshedGrainKgHa<-as.numeric(GrainWiOnly$PlotThreshedGrainKgHa)
+mod1Wi<-lmer(PlotAlfDryKgHa~NRate + (1|Rep), data=WiOnly)
+mod1NWi<-emmeans(mod1Wi, ~NRate)
+pairs(mod1NWi)
+mod2Wi<-lmer(PlotIWGDryKgHa~NRate + (1|Rep), data=WiOnly)
+mod2NWi<-emmeans(mod2Wi, ~NRate)
+pairs(mod2NWi)
+mod3Wi<-lmer(PlotThreshedGrainKgHa~NRate + (1|Rep), data=GrainWiOnly)
+mod3NWi<-emmeans(mod3Wi, ~NRate)
+pairs(mod3NWi)
+```
+
+
+
+#Below is all the stuff I did first, not following Trisoc example (lm and anova) probably just silliness, feel free to ignore. 
+
+#linear models for biomass based on all locations
+```{r}
+#Alfalfa biomass by Nrate 
+AllLocAlfBio<-lm(PlotAlfDryKgHa~NRate, data=IntercroppedOnly)
+summary(AllLocAlfBio)
+#IWG Biomass by Nrate
+AllLocIWGBio<-lm(PlotIWGDryKgHa~NRate, data=IntercroppedOnly)
+summary(AllLocIWGBio)
+#Total biomass (IWG+Alf) by Nrate
+AllLocTotBio<-lm(TotalBioKgHa~NRate, data=IntercroppedOnly)
+summary(AllLocTotBio)
+```
+
+#Anovas for biomass based on all locations 
+```{r}
+#Alfalfa biomass by Nrate 
+AllLocAlfBio1<-aov(PlotAlfDryKgHa~NRate, data=IntercroppedOnly)
+summary(AllLocAlfBio1)
+#IWG Biomass by Nrate
+AllLocIWGBio1<-aov(PlotIWGDryKgHa~NRate, data=IntercroppedOnly)
+summary(AllLocIWGBio1)
+#Total biomass (IWG+Alf) by Nrate
+AllLocTotBio1<-aov(TotalBioKgHa~NRate, data=IntercroppedOnly)
+summary(AllLocTotBio1)
+```
+
+#linear models for biomass in NY 
+```{r}
+NyAlfBio<-lm(PlotAlfDryKgHa~NRate, data=NyOnly)
+summary(NyAlfBio)
+NyIWGBio<-lm(PlotIWGDryKgHa~NRate, data=NyOnly)
+summary(NyIWGBio)  
+NyTotBio<-lm(TotalBioKgHa~NRate, data=NyOnly)
+summary(NyTotBio)
+```
+
+
+#Anovas for biomass in NY 
+```{r}
+NyAlfBio1<-aov(PlotAlfDryKgHa~NRate, data=NyOnly)
+summary(NyAlfBio1)
+NyIWGBio1<-aov(PlotIWGDryKgHa~NRate, data=NyOnly)
+summary(NyIWGBio1)  
+NyTotBio1<-aov(TotalBioKgHa~NRate, data=NyOnly)
+summary(NyTotBio1)
+```
+
+#linear models for biomass in MN 
+```{r}
+MnAlfBio<-lm(PlotAlfDryKgHa~NRate, data=MnOnly)
+summary(MnAlfBio)
+MnIWGBio<-lm(PlotIWGDryKgHa~NRate, data=MnOnly)
+summary(MnIWGBio)  
+MnTotBio<-lm(TotalBioKgHa~NRate, data=MnOnly)
+summary(MnTotBio)
+```
+
+#Anovas for biomass in MN 
+```{r}
+MnAlfBio1<-aov(PlotAlfDryKgHa~NRate, data=MnOnly)
+summary(MnAlfBio1)
+MnIWGBio1<-aov(PlotIWGDryKgHa~NRate, data=MnOnly)
+summary(MnIWGBio1)  
+MnTotBio1<-aov(TotalBioKgHa~NRate, data=MnOnly)
+summary(MnTotBio1)
+```
+
+#linear models for biomass in WI 
+```{r}
+WiAlfBio<-lm(PlotAlfDryKgHa~NRate, data=WiOnly)
+summary(WiAlfBio)
+WiIWGBio<-lm(PlotIWGDryKgHa~NRate, data=WiOnly)
+summary(WiIWGBio)  
+WiTotBio<-lm(TotalBioKgHa~NRate, data=WiOnly)
+summary(WiTotBio)
+```
+
+
+#Anovas for biomass in WI 
+```{r}
+WiAlfBio1<-aov(PlotAlfDryKgHa~NRate, data=WiOnly)
+summary(WiAlfBio1)
+WiIWGBio1<-aov(PlotIWGDryKgHa~NRate, data=WiOnly)
+summary(WiIWGBio1)  
+WiTotBio1<-aov(TotalBioKgHa~NRate, data=WiOnly)
+summary(WiTotBio1)
+```
+
+
+#Linear models of grain yield now; by location and not by location
+```{r}
+#all locations grain yield by Nrate
+AllLocGrain<-lm(PlotThreshedGrainKgHa~NRate, data=GrainDF)
+summary(AllLocGrain)
+#NY grain yield by Nrate
+NyGrain<-lm(PlotThreshedGrainKgHa~NRate, data=GrainNyOnly)
+summary(NyGrain)
+#WI grain yield by Nrate 
+WiGrain<-lm(PlotThreshedGrainKgHa~NRate, data=GrainWiOnly)
+summary(WiGrain)
+#MN grain yield by Nrate (outlier because MN had a bad grain yield due to pests)
+MnGrain<-lm(PlotThreshedGrainKgHa~NRate, data=GrainMnOnly)
+summary(MnGrain)
+```
+
+
+#Anovas for grain yield now; by location and not by location
+```{r}
+#all locations grain yield by Nrate
+AllLocGrain1<-aov(PlotThreshedGrainKgHa~NRate, data=GrainDF)
+summary(AllLocGrain1)
+TukeyHSD(AllLocGrain1, conf.level = .95)
+#NY grain yield by Nrate
+NyGrain1<-aov(PlotThreshedGrainKgHa~NRate, data=GrainNyOnly)
+summary(NyGrain1)
+TukeyHSD(NyGrain1)
+#WI grain yield by Nrate 
+WiGrain1<-aov(PlotThreshedGrainKgHa~NRate, data=GrainWiOnly)
+summary(WiGrain1)
+#MN grain yield by Nrate (outlier because MN had a bad grain yield due to pests)
+MnGrain1<-aov(PlotThreshedGrainKgHa~NRate, data=GrainMnOnly)
+summary(MnGrain1)
+```
+
+
