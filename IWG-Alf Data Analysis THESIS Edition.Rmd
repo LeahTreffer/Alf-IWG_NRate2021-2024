@@ -9561,6 +9561,14 @@ NTFIRY160 <- Nd %>%
   group_by(Rep, P, YearCode, Harvest) %>%
   reframe(
     TFIRelativeYield160 = (PlotTotForageKgHa[Treatment == 10]) / (PlotTotForageKgHa[Treatment == 9]))
+
+# remove empty values
+NTFIRY0 <- NTFIRY0[!is.na(NTFIRY0$TFIRelativeYield0), ]
+NTFIRY40 <- NTFIRY40[!is.na(NTFIRY40$TFIRelativeYield40), ]
+NTFIRY80 <- NTFIRY80[!is.na(NTFIRY80$TFIRelativeYield80), ]
+NTFIRY120 <- NTFIRY120[!is.na(NTFIRY120$TFIRelativeYield120), ]
+NTFIRY160 <- NTFIRY160[!is.na(NTFIRY160$TFIRelativeYield160), ]
+
 #Join together all the tables
 NTFIRY<-left_join(NTFIRY0, NTFIRY40, by = c("Rep", "P", "YearCode", "Harvest"))
 NTFIRY<-left_join(NTFIRY, NTFIRY80, by = c("Rep", "P", "YearCode", "Harvest"))
@@ -9578,16 +9586,18 @@ NTFIRY_long <- NTFIRY %>%
 #split apart by year-harvest 
 NTFIRYX<-NTFIRY_long[NTFIRY_long$YearCode== "X",]
 NTFIRYY<-NTFIRY_long[NTFIRY_long$YearCode== "Y",]
+NTFIRYZ<-NTFIRY_long[NTFIRY_long$YearCode== "Z",]
 NTFIRYXS<-NTFIRYX[NTFIRYX$Harvest== "Summer",]
 NTFIRYXF<-NTFIRYX[NTFIRYX$Harvest== "Fall",]
 NTFIRYYS<-NTFIRYY[NTFIRYY$Harvest== "Summer",]
 NTFIRYYF<-NTFIRYY[NTFIRYY$Harvest== "Fall",]
-
+NTFIRYZS<-NTFIRYZ[NTFIRYZ$Harvest== "Summer",]
+NTFIRYZF<-NTFIRYZ[NTFIRYZ$Harvest== "Fall",]
 class(NTFIRYXS$N)
 #models 
 #year 1 summer TFI RY
 {
-modTFIRYXS<-lmer(TFIRelativeYield~N*P + (1|Rep), data=NTFIRYXS)
+modTFIRYXS<-lmer(TFIRelativeYield~N*P + (1|P:Rep), data=NTFIRYXS)
 anova(modTFIRYXS)
 #check assumptions 
 TFIRYXS_resid<-resid(modTFIRYXS)
@@ -9595,7 +9605,7 @@ qqnorm(TFIRYXS_resid)
 qqline(TFIRYXS_resid)
 plot(modTFIRYXS)
 #Logtransform
-modTFIRYXS1<-lmer(log(TFIRelativeYield)~N*P + (1|Rep), data=NTFIRYXS)
+modTFIRYXS1<-lmer(log(TFIRelativeYield)~N*P + (1|P:Rep), data=NTFIRYXS)
 anova(modTFIRYXS1)
 #check LOG assumptions 
 TFIRYXS_resid1<-resid(modTFIRYXS1)
@@ -9621,24 +9631,24 @@ cld_dataNTFIRYXSNP    |>
   column_spec(1, bold = T)
 
 #year 1 Fall TFI RY
-{modTFIRYXF<-lmer(TFIRelativeYield~N*P + (1|Rep), data=NTFIRYXF)
-anova(modTFIRYXF)
+{
+#modTFIRYXF<-lmer(TFIRelativeYield~N*P + (1|P:Rep), data=NTFIRYXF)
+#boundary (singular) fit: see help('isSingular')
+#anova(modTFIRYXF)
 #check assumptions 
-TFIRYXF_resid<-resid(modTFIRYXF)
-qqnorm(TFIRYXF_resid)
-qqline(TFIRYXF_resid)
-plot(modTFIRYXF)
+#TFIRYXF_resid<-resid(modTFIRYXF)
+#qqnorm(TFIRYXF_resid)
+#qqline(TFIRYXF_resid)
+#plot(modTFIRYXF)
 #Logtransform
-modTFIRYXF1<-lmer(log(TFIRelativeYield)~N*P + (1|Rep), data=NTFIRYXF)
-anova(modTFIRYXF1)
-NTFIRYXF$N<-as.numeric(NTFIRYXF$N)
-modTFIRYXF1<-lmer(log(TFIRelativeYield)~N*P + (1|Rep), data=NTFIRYXF)
+modTFIRYXF1<-lmer(log(TFIRelativeYield)~N*P + (1|P:Rep), data=NTFIRYXF)
 anova(modTFIRYXF1)
 #check LOG assumptions 
 TFIRYXF_resid1<-resid(modTFIRYXF1)
 qqnorm(TFIRYXF_resid1)
 qqline(TFIRYXF_resid1)
-plot(modTFIRYXF1)}
+plot(modTFIRYXF1)
+}
 #Pairwise N
 N_levels <- c(0, 40, 80, 120, 160)
 emmsN <- emmeans(modTFIRYXF1, specs = ~ N, at = list(N = N_levels), type = "response")
@@ -9672,7 +9682,8 @@ cld_dataNTFIRYXFP     |>
   column_spec(1, bold = T)
 
 #year 2 summer TFI RY
-{modTFIRYYS<-lmer(TFIRelativeYield~N*P + (1|Rep), data=NTFIRYYS)
+{
+modTFIRYYS<-lmer(TFIRelativeYield~N*P + (1|P:Rep), data=NTFIRYYS)
 anova(modTFIRYYS)
 #check assumptions 
 TFIRYYS_resid<-resid(modTFIRYYS)
@@ -9680,13 +9691,14 @@ qqnorm(TFIRYYS_resid)
 qqline(TFIRYYS_resid)
 plot(modTFIRYYS)
 #Logtransform
-modTFIRYYS1<-lmer(log(TFIRelativeYield)~N*P + (1|Rep), data=NTFIRYYS)
+modTFIRYYS1<-lmer(log(TFIRelativeYield)~N*P + (1|P:Rep), data=NTFIRYYS)
 anova(modTFIRYYS1)
 #check LOG assumptions 
 TFIRYYS_resid1<-resid(modTFIRYYS1)
 qqnorm(TFIRYYS_resid1)
 qqline(TFIRYYS_resid1)
-plot(modTFIRYYS1)}
+plot(modTFIRYYS1)
+}
 #Pairwise N:P
 N_levels <- c(0, 40, 80, 120, 160)
 emmsNP <- emmeans(modTFIRYYS1, specs = ~ N*P, at = list(N = N_levels), type = "response")
@@ -9705,7 +9717,8 @@ cld_dataNTFIRYYSNP    |>
   column_spec(1, bold = T)
 
 #year 2 Fall TFI RY
-{modTFIRYYF<-lmer(TFIRelativeYield~N*P + (1|Rep), data=NTFIRYYF)
+{
+modTFIRYYF<-lmer(TFIRelativeYield~N*P + (1|P:Rep), data=NTFIRYYF)
 anova(modTFIRYYF)
 #check assumptions 
 TFIRYYF_resid<-resid(modTFIRYYF)
@@ -9713,13 +9726,14 @@ qqnorm(TFIRYYF_resid)
 qqline(TFIRYYF_resid)
 plot(modTFIRYYF)
 #Logtransform
-modTFIRYYF1<-lmer(log(TFIRelativeYield)~N*P + (1|Rep), data=NTFIRYYF)
+modTFIRYYF1<-lmer(log(TFIRelativeYield)~N*P + (1|P:Rep), data=NTFIRYYF)
 anova(modTFIRYYF1)
 #check LOG assumptions 
 TFIRYYF_resid1<-resid(modTFIRYYF1)
 qqnorm(TFIRYYF_resid1)
 qqline(TFIRYYF_resid1)
-plot(modTFIRYYF1)}
+plot(modTFIRYYF1)
+}
 #Pairwise P
 emmsP <- emmeans(modTFIRYYF1, ~ P, type = "response") # Obtain estimated marginal means
 cld_dataTFIRYYFP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
@@ -9736,14 +9750,87 @@ cld_dataTFIRYYFP    |>
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
 
+#year 3 summer TFI RY
+{
+modTFIRYZS<-lmer(TFIRelativeYield~N*P + (1|P:Rep), data=NTFIRYZS)
+anova(modTFIRYZS)
+#check assumptions 
+TFIRYZS_resid<-resid(modTFIRYZS)
+qqnorm(TFIRYZS_resid)
+qqline(TFIRYZS_resid)
+plot(modTFIRYZS)
+#Logtransform
+modTFIRYZS1<-lmer(log(TFIRelativeYield)~N*P + (1|P:Rep), data=NTFIRYZS)
+anova(modTFIRYZS1)
+#check LOG assumptions 
+TFIRYZS_resid1<-resid(modTFIRYZS1)
+qqnorm(TFIRYZS_resid1)
+qqline(TFIRYZS_resid1)
+plot(modTFIRYZS1)
+}
+#Pairwise N:P
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNP <- emmeans(modTFIRYZS1, specs = ~ N*P, at = list(N = N_levels), type = "response")
+cld_dataNTFIRYZSNP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
+cld_dataNTFIRYZSNP  $response <- format(cld_dataNTFIRYZSNP  $response, digits = 3)
+cld_dataNTFIRYZSNP $lower.CL <- format(cld_dataNTFIRYZSNP $lower.CL, digits = 3)
+cld_dataNTFIRYZSNP $upper.CL <- format(cld_dataNTFIRYZSNP $upper.CL, digits = 3)
+rownames(cld_dataNTFIRYZSNP  ) <- NULL
+cld_dataNTFIRYZSNP  <- cld_dataNTFIRYZSNP   %>%
+  select( N, P, response, lower.CL, upper.CL, .group)
+colnames(cld_dataNTFIRYZSNP  ) <- c( "N", "Site", "TIFRY","l","h", "Group")
+cld_dataNTFIRYZSNP    |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#year 2 Fall TFI RY
+{
+modTFIRYZF<-lmer(TFIRelativeYield~N*P + (1|P:Rep), data=NTFIRYZF)
+anova(modTFIRYZF)
+#check assumptions 
+TFIRYZF_resid<-resid(modTFIRYZF)
+qqnorm(TFIRYZF_resid)
+qqline(TFIRYZF_resid)
+plot(modTFIRYZF)
+#Logtransform
+modTFIRYZF1<-lmer(log(TFIRelativeYield)~N*P + (1|P:Rep), data=NTFIRYZF)
+anova(modTFIRYZF1)
+#check LOG assumptions 
+TFIRYZF_resid1<-resid(modTFIRYZF1)
+qqnorm(TFIRYZF_resid1)
+qqline(TFIRYZF_resid1)
+plot(modTFIRYZF1)
+}
+#Pairwise P
+emmsP <- emmeans(modTFIRYZF1, ~ P, type = "response") # Obtain estimated marginal means
+cld_dataTFIRYZFP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+cld_dataTFIRYZFP  $response <- format(cld_dataTFIRYZFP  $response, digits = 3)
+cld_dataTFIRYZFP $lower.CL <- format(cld_dataTFIRYZFP $lower.CL, digits = 3)
+cld_dataTFIRYZFP $upper.CL <- format(cld_dataTFIRYZFP $upper.CL, digits = 3)
+rownames(cld_dataTFIRYZFP  ) <- NULL
+cld_dataTFIRYZFP  <- cld_dataTFIRYZFP   %>%
+  select( P, response, lower.CL, upper.CL, .group)
+colnames(cld_dataTFIRYZFP  ) <- c( "Site", "TIFRY","l","h", "Group")
+cld_dataTFIRYZFP    |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+
+
 
 # Create box plots: 
 # Define the order of factor levels and Convert N to a factor with specified levels
 factor_levels <- c("0", "40", "80", "120", "160")
 NTFIRYXS$N <- factor(NTFIRYXS$N, levels = factor_levels)
 NTFIRYYS$N <- factor(NTFIRYYS$N, levels = factor_levels)
+NTFIRYZS$N <- factor(NTFIRYZS$N, levels = factor_levels)
 NTFIRYXF$N <- factor(NTFIRYXF$N, levels = factor_levels)
 NTFIRYYF$N <- factor(NTFIRYYF$N, levels = factor_levels)
+NTFIRYZF$N <- factor(NTFIRYZF$N, levels = factor_levels)
 #year 1 summer 
 ggplot(NTFIRYXS, aes(x = N, y = TFIRelativeYield)) +
   geom_boxplot() +
@@ -9784,6 +9871,27 @@ ggplot(NTFIRYYF, aes(x = N, y = TFIRelativeYield)) +
     geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
     ggtitle("Year 2 Fall Total Forage Yield Relative to IWG monoculture")+
   ylim(0.5, NA)
+
+#year 3 summer 
+ggplot(NTFIRYZS, aes(x = N, y = TFIRelativeYield)) +
+  geom_boxplot() +
+  facet_wrap(~P, scales = "free_y",ncol=2) +
+  labs(x = "N Rate", y = "Relative Yield") +
+  theme_minimal()+
+   scale_x_discrete(breaks = c(0, 40, 80, 120, 160))+
+    geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
+    ggtitle("Year 3 Summer Total Forage Yield Relative to IWG monoculture")+
+  ylim(0.5, NA)
+#year 2 Fall 
+ggplot(NTFIRYZF, aes(x = N, y = TFIRelativeYield)) +
+  geom_boxplot() +
+  facet_wrap(~P, scales = "free_y",ncol=2) +
+  labs(x = "N Rate", y = "Relative Yield") +
+  theme_minimal()+
+   scale_x_discrete(breaks = c(0, 40, 80, 120, 160))+
+    geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
+    ggtitle("Year 3 Fall Total Forage Yield Relative to IWG monoculture")+
+  ylim(0.5, NA)
 ```
 #TFIRY combo boxplots summer and fall 
 ```{r}
@@ -9792,19 +9900,23 @@ NTFIRYXS$Year<-"Year 1 Summer"
 NTFIRYXF$Year<-"Year 1 Fall"
 NTFIRYYS$Year<-"Year 2 Summer"
 NTFIRYYF$Year<-"Year 2 Fall"
+NTFIRYZS$Year<-"Year 3 Summer"
+NTFIRYZF$Year<-"Year 3 Fall"
 
-combined_dataTFIRY <- rbind(NTFIRYXS, NTFIRYXF,NTFIRYYS,NTFIRYYF)
+combined_dataTFIRY <- rbind(NTFIRYXS, NTFIRYXF,NTFIRYYS,NTFIRYYF, NTFIRYZS, NTFIRYZF)
 
 colors2 <- c("Year 1 Summer" = "red", 
             "Year 1 Fall" = "green", 
             "Year 2 Summer" = "blue", 
-            "Year 2 Fall" = "purple")
+            "Year 2 Fall" = "purple", 
+            "Year 3 Summer" = "orange",
+            "Year 3 Fall" = "yellow")
 legend_order3 <- c("Year 1 Summer", "Year 1 Fall", 
-                  "Year 2 Summer", "Year 2 Fall")
+                  "Year 2 Summer", "Year 2 Fall", "Year 3 Summer", "Year 3 Fall")
 combined_dataTFIRY$P <- factor(combined_dataTFIRY$P, levels = desired_order)
 
 # Convert N to a factor for proper ordering on the x-axis
-combined_dataTFIRY $N <- factor(combined_dataTFIRY $N, levels = c("0", "40", "80", "120", "160"))
+combined_dataTFIRY$N <- factor(combined_dataTFIRY $N, levels = c("0", "40", "80", "120", "160"))
 
 # Plotting both boxplots together with dodge positioning
 TFIRYcomboplot <- ggplot(combined_dataTFIRY, aes(x = N, y = TFIRelativeYield, fill = Year)) +
@@ -9820,7 +9932,7 @@ TFIRYcomboplot <- ggplot(combined_dataTFIRY, aes(x = N, y = TFIRelativeYield, fi
 # Display the combined plot
 print(TFIRYcomboplot)
 
-ggsave("TFIRYcomboplot .jpg", plot = TFIRYcomboplot , width = 8, height = 6, dpi = 300)
+ggsave("TFIRYcomboplot.jpg", plot = TFIRYcomboplot , width = 8, height = 6, dpi = 300)
 ```
 #TFIRY combo boxplots summer 
 ```{r}
