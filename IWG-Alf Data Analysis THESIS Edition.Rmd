@@ -13,7 +13,8 @@ rm(list = ls(all.names = TRUE))
 ***REMOVE AND REPLACE***
 
 ```{r}
-data<-read.csv('MasterDataSpreadsheet  - All locations All years combined.csv')
+#data<-read.csv('MasterDataSpreadsheet  - All locations All years combined.csv')
+data<-read.csv('MasterDataSpreadsheet.csv')
 ```
 
 #just loading these in, unsure if I need to again but might as well
@@ -233,7 +234,7 @@ for (trait in trait_list){
 
 ```
 
-#HERE
+#converstion table for real
 
 ```{r}
 # converstion table for real
@@ -350,6 +351,7 @@ final_data$G<-((final_data$WhSamDH)/(final_data$image_sample_wt_g))*(final_data$
 
 
 ****
+#HERE
 #Making things numeric as needed 
 ```{r}
 data2$G<-as.numeric(data2$G)
@@ -715,6 +717,19 @@ qqline(NXG_resid)
 plot(modNXG)
 #check assumptions logtransform
 modNXG1<-lmer(log(G)~N*P*C + (1|Rep), data=NdXSIG)
+summary(modNXG1)
+anova(modNXG1)
+NXG_resid1<-resid(modNXG1)
+qqnorm(NXG_resid1)
+qqline(NXG_resid1)
+plot(modNXG1)
+#check assumptions box cox
+library(bestNormalize)
+bn <- bestNormalize(NdXSIG$G)
+bn$chosen_transform
+NdXSIG$G_trans <- bn$x.t
+
+modNXG1<-lmer(G_trans~N*P*C + (1|Rep), data=NdXSIG)
 summary(modNXG1)
 anova(modNXG1)
 NXG_resid1<-resid(modNXG1)
