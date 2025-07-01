@@ -1,0 +1,1993 @@
+---
+title: "GrainYield"
+output: html_document
+date: "2025-07-01"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+rm(list = ls(all.names = TRUE))
+
+***REMOVE AND REPLACE***
+
+```{r}
+#data<-read.csv('MasterDataSpreadsheet  - All locations All years combined.csv')
+data<-read.csv('MasterDataSpreadsheet.csv')
+```
+
+#just loading these in, unsure if I need to again but might as well
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(ggthemes)
+library(gapminder)
+library(multcomp)
+library(emmeans)
+library(multcompView)
+library(lmerTest)
+library(scales)
+library(tidyverse)
+library(readxl)
+library(lme4)
+library(gvlma)
+library(rstatix)
+library(sjPlot)
+library(gt)
+library(car)
+library(Rmisc)
+library(nlme)
+library(pgirmess)
+library(MuMIn)
+library(sjPlot)
+library(grateful)
+library(cowplot)
+library(kableExtra)
+library(MuMIn)
+library(ggpmisc)
+```
+
+#Rows to remove due to missing data
+NY 208 s22 missing alfalfa 
+MN 1122 s23 missing grain 
+```{r}
+# 2022 Summer NY 208 is the first row in the data table
+data <- data[-1, ] # 2022 Summer NY 208
+# then the new row 1 becomes the next row needing to be taken out
+data <- data[-1, ] # 2023 Summer MN 1122
+```
+
+#rename variables to match models 
+```{r}
+data2 <- data |> 
+  separate_wider_delim(Crop, delim = " + ", 
+                       names = c("first_value", "second_value"), 
+                       too_few = "align_start") |> 
+  mutate(C = if_else(is.na(second_value), "monoculture", "intercrop")) |> 
+  mutate(CROP = case_when(
+    Intercropped == "y" ~ "Intercropped",  # If intercrop is "y", set CROP to intercrop
+    Monocrop == "y" & ALF == "y" ~ "Mono_ALF",  # If monoculture is "y" and alfalfa is "y", set CROP to alfalfa
+    Monocrop == "y" & IWG == "y" ~ "Mono_IWG",  # If monoculture is "y" and iwg is "y", set CROP to iwg
+    Monocrop == "y" ~ "NA",  # If monoculture is "y" and neither alfalfa nor iwg is "y", set CROP to NA
+    TRUE ~ NA_character_  # If no condition matches, assign NA
+  ))
+
+V<-data2$first_value #Variety (IWG, Shockwave, Higest, WL)
+data2$V<-as.factor(V)
+N<-data2$NRate # Nitrogen Rate (0, 40, 80, 120, 160)
+data2$N<-as.numeric(N)
+P<-data2$Location # Location ("MN", "NY", "WI", "KS")
+data2$P<-as.factor(P)
+data2$Rep<-as.factor(data2$Rep) # (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
+data2$C<-as.factor(data2$C) # Crop (intercrop, monoculture)
+data2$CROP <- as.factor(data2$CROP) # Crop (intercrop, monoculture_IWG, monoculture_Alfalfa)
+```
+
+****
+Grain conversion work 
+
+
+
+#Grain data conversion NEED TO CHECK that 2023 doesn't have any NaN values!!!
+
+options: 
+1) don't do any conversion on grain data, just use raw grain data from all years (or just year 3) ; MN yr 2 is our yr 3 though so this would be messy
+2) assuming that same proportion of grain:chaff is occuring in yr 3, we could use the same correction on yr 3 raw; would need the average conversion rate for the plot in yr 1 and 2 to be able to run on yr 3
+  - average of yr 1 and 2 converstion to converted weight, then use that converstion factor to calculate yr 3 
+  - average of yr 1 and 2 converstion for each proportion, find conversation factor, then apply to year 3 to get those 'predicted' proportions, then run Lee's equation to get a predicted converted weight
+  
+try both of these and show Ginny
+
+```{r}
+#need to calculate the fractions 
+# data points from imaging giving proportionss
+# for yr 1 and 2 there are columns with plot individual info for this
+#hull fraction 
+data2$hullNHd<-data2$hull_N/(data2$hull_N+data2$nkd_N+data2$spklt_N)
+#naked seed fraction 
+data2$NdkNHd<-data2$nkd_N/(data2$hull_N+data2$nkd_N+data2$spklt_N)
+#spiklet fraction 
+data2$SpkltNHd <- ifelse(data2$spklt_N == 0, 0, data2$spklt_N / (data2$hull_N + data2$nkd_N + data2$spklt_N))
+
+#IGNORE (Lee's equation)
+# converted grain wieght using proportion information and his calibration values
+#then can just plug and chug into this equation 
+#data2$YldHdDH <- (1.26975580047546E-03) + (0.897057684933234 * data2$image_sample_wt_g) - ((1.07961789616701E-05) * data2$hullNHd * data2$hull_A) + ((4.61501772182347E-06) * data2$NdkNHd * data2$nkd_A) - ((2.00025159218368E-05) * ifelse(is.nan(data2$SpkltNHd), 0, data2$SpkltNHd) * ifelse(is.nan(data2$spklt_A), 0, data2$spklt_A))
+
+#new equation from Lee
+# converted grain wieghts 
+data2$WhSamDH = (0.905045351733363*data2$image_sample_wt_g)-((1.10627799960595E-05)*data2$hullNHd*data2$hull_A)+((4.10249606987368E-06)*data2$NdkNHd*data2$nkd_A)-((2.01262650442053E-05)* ifelse(is.nan(data2$SpkltNHd), 0, data2$SpkltNHd) * ifelse(is.nan(data2$spklt_A), 0, data2$spklt_A)) 
+
+
+#fix below to create the right proportion and save it  
+#samples sent for imaging were a subset, so have to apply the converstion factor to the subsample, need to calculate up to the whole plot samples
+data2$G<-((data2$WhSamDH)/(data2$image_sample_wt_g))*(data2$PlotThreshedGrainKgHa)
+
+#apply the adjustment above to the year 2 grain data
+data2$GXAdj<-((data2$WhSamDH)/(data2$image_sample_wt_g))
+data2GXAdj<-data2[data2$YearCode == "X",]
+data2GXAdj<-data2GXAdj[data2GXAdj$Harvest == "Summer",]
+data2GXAdj<-data2GXAdj[data2GXAdj$P != "MN",]
+data2Y<-data2[data2$YearCode=="Y",]
+data2Y<-data2Y[data2Y$Harvest == "Summer",]
+DATA<-data2GXAdj%>%select(GXAdj, P, Plot, N, C)
+DATA2<-left_join(data2GXAdj%>%select(-GXAdj),DATA)
+DATA3<-left_join(data2Y%>%select(-GXAdj),DATA)
+#data2Y <- merge(data2Y, data2GXAdj$GXAdj, by = c("Location", "Plot"), all.x = TRUE)
+DATA3$GAdjY<-(DATA3$GXAdj)*(DATA3$PlotThreshedGrainKgHa)
+```
+
+Matching 2024 grain to 2022 and 2023 grain
+  - average of yr 1 and 2 converstion to converted weight, then use that converstion factor to calculate yr 3 
+  - average of yr 1 and 2 converstion for each proportion, find conversation factor, then apply to year 3 to get those 'predicted' proportions, then run Lee's equation to get a predicted converted weight
+  
+```{r}
+# Leah's practice code 
+library(data.table)
+# make an unique identifier for each plot (Location_Plot)
+# Fast way: average WhSamDH
+# Granular way: hull_N, nkd_N, spklt_N, nkd_N, image_sample_wt_g, hull_A, nkd_A, spklt_A
+
+d <- tibble(
+  Location = c("MN", "MN", "MN", "MN", "MN", "MN", "MN", "MN", "MN", "NY", "NY", "NY", "NY", "NY", "NY"),
+  Plot = c("1", "2", "3", "1", "2", "3", "1", "2", "3", "1", "2", "3", "1", "2", "3"),
+  Year = c("2022", "2022", "2022", "2023", "2023", "2023", "2024", "2024", "2024", "2023", "2023", "2023", "2024", "2024", "2024"),
+  rawG = c("5", "10", "1", "3", "14", "2", "", "", "", "3", "6", "2", "", "", ""),
+  WhSamDH = c("0.3", "0.7", "0.04", "", "", "", "", "", "", "0.2", "0.4", "0.3", "", "", ""),
+  hull_N = c("0.2", "0.5", "0.02", "0.22", "0.7", "0.3", "", "", "", "0.1", "0.4", "0.07", "", "", ""),
+  nope = c("10", "14", "4", "9", "11", "3", "", "", "", "6", "3", "9", "", "", ""),
+  hull_A = c("0.25", "0.55", "0.025", "0.27", "0.57", "0.027", "", "", "", "0.1", "0.8", "0.69", "", "", ""),
+  real_sample_wt_g = c("0.25", "0.55", "0.025", "0.27", "0.57", "0.027", "0.8", "0.2", "0.4", "0.1", "0.8", "0.69", "0.6", "0.15", "0.9"))
+d$ID <- paste0(d$Location, "_", d$Plot)
+# Convert the columns that need averaging into numeric
+d <- d %>%
+  mutate(
+    rawG = as.numeric(rawG),
+    WhSamDH = as.numeric(WhSamDH),
+    hull_N = as.numeric(hull_N),
+    nope = as.numeric(nope),
+    hull_A = as.numeric(hull_A),
+    real_sample_wt_g = as.numeric(real_sample_wt_g)
+  )
+
+# now loop through to group plots, average, and fill missing values with the mean of the other observations of the same plot
+
+updated_data_list <- list()
+
+for (id in unique(d$ID)) {
+  group_data <- d %>% filter(ID == id)
+  
+  mean_rawG <- mean(group_data$rawG, na.rm = TRUE)
+  mean_WhSamDH <- mean(group_data$WhSamDH, na.rm = TRUE)
+  mean_hull_N <- mean(group_data$hull_N, na.rm = TRUE)
+  mean_nope <- mean(group_data$nope, na.rm = TRUE)
+  mean_hull_A <- mean(group_data$hull_A, na.rm = TRUE)
+
+  # Fill missing values in column 'A' with the calculated mean
+  group_data$rawG[is.na(group_data$rawG)] <- mean_rawG
+  group_data$WhSamDH[is.na(group_data$WhSamDH)] <- mean_WhSamDH
+  group_data$hull_N[is.na(group_data$hull_N)] <- mean_hull_N
+  group_data$nope[is.na(group_data$nope)] <- mean_nope
+  group_data$hull_A[is.na(group_data$hull_A)] <- mean_hull_A
+  
+  # build new table
+  updated_data_list[[length(updated_data_list) + 1]] <- group_data
+
+}
+final_data <- bind_rows(updated_data_list)
+
+# instead of filling with the mean, get the conversion factor between real_sample_wt_g and the ratios
+# testing using 
+conversion_factors <- d[,c(1:3,9,10)]  # table
+condensed_df <- conversion_factors %>%
+  group_by(ID) %>%
+  summarise(
+    ID = first(ID) ) # unique IDs
+
+
+trait_list <- colnames(d[,c(4:8)])
+for (trait in trait_list){
+  # initial vecotor to store quotients for each ID
+  column <- numeric(nrow(condensed_df))
+  
+  for(i in 1:nrow(condensed_df)){
+    id = as.character(condensed_df[i,"ID"])
+    group_data <- d %>% filter(ID == id)
+    
+    mt = mean(group_data[[trait]], na.rm = TRUE)
+    ms = mean(group_data$real_sample_wt_g, na.rm = TRUE)
+    
+    # add conversion to id's row
+    column[i] <- ms / mt
+  }    
+    # add column to table
+    col_name <- (paste("conversion", trait, sep = "_"))
+    condensed_df[[col_name]] <- column
+}
+
+
+
+
+```
+
+#converstion table for real
+
+```{r}
+# converstion table for real
+data2$ID <- paste0(data2$Location, "_", data2$Plot)
+
+conversion_factors <- data2[,c('Year', 'YearCode', 'Location', 'Plot', 'ID', 'QThreshedGrainDryG')]  # table
+condensed_df <- conversion_factors %>%
+  group_by(ID) %>%
+  dplyr::summarise(ID = first(ID)) # unique IDs
+
+trait_list <- colnames(data2[,c('hull_N', 'nkd_N', 'spklt_N', 'image_sample_wt_g', 'hull_A', 'nkd_A', 'spklt_A', 'WhSamDH')])
+for (trait in trait_list){
+  # initial vecotor to store quotients for each ID
+  column <- numeric(nrow(condensed_df))
+  
+  for(i in 1:nrow(condensed_df)){
+    id = as.character(condensed_df[i,"ID"])
+    group_data <- data2 %>% filter(ID == id)
+    
+    mt = mean(as.numeric(group_data[[trait]]), na.rm = TRUE)
+    ms = mean(as.numeric(group_data$QThreshedGrainDryG), na.rm = TRUE)
+    
+    # Check if mt (mean of trait) is NA, if so assign NA to the result for this ID
+    if (is.na(mt)) {
+      column[i] <- NA
+    } else {
+      column[i] <- ms / mt
+    }
+  }    
+    # add column to table
+    col_name <- (paste("conversion", trait, sep = "_"))
+    condensed_df[[col_name]] <- column
+}
+
+# works? need to make sure the values make sense
+# is QThreshedGrainDryG the right column to use? 
+```
+
+Long way 
+```{r}
+data2$ID <- paste0(data2$Location, "_", data2$Plot)
+
+updated_data_list <- list()
+
+for (id in unique(data2$ID)) {
+  group_data <- data2 %>% filter(ID == id) #, Harvest == "Summer", IWG == "y")
+  
+  mean_hull_N <- mean(group_data$hull_N, na.rm = TRUE)
+  mean_nkd_N <- mean(group_data$nkd_N, na.rm = TRUE)
+  mean_spklt_N <- mean(group_data$spklt_N, na.rm = TRUE)
+  mean_image_sample_wt_g <- mean(group_data$image_sample_wt_g, na.rm = TRUE)
+  mean_hull_A <- mean(group_data$hull_A, na.rm = TRUE)
+  mean_nkd_A <- mean(group_data$nkd_A, na.rm = TRUE)
+  mean_spklt_A <- mean(group_data$spklt_A, na.rm = TRUE)
+
+  # Fill missing values in column 'A' with the calculated mean
+  group_data$hull_N[is.na(group_data$hull_N)] <- mean_hull_N
+  group_data$nkd_N[is.na(group_data$nkd_N)] <- mean_nkd_N
+  group_data$spklt_N[is.na(group_data$spklt_N)] <- mean_spklt_N
+  group_data$image_sample_wt_g[is.na(group_data$image_sample_wt_g)] <- mean_image_sample_wt_g
+  group_data$hull_A[is.na(group_data$hull_A)] <- mean_hull_A
+  group_data$nkd_A[is.na(group_data$nkd_A)] <- mean_nkd_A
+  group_data$spklt_A[is.na(group_data$spklt_A)] <- mean_spklt_A
+
+  # build new table
+  updated_data_list[[length(updated_data_list) + 1]] <- group_data
+
+}
+final_data <- bind_rows(updated_data_list)
+
+#need to calculate the fractions 
+#hull fraction 
+final_data$hullNHd<-final_data$hull_N/(final_data$hull_N+final_data$nkd_N+final_data$spklt_N)
+#naked seed fraction 
+final_data$NdkNHd<-final_data$nkd_N/(final_data$hull_N+final_data$nkd_N+final_data$spklt_N)
+#spiklet fraction 
+final_data$SpkltNHd <- ifelse(final_data$spklt_N == 0, 0, final_data$spklt_N / (final_data$hull_N + final_data$nkd_N + final_data$spklt_N))
+
+#new equation from Lee
+# converted grain wieghts 
+final_data$WhSamDH = (0.905045351733363*final_data$image_sample_wt_g)-((1.10627799960595E-05)*final_data$hullNHd*final_data$hull_A)+((4.10249606987368E-06)*final_data$NdkNHd*final_data$nkd_A)-((2.01262650442053E-05)* ifelse(is.nan(final_data$SpkltNHd), 0, final_data$SpkltNHd) * ifelse(is.nan(final_data$spklt_A), 0, final_data$spklt_A)) 
+
+
+#fix below to create the right proportion and save it  
+#samples sent for imaging were a subset, so have to apply the converstion factor to the subsample, need to calculate up to the whole plot samples
+final_data$G<-((final_data$WhSamDH)/(final_data$image_sample_wt_g))*(final_data$PlotThreshedGrainKgHa)
+
+```
+
+Short way 
+```{r}
+
+updated_data_list2 <- list()
+
+for (id in unique(data2$ID)) {
+  group_data <- data2 %>% filter(ID == id)
+  
+  mean_WhSamDH <- mean(group_data$WhSamDH, na.rm = TRUE)
+  
+  # Fill missing values in column 'A' with the calculated mean
+  group_data$WhSamDH[is.na(group_data$WhSamDH)] <- mean_WhSamDH
+  
+  # build new table
+  updated_data_list2[[length(updated_data_list2) + 1]] <- group_data
+
+}
+final_data2 <- bind_rows(updated_data_list2)
+
+#fix below to create the right proportion and save it  
+#samples sent for imaging were a subset, so have to apply the converstion factor to the subsample, need to calculate up to the whole plot samples
+final_data$G<-((final_data$WhSamDH)/(final_data$image_sample_wt_g))*(final_data$PlotThreshedGrainKgHa)
+
+```
+
+
+****
+#HERE
+#Making things numeric as needed 
+```{r}
+data2$G<-as.numeric(data2$G)
+data2$PlotIWGDryKgHa<-as.numeric(data2$PlotIWGDryKgHa)
+data2$PlotAlfDryKgHa<-as.numeric(data2$PlotAlfDryKgHa)
+data2$PlotTotForageKgHa<-as.numeric(data2$PlotTotForageKgHa)
+data2$IWGCP<-as.numeric(data2$IWGCP)
+data2$IWGdNDF48<-as.numeric(data2$IWGdNDF48)
+data2$IWGLignin<-as.numeric(data2$IWGLignin)
+data2$ALFCP<-as.numeric(data2$ALFCP)
+data2$ALFdNDF48<-as.numeric(data2$ALFdNDF48)
+data2$ALFLignin<-as.numeric(data2$ALFLignin)
+data2$ALFADF<-as.numeric(data2$ALFADF)
+data2$IWGADF<-as.numeric(data2$IWGADF)
+data2$ALFaNDF<-as.numeric(data2$ALFaNDF)
+custom_letters <- c("a", "b", "c", "d", "e", "f", "g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z")  # Customize the letters as needed
+
+
+
+```
+
+#Nrate data isolation
+```{r}
+
+#Just shockwave 
+Nd<-data2[data2$first_value != "WL" & data2$first_value != "Higest" ,]
+
+Nd <- Nd %>%
+  mutate(CROP = case_when(
+    `Crop1` == "Shockwave" ~ "monoA",
+    `Crop1` == "IWG" ~ "monoI",
+    `Crop1` == "Shockwave + IWG" ~ "inter",
+    TRUE ~ NA_character_  # Handle other cases if any
+  ))
+
+# MN 2024 has some Filler plots which get the NA character, but code later in this script dosn't like it. 
+# So removing these here
+Nd <- Nd %>%
+  filter(!is.na(CROP))
+```
+
+
+```{r}
+#Year
+NdX<-Nd[Nd$YearCode == "X",]
+NdY<-Nd[Nd$YearCode == "Y",]
+NdZ<-Nd[Nd$YearCode == "Z",]
+
+#REMOVE this once you get the corrected year 2 grain values in 
+NdY$G<-NdY$PlotThreshedGrainKgHa
+
+#Harvest 
+NdXS<-NdX[NdX$Harvest == "Summer",]
+NdXF<-NdX[NdX$Harvest == "Fall",]
+
+NdYS<-NdY[NdY$Harvest == "Summer",]
+NdYF<-NdY[NdY$Harvest == "Fall",]
+
+NdZS<-NdZ[NdZ$Harvest == "Summer",]
+NdZF<-NdZ[NdZ$Harvest == "Fall",]
+
+#IWG vs ALF 
+NdXSI<-NdXS[NdXS$Crop1 != "Shockwave",]
+NdXSA<-NdXS[NdXS$Crop1 != "IWG",]
+
+NdXFI<-NdXF[NdXF$Crop1 != "Shockwave",]
+NdXFA<-NdXF[NdXF$Crop1 != "IWG",]
+
+NdYSI<-NdYS[NdYS$Crop1 != "Shockwave" ,]
+NdYSA<-NdYS[NdYS$Crop1 != "IWG",]
+
+NdYFI<-NdYF[NdYF$Crop1 != "Shockwave",]
+NdYFA<-NdYF[NdYF$Crop1 != "IWG",]
+
+NdZSI<-NdZS[NdZS$Crop1 != "Shockwave" ,]
+NdZSA<-NdZS[NdZS$Crop1 != "IWG",]
+
+NdZFI<-NdZF[NdZF$Crop1 != "Shockwave",]
+NdZFA<-NdZF[NdZF$Crop1 != "IWG",]
+
+```
+
+#Variety data isolation: for checking V*N interaction (variety x N rate)
+```{r}
+#just 0 and 80 Nrate
+Vd1<-data2[data2$NRate != "40" & data2$NRate != "120" & data2$NRate != "160",]
+
+#remove monoculture plots
+Vd<-Vd1[Vd1$C == "intercrop",]
+
+#Year isolation
+VdX<-Vd[Vd$YearCode == "X",]
+VdY<-Vd[Vd$YearCode == "Y",]
+VdZ<-Vd[Vd$YearCode == "Z",]
+
+#REMOVE this once you get the corrected year 2 grain values in 
+VdY$G<-VdY$PlotThreshedGrainKgHa
+
+#Harvest isolation
+VdXS<-VdX[VdX$Harvest == "Summer",]
+VdXF<-VdX[VdX$Harvest == "Fall",]
+
+VdYS<-VdY[VdY$Harvest == "Summer",]
+VdYF<-VdY[VdY$Harvest == "Fall",]
+
+VdZS<-VdZ[VdZ$Harvest == "Summer",]
+VdZF<-VdZ[VdZ$Harvest == "Fall",]
+
+#IWG vs ALF isolation
+VdXSI<-VdXS[VdXS$Crop1 != "Shockwave" & VdXS$Crop1 != "WL" & VdXS$Crop1 != "Higest" ,] 
+VdXSA<-VdXS[VdXS$Crop1 != "IWG",]
+
+VdXFI<-VdXF[VdXF$Crop1 != "Shockwave" & VdXF$Crop1 != "WL" & VdXF$Crop1 != "Higest" ,]
+VdXFA<-VdXF[VdXF$Crop1 != "IWG",]
+
+VdYSI<-VdYS[VdYS$Crop1 != "Shockwave" & VdYS$Crop1 != "WL" & VdYS$Crop1 != "Higest" ,]
+VdYSA<-VdYS[VdYS$Crop1 != "IWG",]
+
+VdYFI<-VdYF[VdYF$Crop1 != "Shockwave" & VdYF$Crop1 != "WL" & VdYF$Crop1 != "Higest" ,]
+VdYFA<-VdYF[VdYF$Crop1 != "IWG",]
+
+VdZSI<-VdZS[VdZS$Crop1 != "Shockwave" & VdZS$Crop1 != "WL" & VdZS$Crop1 != "Higest" ,]
+VdZSA<-VdZS[VdZS$Crop1 != "IWG",]
+
+VdZFI<-VdZF[VdZF$Crop1 != "Shockwave" & VdZF$Crop1 != "WL" & VdZF$Crop1 != "Higest" ,]
+VdZFA<-VdZF[VdZF$Crop1 != "IWG",]
+```
+
+
+*******
+
+Nrate paper
+
+#making emmeans functions 
+```{r}
+# Define a 3 WAY function for year 1 summer
+compute_emmeansNXS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Summer")
+  
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 1 fall
+compute_emmeansNXF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 2 Summer
+compute_emmeansNYS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a 3 WAY function for year 2 Fall
+compute_emmeansNYF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a 3 WAY function for year 3 summer
+compute_emmeansNZS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Summer")
+  
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 3 fall
+compute_emmeansNZF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Fall")
+  return(emm_df)}
+
+
+
+# Define a NP function for year 1 summer
+compute_emmeansNXS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP  function for year 1 fall
+compute_emmeansNXF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a NP  function for year 2 Summer
+compute_emmeansNYS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP function for year 2 Fall
+compute_emmeansNYF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a NP function for year 3 summer
+compute_emmeansNZS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP  function for year 3 fall
+compute_emmeansNZF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Fall")
+  return(emm_df)}
+```
+
+#adding year 1 mn grain to the G column because they were actually dehulled instead of imaged for using the equation 
+```{r}
+NdXSInoMN<-NdXSI[NdXSI$Location != "MN",]
+NdXSIMN<-NdXSI[NdXSI$Location == "MN",]
+NdXSIMN$G<-NdXSIMN$X2023MNGrainDeHulledKgHa
+NdXSIG<-rbind(NdXSInoMN, NdXSIMN)
+```
+
+#Grain year 1 (all locations)
+```{r}
+#REMOVE PLOT MIA MNXS plot 1122 is removed because of missing grain
+#NdXSIG<-NdXSIG[-117,]
+modNXG<-lmer(G~N*P*C + (1|Rep), data=NdXSIG)
+anova(modNXG)
+#Check Assumptions
+NXG_resid<-resid(modNXG)
+qqnorm(NXG_resid)
+qqline(NXG_resid)
+plot(modNXG)
+#check assumptions logtransform
+modNXG1<-lmer(log(G)~N*P*C + (1|Rep), data=NdXSIG)
+summary(modNXG1)
+anova(modNXG1)
+NXG_resid1<-resid(modNXG1)
+qqnorm(NXG_resid1)
+qqline(NXG_resid1)
+plot(modNXG1)
+#check assumptions box cox
+library(bestNormalize)
+bn <- bestNormalize(NdXSIG$G)
+bn$chosen_transform
+NdXSIG$G_trans <- bn$x.t
+
+modNXG1<-lmer(G_trans~N*P*C + (1|Rep), data=NdXSIG)
+summary(modNXG1)
+anova(modNXG1)
+NXG_resid1<-resid(modNXG1)
+qqnorm(NXG_resid1)
+qqline(NXG_resid1)
+plot(modNXG1)
+
+monoIformean<-NdXSIG[NdXSIG$C == 'monoculture',]
+mean(monoIformean$G)
+Iformean<-NdXSIG[NdXSIG$C == '',]
+mean(Iformean$G)
+
+#Plot raw data with predicted values regression line
+NdXSIG$predicted <- predict(modNXG1, newdata = NdXSIG, re.form = NA)
+plotty<-ggplot(NdXSIG, aes(x = N, y = G, color = C, group = C)) +
+geom_point()+
+facet_wrap(~P, scales = "free_y", ncol = 2)+ #make it by location 
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+labs(x = "N-Rate (Kg/ha)", y = "Grain Yield (Kg/ha)") +  # Label the axes
+geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values 
+ylim(0, 1700)+ #set y axis scale 
+scale_color_discrete(name = "Cropping System")  #legend for colors
+
+#try plot again
+
+
+#Threeway means
+NXG1emm <- compute_emmeansNXS("modNXG1")
+# Perform pairwise comparisons
+pairwise_results <- pairwise.t.test(NdXSIG$G, NdXSIG$P, 
+                                    p.adjust.method = "bonferroni")
+
+#Pairwise P:C
+NXGemmsPC <- emmeans(modNXG1, ~ P*C, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNXGPC <- cld(NXGemmsPC, Letters=custom_letters) # Create compact letter display
+cld_dataNXGPC$response <- format(cld_dataNXGPC$response, digits = 5)
+cld_dataNXGPC<- cld_dataNXGPC %>%
+  select(P, C, response, .group)
+colnames(cld_dataNXGPC) <- c("Site","Cropping System","Grain Yield (kg ha-1)", "Group")
+cld_dataNXGPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise P
+emmsP <- emmeans(modNXG1, ~ P, type = "response") # Obtain estimated marginal means (excluding N)
+pairwise_comparisons <- cld(emmsP, Letters=custom_letters) #pairwise comparison
+#Pairwise C
+emmsCXG <- emmeans(modNXG1, ~ C, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNXGC <- cld(emmsCXG, Letters=custom_letters) # Create compact letter display
+#Pairwise N (I could theoreticlaly delete all pairwise N because its all incorrect apparently after defense...)
+N_levels <- c(0, 40, 80, 120, 160)
+emmsN <- emmeans(modNXG1, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataNXGN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+#Pairwise N:P
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNP <- emmeans(modNXG1, specs = ~ N*P, at = list(N = N_levels), type = "response")
+cld_dataNXGNP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
+cld_dataNXGNP$response <- format(cld_dataNXGNP$response, digits = 5)
+rownames(cld_dataNXGNP) <- NULL
+cld_dataNXGNP<- cld_dataNXGNP %>%
+  select(N,P, response, .group)
+colnames(cld_dataNXGNP) <- c("N","Site","Grain Yield (kg ha-1)", "Group")
+cld_dataNXGNP  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+
+#This gives us the slope for each interactions as well as a P value indicating significance level for that slope
+emtrends(modNXG1,~ P*C, var= "N", infer=TRUE)
+emtrends(modNXG1,~ P, var= "N", infer=TRUE)
+emtrends(modNXG1,~ C, var= "N", infer=TRUE)
+summary(modNXG1)
+
+
+#try to get R2 for the model (not helpful for individual interactions..?)
+r2 <- r.squaredGLMM(modNXG1)
+r2_interaction <- r.squaredGLMM(modNXG1, which = "conditional", type = "marginal", subset = "interaction")
+
+#try to add R2 and CI to plots (more helpful for individual interactions? or just Threeway?)
+NdXSIG$predicted <- predict(modNXG1, newdata = NdXSIG, re.form = NA)
+# Predict values and calculate standard errors
+pred_ci <- predict(modNXG1, newdata = NdXSIG, re.form = NA, type = "response", se.fit = TRUE)
+# Calculate lower and upper confidence interval bounds for fixed effects
+lower_ci <- pred_ci$fit - 1.96 * pred_ci$se.fit  # Assuming a 95% confidence interval
+upper_ci <- pred_ci$fit + 1.96 * pred_ci$se.fit
+# Add confidence interval bounds for fixed effects to the dataframe
+NdXSIG$lower_ci_fixed <- lower_ci
+NdXSIG$upper_ci_fixed <- upper_ci
+ggplot(NdXSIG, aes(x = N, y = G, color = C, group = C)) +
+geom_point()+
+geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+geom_line(aes(N, exp(lower_ci_fixed)))+
+geom_line(aes(N, exp(upper_ci_fixed)))+
+geom_ribbon(aes(ymin = exp(lower_ci_fixed), ymax = exp(upper_ci_fixed), fill = C), alpha = 0.2) +  # Confidence interval shading
+facet_wrap(~P, scales = "free_y", ncol = 2)+ #make it by location 
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+labs(x = "N-Rate (Kg/ha)", y = "Grain Yield (Kg/ha)") +  # Label the axes
+ylim(0, 1700)+ #set y axis scale 
+scale_color_discrete(name = "Cropping System")+  #legend for colors
+stat_poly_eq(use_label(c("eq", "R2"))) #add equation and R2 to plot
+
+
+
+#what if i just take out P and N (example for when no N:P or N:C or N:P:C)
+modXGnoNP<-lmer(log(G)~N + (1|Rep), data=NdXSIG)
+modXGplusNP<-lmer(log(G)~N+P+C + (1|Rep), data=NdXSIG)
+NdXSIG$B<-as.numeric(NdXSIG$P)
+NdXSIG$K<-as.numeric(NdXSIG$C)
+modXGcontNP<-lmer(log(G)~N+B+K+N:B+N:K + (1|Rep), data=NdXSIG)
+summary(modXGplusNP)
+summary(modXGnoNP)
+summary(modXGcontNP)
+```
+#grain equations table attempt
+```{r}
+emtrends_result<-emtrends(modNXG1,~ P, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNXG1, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x)
+view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P)
+view(sorted_df)
+```
+#grain figures redo N:E
+```{r}
+#N:E
+# Layer all the plots together!
+colors <- c("Year 1 Summer Harvest" = "red", 
+            "Year 1 Fall Harvest" = "green", 
+            "Year 2 Summer Harvest" = "blue", 
+            "Year 2 Fall Harvest" = "purple")
+legend_order2 <- c("Year 1 Summer Harvest", 
+                  "Year 2 Summer Harvest")
+# Define the desired order of 'P'
+desired_order <- c("MN", "NY", "KS", "WI")
+NdXSIG$P <- factor(NdXSIG$P, levels = desired_order)
+
+GraincomboplotNE <- ggplot(data=NdXSIG) +
+  geom_point(data = NdXSIG, aes(x = N, y = G, color = "Year 1 Summer Harvest", shape = C)) +
+  geom_point(data = DATA32, aes(x = N, y = GAdjY, color = "Year 2 Summer Harvest", shape = C)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "Grain Yield", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 1550) +
+  facet_wrap(~P, scales = "free_y", ncol = 2) +
+  scale_shape_manual(values = c(4, 25),labels = c("Intercropped","Monoculture IWG"))+
+    scale_color_manual(values = colors, limits = legend_order2)+
+  geom_function(data=subset(NdXSIG, P== "MN"), fun=~179.38*exp(0.0021*.x),color='red')+
+  geom_function(data=subset(NdXSIG, P== "NY"), fun=~408.24*exp(0.0047*.x),color='red')+
+  geom_function(data=subset(NdXSIG, P== "KS"), fun=~407.18*exp(-0.0002*.x),color='red')+
+  geom_function(data=subset(NdXSIG, P== "WI"), fun=~736.77*exp(-0.0001*.x),color='red')+
+  geom_function(data=subset(DATA32, P== "NY"), fun=~222.27*exp(0.0009*.x),color='blue')+
+  geom_function(data=subset(DATA32, P== "KS"), fun=~99.20*exp(0.0005*.x),color='blue')+
+  geom_function(data=subset(DATA32, P== "WI"), fun=~278.01*exp(0.0065*.x),color='blue')
+print(GraincomboplotNE)
+
+ggsave("GraincomboplotNE.jpg", plot = GraincomboplotNE, width = 8, height = 6, dpi = 300)
+
+
+```
+#grain figure E:C (X)
+```{r}
+
+NXGemmsPC <- emmeans(modNXG1, ~ P*C, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(NXGemmsPC)
+cld_dataNXGPC <- cld(NXGemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNXGPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "C"))
+custom_labels <- c("Intercrop", "Monoculture IWG")
+custom_colors <- c("darkmagenta", "cyan") 
+GXPC<-ggplot(NdXSIG, aes(x = P, y = exp(predicted), color = C)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Grain Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 1.8)+
+  scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)+
+    guides(color = "none")+
+     ggtitle("Year 1")+
+  theme(plot.title = element_text(hjust = 0.5))
+print(GXPC)
+ggsave("GXPC.jpg", plot = GXPC, width = 8, height = 6, dpi = 300)
+```
+#grain figure E example
+```{r}
+NXGemmsP <- emmeans(modNXG1, ~ P, type = "response") 
+emms_df <- as.data.frame(NXGemmsP)
+cld_dataNXGP <- cld(NXGemmsP, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNXGP)
+merged_df <- merge(emms_df, cld_df,by = c("P"))
+Pplot<-ggplot(NdXSIG, aes(x = P, y = exp(predicted))) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7, color="cyan") +
+  labs(x = "Environment", y = "Grain Yield") +
+  theme_minimal()+
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 1.8)
+
+print(Pplot)
+```
+#grain figure C example
+```{r}
+custom_labels <- c("Intercrop", "Monoculture IWG")
+custom_colors <- c("darkmagenta", "cyan") 
+NXGemmsC <- emmeans(modNXG1, ~ C, type = "response") 
+emms_df <- as.data.frame(NXGemmsC)
+cld_dataNXGC <- cld(NXGemmsC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNXGC)
+merged_df <- merge(emms_df, cld_df,by = c("C"))
+Cplot<-ggplot(NdXSIG, aes(x = C, y = exp(predicted), color= C)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Cropping System", y = "Grain Yield") +
+  theme_minimal()+
+  geom_point(data = emms_df, aes(x = C, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = C, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = C, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 1.8)+
+  scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)
+
+print(Cplot)
+```
+
+
+
+#GLM stuff for matt.....
+```{r}
+#Grain Q vs L vs log-lin
+JmodGXLog<-lme(log(G)~N*C*P, random=~1|Rep, data=NdXSIG)
+JmodGXL<-lme(G~N*C*P, random=~1|Rep, data=NdXSIG)
+JmodGXQ<-lme(G~N+(I(N^2))*C*P, random=~1|Rep, data=NdXSIG)
+AICc(JmodGXL)
+AICc(JmodGXLog)
+AICc(JmodGXQ)
+
+#Total forage Q vs L vs log-lin
+JmodTFXLog<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdXF)
+JmodTFXL<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdXF)
+AICc(JmodTFXL)
+AICc(JmodTFXLog)
+
+#IWG forage Q vs L vs log-lin 
+JmodIXLog<-lmer(log(PlotIWGDryKgHa)~N*P*C + (1|Rep), data=NdXSI)
+JmodIXL<-lmer(PlotIWGDryKgHa~N*P*C + (1|Rep), data=NdXSI)
+AICc(JmodIXL)
+AICc(JmodIXLog)
+```
+
+#Grain year 2
+```{r}
+#paring down to just the necessary data from the dataset where we did the year 2 G adjusments based on the year 1 ajdustment values 
+DATA31<-DATA3[DATA3$Crop1 != "WL" & DATA3$Crop1 != "Shockwave" & DATA3$Crop1 != "Higest",]
+DATA31<- DATA31[complete.cases(DATA31$GAdjY), ]
+DATA32<-DATA31[DATA31$first_value != "WL" & DATA31$first_value != "Higest",]
+#linear (based on year 1 adjustments)
+modNYGadj<-lmer(GAdjY~N*P*C + (1|Rep), data=DATA32)
+anova(modNYGadj)
+#Check Assumptions
+NYGadj_resid<-resid(modNYGadj)
+qqnorm(NYGadj_resid)
+qqline(NYGadj_resid)
+plot(modNYGadj)
+abline(h = 0, col="red")
+#check assumptions log-transform
+modNYGadj1<-lmer(log(GAdjY)~N*P*C + (1|Rep), data=DATA32)
+anova(modNYGadj1)
+summary(modNYGadj1)
+NYGadj_resid1<-resid(modNYGadj1)
+qqnorm(NYGadj_resid1)
+qqline(NYGadj_resid1)
+plot(modNYGadj1)
+
+monoIformean2<-DATA32[DATA32$C == 'monoculture',]
+mean(monoIformean2$GAdjY)
+Iformean2<-DATA32[DATA32$C == 'intercrop',]
+mean(Iformean2$GAdjY)
+
+#linear (year 2, unadjusted)
+modNYG<-lmer(G~N*P*C + (1|Rep), data=NdYSI)
+anova(modNYG)
+#Check Assumptions
+NYG_resid<-resid(modNYG)
+qqnorm(NYG_resid)
+qqline(NYG_resid)
+plot(modNYG)
+abline(h = 0, col="red")
+#check assumptions log-transform
+modNYG1<-lmer(log(G)~N*P*C + (1|Rep), data=NdYSI)
+anova(modNYG1)
+NYG_resid1<-resid(modNYG1)
+qqnorm(NYG_resid1)
+qqline(NYG_resid1)
+plot(modNYG1)
+
+
+#plot year 2 adjusted
+DATA32$predicted <- predict(modNYGadj1, newdata = DATA32, re.form = NA)
+ggplot(DATA32, aes(x = N, y = G, color = C, group= C)) +
+    geom_point() + 
+  geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Grain Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Relationship between Grain Yield and Nrate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 1200) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+
+#three way emmeans to compare ranks of adjusted and unadjusted
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNGNPC <- emmeans(modNYG1, specs= ~ N*P*C, at= list(N = N_levels), type= "response")
+cld_dataNYGNPC <- cld(emmsNGNPC, Letters=custom_letters)
+emmsNGadjNPC <- emmeans(modNYGadj1, specs= ~ N*P*C, at= list(N = N_levels), type= "response")
+cld_dataNYGadjNPC <- cld(emmsNGadjNPC, Letters=custom_letters)
+cld_dataNYGNPC
+cld_dataNYGadjNPC
+library(multcomp)
+#Pairwise done based on adjusted year 2 values!!!
+#Pairwise P:C
+emmsPC <- emmeans(modNYGadj1, ~ P*C, type= "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYGadjPC <- cld(emmsPC, Letters=custom_letters) # Create compact letter display
+print(cld_dataNYGadjPC) # Print or view the compact letter display table
+cld_dataNYGadjPC$response <- format(cld_dataNYGadjPC$response, digits = 5)
+rownames(cld_dataNYGadjPC) <- NULL
+cld_dataNYGadjPC<- cld_dataNYGadjPC %>%
+  select(P, C, response, .group)
+colnames(cld_dataNYGadjPC) <- c("Site","Cropping System","Grain Yield (kg ha-1)", "Group")
+cld_dataNYGadjPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise N:P
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNP <- emmeans(modNYGadj1, ~ N*P,at= list(N = N_levels), type= "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYGadjNP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
+print(cld_dataNYGadjNP) # Print or view the compact letter display table
+cld_dataNYGadjNP$response <- format(cld_dataNYGadjNP$response, digits = 5)
+rownames(cld_dataNYGadjNP) <- NULL
+cld_dataNYGadjNP<- cld_dataNYGadjNP %>%
+  select(N,P, response, .group)
+colnames(cld_dataNYGadjNP) <- c("N","Site","Grain Yield (kg ha-1)", "Group")
+cld_dataNYGadjNP  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise P
+emmsP <- emmeans(modNYGadj1, ~ P,type= "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYGadjP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+print(cld_dataNYGadjP) # Print or view the compact letter display table
+#Pairwise N
+N_levels <- c(0, 40, 80, 120, 160)
+emmsCYGadj <- emmeans(modNYGadj1, specs= ~ N, at= list(N = N_levels), type= "response" ) # Obtain estimated marginal means (excluding N)
+cld_dataNYGadjC <- cld(emmsCYGadj, Letters=custom_letters) # Create compact letter display
+print(cld_dataNYGadjC) # Print or view the compact letter display table
+
+
+#This gives us the slope for each interactions as well as a P value indicating significance level for that slope
+#emtrends(modNYGadj1,~ P*C, var= "N", infer=TRUE)
+emtrends(modNYGadj1,~ P, var= "N", infer=TRUE)
+#emtrends(modNYGadj1,~ C, var= "N", infer=TRUE)
+summary(modNYGadj1)
+
+emtrends_result<-emtrends(modNYGadj1,~ P, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNYGadj1, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x)
+view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P)
+view(sorted_df)
+```
+#grain figure E:C (Y)
+```{r}
+
+NYGemmsPC <- emmeans(modNYGadj1, ~ P*C, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(NYGemmsPC)
+cld_dataNYGPC <- cld(NYGemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNYGPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "C"))
+custom_labels <- c("Intercrop", "Monoculture IWG")
+custom_colors <- c("darkmagenta", "cyan") 
+GYPC<-ggplot(DATA32, aes(x = P, y = exp(predicted), color = C)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Grain Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 3)+
+  scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)+
+     ggtitle("Year 2")+
+  theme(plot.title = element_text(hjust = 0.5))+
+    scale_y_continuous(breaks = c(250, 500, 750, 1000, 1250), limits = c(0, 1260))
+
+
+print(GYPC)
+ggsave("GYPC.jpg", plot = GYPC, width = 8, height = 6, dpi = 300)
+```
+#combined grain year 1 and 2 plots N:E:C
+```{r}
+# Layer all the plots together!
+colors <- c("Year 1 Summer Harvest" = "red", 
+            "Year 1 Fall Harvest" = "green", 
+            "Year 2 Summer Harvest" = "blue", 
+            "Year 2 Fall Harvest" = "purple")
+legend_order2 <- c("Year 1 Summer Harvest", 
+                  "Year 2 Summer Harvest")
+# Define the desired order of 'P'
+desired_order <- c("MN", "NY", "KS", "WI")
+NdXSIG$P <- factor(NdXSIG$P, levels = desired_order)
+
+Graincomboplot <- ggplot() +
+  geom_line(data = NdXSIG, aes(N, exp(predicted), color = "Year 1 Summer Harvest", linetype = C)) +
+  geom_point(data = NdXSIG, aes(x = N, y = G, color = "Year 1 Summer Harvest", shape = C)) +
+  geom_line(data = DATA32, aes(N, exp(predicted), color = "Year 2 Summer Harvest", linetype = C)) +
+  geom_point(data = DATA32, aes(x = N, y = GAdjY, color = "Year 2 Summer Harvest", shape = C)) +
+  labs(x = "N-Rate (Kg/ha)", y = "Grain Yield (Kg/ha)", linetype = "Cropping System", shape = "Cropping System", color = "Harvest") +
+  ggtitle("Relationship between Grain Yield and N-rate") +
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 1550) +
+  facet_wrap(~P, scales = "free_y", ncol = 2) +
+  scale_color_manual(values = colors, limits = legend_order2)+
+  scale_shape_manual(values = c(4, 20))
+
+print(Graincomboplot)
+
+ggsave("Graincomboplot.jpg", plot = Graincomboplot, width = 8, height = 6, dpi = 300)
+```
+#combined grain year 1 and 2 plots E:C
+```{r}
+GEC<-grid.arrange(GXPC, GYPC, ncol = 2)
+ggsave("GEC.jpg", plot = GEC, width =12, height = 6, dpi = 350)
+```
+
+
+#working example for making nice tables!!!! only works for ~N*P*C spec emmeans
+```{r}
+library(tidyverse)
+library(kableExtra)
+#added together emmeans results data from GX and GY into one table!!!
+#combinedGemms <- rbind(BTGXemmsNPC, BTGYemmsNPC)
+#combinedGemms |> 
+  #data.frame() |> 
+  # reorder columns via select()
+  #select(Year, Harvest, P,C, N, response, lower.CL, upper.CL) |> 
+  #kbl(align = "c") |> 
+  #kable_paper(full_width = F) |> 
+  #column_spec(1, bold = T) |> 
+  #collapse_rows(columns = 1:5, valign = "top")
+```
+
+
+
+***
+Grain PLER NEED TO UPDATE ALL OF THIS 
+
+#GPLER year 1 math (missing NY rep 2 for some reason but i dont think I can be bothered... I THINK ITS BECAUSE YOU took out 208...)
+```{r}
+#0 
+NdSW0GLER <- NdXSIG %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW0 = (G[Treatment == 10]) / (G[Treatment == 5])
+  )
+NdSW0GLER<-NdSW0GLER[NdSW0GLER$Harvest == "Summer",]
+print(NdSW0GLER)
+
+#40
+NdSW40GLER <- NdXSIG %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW40 = (G[Treatment == 11]) / (G[Treatment == 6])
+  )
+NdSW40GLER<-NdSW40GLER[NdSW40GLER$Harvest == "Summer",]
+print(NdSW40GLER)
+
+#80
+NdSW80GLER <- NdXSIG %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW80 = (G[Treatment == 12]) / (G[Treatment == 7])
+  )
+NdSW80GLER<-NdSW80GLER[NdSW80GLER$Harvest == "Summer",]
+print(NdSW80GLER)
+
+#120
+NdSW120GLER <- NdXSIG %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW120 = (G[Treatment == 13]) / (G[Treatment == 8])
+  )
+NdSW120GLER<-NdSW120GLER[NdSW120GLER$Harvest == "Summer",]
+print(NdSW120GLER)
+
+#160
+NdSW160GLER <- NdXSIG %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW160= (G[Treatment == 14]) / (G[Treatment == 9])
+  )
+NdSW160GLER<-NdSW160GLER[NdSW160GLER$Harvest == "Summer",]
+print(NdSW160GLER)
+
+#merge dataframes 
+GLER1<-left_join(NdSW0GLER, NdSW40GLER, by = c("Rep", "P", "YearCode", "Harvest"))
+print(GLER1)
+GLER2<-left_join(GLER1, NdSW80GLER, by = c("Rep", "P", "YearCode", "Harvest"))
+print(GLER2)
+GLER3<-left_join(GLER2, NdSW120GLER, by = c("Rep", "P", "YearCode", "Harvest"))
+print(GLER3)
+GLER4<-left_join(GLER3, NdSW160GLER, by = c("Rep", "P", "YearCode", "Harvest"))
+print(GLER4)
+
+#rearrange dataframe 
+GLER4 <- GLER4 %>%
+  pivot_longer(cols = starts_with("PartialLER") | starts_with("TotalLER"),
+               names_to = "Nrate",
+               values_to = "LER")
+
+#cut off total and partial 
+GLER4$Type <- sub("^(Partial|Total)", "", GLER4$Nrate)
+GLER4$tot_or_part <- sub("^(Partial|Total).*", "\\1", GLER4$Nrate)
+print(GLER4)
+
+#cut off LERIWGSW and LERAlfSW and LERSW
+GLER4$NRATE <- sub("^(LERGSW|LERAlfSW|LERSW)", "", GLER4$Type)
+GLER4$PlotType <- sub("^(LERGSW|LERAlfSW|LERSW).*", "\\1", GLER4$Type)
+print(GLER4)
+GLER4$N<-as.numeric(GLER4$NRATE)
+
+#get rid of pesky NA results (caused by missing plots inherent in year 1 KS summer data)
+GLERX<- na.omit(GLER4)
+print(GLERX)
+```
+
+#Grain PLER year 1 model (use PLER to see if there is interaction between Cropping system and Nrate and yield)
+```{r}
+NdXSIG
+GLERX$P<-as.factor(GLERX$P)
+as.numeric(GLERX$N)
+as.numeric(GLERX$LER)
+#linear
+modGPLERX<-lmer(LER~N*P + (1|Rep), data= GLERX)
+anova(modGPLERX)
+#check assumptions
+GPLERX_resid<-resid(modGPLERX)
+qqnorm(GPLERX_resid)
+qqline(GPLERX_resid)
+plot(modGPLERX)
+#Logtransform
+modGPLERX1<-lmer(log(LER)~N*P + (1|Rep), data=GLERX)
+anova(modGPLERX1)
+#check assumptions logtransform (makes BETTER!)
+GPLERX_resid1<-resid(modGPLERX1)
+qqnorm(GPLERX_resid1)
+qqline(GPLERX_resid1)
+plot(modGPLERX1)
+
+#Comparison plots
+
+# Boxplot for I Partial LER
+ggplot(GLERX, aes(x = P, y = LER, fill = as.factor(N))) +
+  geom_boxplot() +
+  labs(title = "Year 1 Grain Partial LER by Location and N Rate", x = "Location", y = "Grain Partial LER")+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")
+
+max(GLERX$LER)
+#plots
+GLERX$predicted <- predict(modGPLERX1, newdata = GLERX, re.form = NA)
+ggplot(GLERX, aes(x = N, y = LER)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Grain Partial LER (Kg/ha)") +  # Label the axes
+  ggtitle("Relationship between Year 1 Grain Partial LER and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 7.1) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")#legend for colors
+
+#TWO way emmeans
+GPLERX1emm <- compute_emmeansNXS2("modGPLERX1")
+
+#Pairwise comparison P 
+emmsNGPLERP <- emmeans(modGPLERX1, specs= ~ P,  type= "response")
+cld_dataNGPLERX1P <- cld(emmsNGPLERP, Letters=custom_letters)
+cld_dataNGPLERX1P $response <- format(cld_dataNGPLERX1P $response, digits = 2)
+cld_dataNGPLERX1P $lower.CL <- format(cld_dataNGPLERX1P $lower.CL, digits = 2)
+cld_dataNGPLERX1P $upper.CL <- format(cld_dataNGPLERX1P $upper.CL, digits = 3)
+rownames(cld_dataNGPLERX1P ) <- NULL
+cld_dataNGPLERX1P<- cld_dataNGPLERX1P  %>%
+  select( P, response,lower.CL, upper.CL, .group)
+colnames(cld_dataNGPLERX1P ) <- c( "Site", "GPLER","l","h", "Group")
+cld_dataNGPLERX1P  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#Pairwise comparison N 
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNGPLERN <- emmeans(modGPLERX1, specs= ~ N, at= list(N = N_levels), type= "response")
+cld_dataNGPLERX1N <- cld(emmsNGPLERN, Letters=custom_letters)
+cld_dataNGPLERX1N $response <- format(cld_dataNGPLERX1N $response, digits = 2)
+cld_dataNGPLERX1N $lower.CL <- format(cld_dataNGPLERX1N $lower.CL, digits = 2)
+cld_dataNGPLERX1N $upper.CL <- format(cld_dataNGPLERX1N $upper.CL, digits = 3)
+rownames(cld_dataNGPLERX1N ) <- NULL
+cld_dataNGPLERX1N <- cld_dataNGPLERX1N  %>%
+  select( N, response,lower.CL, upper.CL, .group)
+colnames(cld_dataNGPLERX1N ) <- c( "N", "APLER","l","h", "Group")
+cld_dataNGPLERX1N  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+```
+
+#GPLER year 2 math (why is rep 2 also missing from year 2? oh because adjusted is made from year 1 and 208 was missing from the beginning of all this analysis for year 1 etc etc etc... ugh. I'm not going to fix it unless it becomes a problem.)
+```{r}
+#0 
+NdSW0GLERY <- DATA32 %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW0 = (GAdjY[Treatment == 10]) / (GAdjY[Treatment == 5])
+  )
+
+#40
+NdSW40GLERY <- DATA32 %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW40 = (GAdjY[Treatment == 11]) / (GAdjY[Treatment == 6])
+  )
+
+#80
+NdSW80GLERY <- DATA32 %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW80 = (GAdjY[Treatment == 12]) / (GAdjY[Treatment == 7])
+  )
+
+#120
+NdSW120GLERY <- DATA32 %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW120 = (GAdjY[Treatment == 13]) / (GAdjY[Treatment == 8])
+  )
+
+#160
+NdSW160GLERY <- DATA32 %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW160= (GAdjY[Treatment == 14]) / (GAdjY[Treatment == 9])
+  )
+
+#merge dataframes 
+GLER1<-left_join(NdSW0GLERY, NdSW40GLERY, by = c("Rep", "P", "YearCode", "Harvest"))
+print(GLER1)
+GLER2<-left_join(GLER1, NdSW80GLERY, by = c("Rep", "P", "YearCode", "Harvest"))
+print(GLER2)
+GLER3<-left_join(GLER2, NdSW120GLERY, by = c("Rep", "P", "YearCode", "Harvest"))
+print(GLER3)
+GLER4<-left_join(GLER3, NdSW160GLERY, by = c("Rep", "P", "YearCode", "Harvest"))
+print(GLER4)
+
+#rearrange dataframe 
+GLER4 <- GLER4 %>%
+  pivot_longer(cols = starts_with("PartialLER") | starts_with("TotalLER"),
+               names_to = "Nrate",
+               values_to = "LER")
+
+#cut off total and partial 
+GLER4$Type <- sub("^(Partial|Total)", "", GLER4$Nrate)
+GLER4$tot_or_part <- sub("^(Partial|Total).*", "\\1", GLER4$Nrate)
+print(GLER4)
+
+#cut off LERIWGSW and LERAlfSW and LERSW
+GLER4$NRATE <- sub("^(LERGSW|LERAlfSW|LERSW)", "", GLER4$Type)
+GLER4$PlotType <- sub("^(LERGSW|LERAlfSW|LERSW).*", "\\1", GLER4$Type)
+print(GLER4)
+GLER4$N<-as.numeric(GLER4$NRATE)
+
+#get rid of pesky NA results (caused by missing plots inherent in year 1 KS summer data)
+GLERY<- na.omit(GLER4)
+print(GLERY)
+```
+
+#Grain PLER year 2 model 
+```{r}
+GLERY$P<-as.factor(GLERY$P)
+as.numeric(GLERY$N)
+as.numeric(GLERY$LER)
+#linear
+modGPLERY<-lmer(LER~N*P + (1|Rep), data= GLERY)
+anova(modGPLERY)
+#check assumptions
+GPLERY_resid<-resid(modGPLERY)
+qqnorm(GPLERY_resid)
+qqline(GPLERY_resid)
+plot(modGPLERY)
+#Logtransform
+modGPLERY1<-lmer(log(LER)~N*P + (1|Rep), data=GLERY)
+anova(modGPLERY1)
+#check assumptions logtransform (makes BETTER!)
+GPLERY_resid1<-resid(modGPLERY1)
+qqnorm(GPLERY_resid1)
+qqline(GPLERY_resid1)
+plot(modGPLERY1)
+
+#Comparison plots
+
+# Boxplot for I Partial LER
+ggplot(GLERY, aes(x = P, y = LER, fill = as.factor(N))) +
+  geom_boxplot() +
+  labs(title = "Year 2 Grain Partial LER by Location and N Rate", x = "Location", y = "Grain Partial LER")
+
+max(GLERY$LER)
+#plots
+GLERY$predicted <- predict(modGPLERY1, newdata = GLERY, re.form = NA)
+ggplot(GLERY, aes(x = N, y = LER)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Grain Partial LER (Kg/ha)") +  # Label the axes
+  ggtitle("Relationship between year 2 Grain Partial LER and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 7.1) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")#legend for colors
+
+#Pairwise P
+emmsP <- emmeans(modGPLERY1, specs = ~ P, type = "response")
+cld_dataNGPLERYP <- cld(emmsP) # Create compact letter display
+cld_dataNGPLERYP $response <- format(cld_dataNGPLERYP $response, digits = 2)
+cld_dataNGPLERYP $lower.CL <- format(cld_dataNGPLERYP $lower.CL, digits = 2)
+cld_dataNGPLERYP $upper.CL <- format(cld_dataNGPLERYP $upper.CL, digits = 3)
+rownames(cld_dataNGPLERYP ) <- NULL
+cld_dataNGPLERYP <- cld_dataNGPLERYP  %>%
+  select( P, response,lower.CL, upper.CL, .group)
+colnames(cld_dataNGPLERYP ) <- c( "Site", "APLER","l","h", "Group")
+cld_dataNGPLERYP  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise comparison N 
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNGPLERN <- emmeans(modGPLERY1, specs= ~ N, at= list(N = N_levels), type= "response")
+cld_dataNGPLERY1N <- cld(emmsNGPLERN, Letters=custom_letters)
+cld_dataNGPLERY1N $response <- format(cld_dataNGPLERY1N $response, digits = 2)
+cld_dataNGPLERY1N $lower.CL <- format(cld_dataNGPLERY1N $lower.CL, digits = 2)
+cld_dataNGPLERY1N $upper.CL <- format(cld_dataNGPLERY1N $upper.CL, digits = 3)
+rownames(cld_dataNGPLERY1N ) <- NULL
+cld_dataNGPLERY1N <- cld_dataNGPLERY1N  %>%
+  select( N, response,lower.CL, upper.CL, .group)
+colnames(cld_dataNGPLERY1N ) <- c( "N", "APLER","l","h", "Group")
+cld_dataNGPLERY1N  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+```
+
+#Grain PLER combo plot
+```{r}
+# Layer all the plots together!
+colors <- c("Year 1 Summer Harvest" = "red", 
+            "Year 1 Fall Harvest" = "green", 
+            "Year 2 Summer Harvest" = "blue", 
+            "Year 2 Fall Harvest" = "purple")
+legend_order2 <- c("Year 1 Summer Harvest", 
+                  "Year 2 Summer Harvest")
+GLERX$P <- factor(GLERX$P, levels = desired_order)
+max(GLERX$LER)
+max(GLERY$LER)
+GPLERcomboplot <- ggplot() +
+  geom_line(data = GLERX, aes(N, exp(predicted), color = "Year 1 Summer Harvest")) +
+  geom_point(data =GLERX, aes(x = N, y = LER, color = "Year 1 Summer Harvest")) +
+  geom_line(data = GLERY, aes(N, exp(predicted), color = "Year 2 Summer Harvest")) +
+  geom_point(data = GLERY, aes(x = N, y = LER, color = "Year 2 Summer Harvest")) +
+  labs(x = "N-Rate (kg ha-1)", y = "Grain PLER",
+    color = "Harvest", 
+    linetype = "Cropping System", shape = "Cropping System") +
+  ggtitle("Relationship Between Grain PLER and N-rate") +
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 7.1) +
+  facet_wrap(~P, scales = "free", ncol = 2) +
+  scale_color_manual(values = colors, limits = legend_order2)+
+  scale_shape_manual(values = c(4, 20))+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")
+
+
+print(GPLERcomboplot)
+
+ggsave("GPLERcomboplot.jpg", plot = GPLERcomboplot, width = 8, height = 6, dpi = 300)
+```
+***
+Nrate Relative yield stuff
+
+#GPLER E plot (Y)
+```{r}
+NGLERYemmsP <- emmeans(modGPLERY1, ~ P, type = "response") 
+emms_df <- as.data.frame(NGLERYemmsP)
+cld_dataNGLERYP <- cld(NGLERYemmsP, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNGLERYP)
+merged_df <- merge(emms_df, cld_df,by = c("P"))
+GLERE<-ggplot(GLERY, aes(x = P, y = exp(predicted))) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7, color="darkgreen") +
+  labs(x = "Environment", y = "Grain PLER") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 1.8)
+
+print(GLERE)
+ggsave("GLERE.jpg", plot = GLERE, width = 8, height = 6, dpi = 300)
+```
+
+#Grain year 1 relative yields
+```{r}
+#0
+NGRY0 <- NdXSIG %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield0 = (G[Treatment == 10]) / (G[Treatment == 5]))
+#40
+NGRY40 <- NdXSIG %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield40 = (G[Treatment == 10]) / (G[Treatment == 6]))
+#80
+NGRY80 <- NdXSIG %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield80 = (G[Treatment == 10]) / (G[Treatment == 7]))
+#120
+NGRY120 <- NdXSIG %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield120 = (G[Treatment == 10]) / (G[Treatment == 8]))
+#160
+NGRY160 <- NdXSIG %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield160 = (G[Treatment == 10]) / (G[Treatment == 9]))
+#Join together all the tables
+NGRY<-left_join(NGRY0, NGRY40, by = c("Rep", "P", "YearCode", "Harvest"))
+NGRY<-left_join(NGRY, NGRY80, by = c("Rep", "P", "YearCode", "Harvest"))
+NGRY<-left_join(NGRY, NGRY120, by = c("Rep", "P", "YearCode", "Harvest"))
+NGRY<-left_join(NGRY, NGRY160, by = c("Rep", "P", "YearCode", "Harvest"))
+print(NGRY)
+
+# Reshape the data from wide to long format
+NGRY_long <- NGRY %>%
+  pivot_longer(cols = starts_with("GRelativeYield"),
+               names_to = "N_rate",
+               values_to = "GRelativeYield") %>%
+  separate(N_rate, into = c("N_rate", "N"), sep = "GRelativeYield") %>%
+  mutate(N = as.numeric(N))
+
+#models 
+#year 1 grain RY
+modGRYX<-lmer(GRelativeYield~N*P + (1|Rep), data=NGRY_long)
+anova(modGRYX)
+#check assumptions 
+GRYX_resid<-resid(modGRYX)
+qqnorm(GRYX_resid)
+qqline(GRYX_resid)
+plot(modGRYX)
+#Logtransform
+modGRYX1<-lmer(log(GRelativeYield)~N*P + (1|Rep), data=NGRY_long)
+anova(modGRYX1)
+#check LOG assumptions 
+GRYX_resid1<-resid(modGRYX1)
+qqnorm(GRYX_resid1)
+qqline(GRYX_resid1)
+plot(modGRYX1)
+
+# Create box plots: 
+# Define the order of factor levels and Convert N to a factor with specified levels
+factor_levels <- c("0", "40", "80", "120", "160")
+NGRY_long$N <- factor(NGRY_long$N, levels = factor_levels)
+NGRY_long$P <- factor(NGRY_long$P, levels = desired_order)
+GRYXcomboplot<-ggplot(NGRY_long, aes(x = N, y = GRelativeYield)) +
+  geom_boxplot() +
+  facet_wrap(~P, scales = "free_y",ncol=2) +
+  labs(x = "N Rate", y = "Relative Yield") +
+  theme_minimal()+
+  scale_x_discrete(breaks = c(0, 40, 80, 120, 160))+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
+  ggtitle("Year 1 Grain Relative Yield")+
+    coord_cartesian(ylim = c(NA, NA))
+ggsave("GRYXcomboplot.jpg", plot = GRYXcomboplot, width = 8, height = 6, dpi = 300)
+
+#Pairwise comparisons
+#Pairwise N
+N_levels <- c(0, 40, 80, 120, 160)
+emmsN <- emmeans(modGRYX1, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataGRYXN <- cld(emmsN) # Create compact letter display
+cld_dataGRYXN  $response <- format(cld_dataGRYXN  $response, digits = 3)
+cld_dataGRYXN $lower.CL <- format(cld_dataGRYXN $lower.CL, digits = 3)
+cld_dataGRYXN $upper.CL <- format(cld_dataGRYXN $upper.CL, digits = 3)
+rownames(cld_dataGRYXN  ) <- NULL
+cld_dataGRYXN  <- cld_dataGRYXN   %>%
+  select( N, response, lower.CL, upper.CL, .group)
+colnames(cld_dataGRYXN  ) <- c( "N", "TLER","l","h", "Group")
+cld_dataGRYXN    |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise P
+emmsP <- emmeans(modGRYX1, specs = ~ P, type = "response")
+cld_dataGRYXP <- cld(emmsP) # Create compact letter display
+cld_dataGRYXP  $response <- format(cld_dataGRYXP  $response, digits = 3)
+cld_dataGRYXP $lower.CL <- format(cld_dataGRYXP $lower.CL, digits = 3)
+cld_dataGRYXP $upper.CL <- format(cld_dataGRYXP $upper.CL, digits = 3)
+rownames(cld_dataGRYXP  ) <- NULL
+cld_dataGRYXP  <- cld_dataGRYXP   %>%
+  select( P, response, lower.CL, upper.CL, .group)
+colnames(cld_dataGRYXP  ) <- c( "Site", "GRY","l","h", "Group")
+cld_dataGRYXP    |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+```
+
+#Grain year 2 relative yields
+```{r}
+#0
+NYGRY0 <- DATA32 %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield0 = (GAdjY[Treatment == 10]) / (GAdjY[Treatment == 5]))
+#40
+NYGRY40 <- DATA32 %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield40 = (GAdjY[Treatment == 10]) / (GAdjY[Treatment == 6]))
+#80
+NYGRY80 <- DATA32 %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield80 = (GAdjY[Treatment == 10]) / (GAdjY[Treatment == 7]))
+#120
+NYGRY120 <- DATA32 %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield120 = (GAdjY[Treatment == 10]) / (GAdjY[Treatment == 8]))
+#160
+NYGRY160 <- DATA32 %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield160 = (GAdjY[Treatment == 10]) / (GAdjY[Treatment == 9]))
+#Join together all the tables
+NYGRY<-left_join(NYGRY0, NYGRY40, by = c("Rep", "P", "YearCode", "Harvest"))
+NYGRY<-left_join(NYGRY, NYGRY80, by = c("Rep", "P", "YearCode", "Harvest"))
+NYGRY<-left_join(NYGRY, NYGRY120, by = c("Rep", "P", "YearCode", "Harvest"))
+NYGRY<-left_join(NYGRY, NYGRY160, by = c("Rep", "P", "YearCode", "Harvest"))
+print(NYGRY)
+
+# Reshape the data from wide to long format
+NGRY_longY <- NYGRY %>%
+  pivot_longer(cols = starts_with("GRelativeYield"),
+               names_to = "N_rate",
+               values_to = "GRelativeYield") %>%
+  separate(N_rate, into = c("N_rate", "N"), sep = "GRelativeYield") %>%
+  mutate(N = as.numeric(N))
+
+#models 
+#year 1 grain RY
+modGRYY<-lmer(GRelativeYield~N*P + (1|Rep), data=NGRY_longY)
+anova(modGRYY)
+#check assumptions 
+GRYY_resid<-resid(modGRYY)
+qqnorm(GRYY_resid)
+qqline(GRYY_resid)
+plot(modGRYY)
+#Logtransform
+modGRYY1<-lmer(log(GRelativeYield)~N*P + (1|Rep), data=NGRY_longY)
+anova(modGRYY1)
+#check LOG assumptions 
+GRYY_resid1<-resid(modGRYY1)
+qqnorm(GRYY_resid1)
+qqline(GRYY_resid1)
+plot(modGRYY1)
+
+# Create box plots: 
+# Define the order of factor levels and Convert N to a factor with specified levels
+factor_levels <- c("0", "40", "80", "120", "160")
+NGRY_longY$N <- factor(NGRY_longY$N, levels = factor_levels)
+NGRY_longY$P<-factor(NGRY_longY$P, levels = desired_order)
+GRYYcomboplot<-ggplot(NGRY_longY, aes(x = N, y = GRelativeYield)) +
+  geom_boxplot() +
+  facet_wrap(~P, scales = "free",ncol=2) +
+  labs(x = "N Rate", y = "Relative Yield") +
+  theme_minimal()+
+  scale_x_discrete(breaks = c(0, 40, 80, 120, 160))+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
+  ggtitle("Year 2 Grain Relative Yield")+
+    coord_cartesian(ylim = c(NA, NA))
+
+ggsave("GRYYcomboplot.jpg", plot = GRYYcomboplot, width = 8, height = 6, dpi = 300)
+
+#Pairwise comparisons
+#Pairwise N
+N_levels <- c(0, 40, 80, 120, 160)
+emmsN <- emmeans(modGRYY1, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataGRYYN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataGRYYN  $response <- format(cld_dataGRYYN  $response, digits = 3)
+cld_dataGRYYN $lower.CL <- format(cld_dataGRYYN $lower.CL, digits = 3)
+cld_dataGRYYN $upper.CL <- format(cld_dataGRYYN $upper.CL, digits = 3)
+rownames(cld_dataGRYYN  ) <- NULL
+cld_dataGRYYN  <- cld_dataGRYYN   %>%
+  select( N, response, lower.CL, upper.CL, .group)
+colnames(cld_dataGRYYN  ) <- c( "N", "TLER","l","h", "Group")
+cld_dataGRYYN    |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise N:P
+emmsNP <- emmeans(modGRYY1, specs = ~ N:P, at = list(N = N_levels), type = "response")
+cld_dataGRYYNP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
+cld_dataGRYYNP  $response <- format(cld_dataGRYYNP  $response, digits = 3)
+cld_dataGRYYNP $lower.CL <- format(cld_dataGRYYNP $lower.CL, digits = 3)
+cld_dataGRYYNP $upper.CL <- format(cld_dataGRYYNP $upper.CL, digits = 3)
+rownames(cld_dataGRYYNP  ) <- NULL
+cld_dataGRYYNP  <- cld_dataGRYYNP   %>%
+  select( N, P, response, lower.CL, upper.CL, .group)
+colnames(cld_dataGRYYNP  ) <- c( "N", "Site", "TLER","l","h", "Group")
+cld_dataGRYYNP    |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+```
+
+#combo GRY boxplot 
+```{r}
+# Combine the data frames and create a new column to distinguish the years
+NGRY_longY$Year <- "Year 2"
+NGRY_long$Year <- "Year 1"
+combined_data <- rbind(NGRY_longY, NGRY_long)
+
+colors3<-c("Year 1" = "red", 
+            "Year 2" = "blue")
+# Convert N to a factor for proper ordering on the x-axis
+combined_data$N <- factor(combined_data$N, levels = c("0", "40", "80", "120", "160"))
+
+# Plotting both boxplots together with dodge positioning
+GRYcomboplot <- ggplot(combined_data, aes(x = N, y = GRelativeYield, fill = Year)) +
+  geom_boxplot(position = position_dodge(width = 0.75)) +
+  labs(x = "N Rate", y = "Relative Yield") +
+  scale_x_discrete(breaks = c("0", "40", "80", "120", "160")) +
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed") +
+  ggtitle("Grain Relative Yield") +
+  scale_fill_manual(values = colors3)+
+  theme_minimal()+
+  facet_wrap(~P, scales = "free", ncol = 2)
+
+# Display the combined plot
+print(GRYcomboplot)
+
+ggsave("GRYcomboplot .jpg", plot = GRYcomboplot , width = 8, height = 6, dpi = 300)
+```
+
+***
+Nrate paper anova tables stuff 
+
+#mean values across reps for table 
+```{r}
+#Grain
+# Calculate the mean for each treatment excluding NA and 0 values
+mean_by_treatmentNG <- Nd %>%
+  dplyr::group_by(P, N, YearCode, Harvest, C) %>%
+  dplyr::summarise(MeanGrainYield = mean(G, na.rm = TRUE))
+print(mean_by_treatmentNG)
+
+#Total forage 
+mean_by_treatmentNTF <- Nd %>%
+  dplyr::group_by(P, N, YearCode, Harvest, C) %>%
+  dplyr::summarise(MeanTotalForage = mean(PlotTotForageKgHa, na.rm = TRUE))
+print(mean_by_treatmentNTF)
+
+#IWG biomass 
+mean_by_treatmentNIB <- Nd %>%
+ dplyr::group_by(P, N, YearCode, Harvest, C) %>%
+  dplyr::summarise(MeanIWGBiomass = mean(PlotIWGDryKgHa, na.rm = TRUE))
+print(mean_by_treatmentNIB)
+
+#Alf Biomass
+mean_by_treatmentNAB <- Nd %>%
+  dplyr::group_by(P, N, YearCode, Harvest, C) %>%
+  dplyr::summarise(MeanAlfBiomass = mean(PlotAlfDryKgHa, na.rm = TRUE))
+print(mean_by_treatmentNAB)
+
+#Total LER 
+mean_by_treatmentNTL <- TotalLERresults %>%
+  dplyr::group_by(P, NRATE, YearCode, Harvest) %>%
+  dplyr::summarise(MeanTotalLER = mean(LER, na.rm = TRUE))
+print(mean_by_treatmentNTL)
+
+#IWG partial LER 
+mean_by_treatmentNIL <- IWGPartialLERresults %>%
+  dplyr::group_by(P, NRATE, YearCode, Harvest) %>%
+  dplyr::summarise(MeanIWGPartialLER = mean(LER, na.rm = TRUE))
+print(mean_by_treatmentNIL)
+
+#Alf partial LER
+mean_by_treatmentNAL <- AlfPartialLERresults %>%
+  dplyr::group_by(P, NRATE, YearCode, Harvest) %>%
+  dplyr::summarise(MeanAlfPartialLER = mean(LER, na.rm = TRUE))
+print(mean_by_treatmentNAL)
+
+#quality stuff?
+```
+
+#building consolidated tables of mean values  
+```{r}
+#Build a table for mean yield results for all years, locations, harvests, cropping systems 
+NdBigMeansTable <- left_join(mean_by_treatmentNG, 
+                              mean_by_treatmentNTF, 
+                              by = c( "P", "YearCode", "Harvest", "N",  "C")) %>%
+                  left_join(mean_by_treatmentNIB, by = c("P", "YearCode", "Harvest", "N",  "C")) %>%
+                  left_join(mean_by_treatmentNAB, by = c("P", "YearCode", "Harvest", "N",  "C")) 
+print(NdBigMeansTable)
+
+ NdBigMeansTable %>%
+  gt(rowname_col = "Harvest", groupname_col = "YearCode")
+
+library("kableExtra")
+
+NdBigMeansTableX<-NdBigMeansTable[NdBigMeansTable$YearCode=="X",]
+NdBigMeansTableY<-NdBigMeansTable[NdBigMeansTable$YearCode=="Y",]
+
+#pretty theme 
+table_meansX<- NdBigMeansTableX  %>%
+  kbl(caption = "Recreating booktabs style table") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+
+table_meansY<- NdBigMeansTableY %>%
+  kbl(caption = "Recreating booktabs style table") %>%
+  kable_classic(full_width = F, html_font = "Cambria")
+
+
+```
+
+#Grain RY anovas
+```{r}
+modGRYX1
+my_modelsGRY <- c(modGRYX1, modGRYY1)
+anovasGRY <- purrr::map(my_modelsGRY, ~anova(.))
+names(anovasGRY) <- c("Year 1", "Year 2")
+
+
+# Function to format p-values as stars
+format_p_value <- function(p_val) {
+  stars <- ifelse(p_val < 0.001, "***", ifelse(p_val < 0.01, "**", ifelse(p_val < 0.05, "*", "")))
+  return(stars)
+}
+
+# Apply the function to your ANOVA results
+GRY_stars_tibble <- map(anovasGRY, as_tibble, rownames="term") %>%
+  bind_rows(.id = "model") %>%
+  mutate(stars = map_chr(`Pr(>F)`, format_p_value))%>%
+  mutate(term = ifelse(term == "P", "E", term)) %>%
+  mutate(term = ifelse(term == "N:P", "N:E", term))
+
+# Print the tibble
+print(GRY_stars_tibble)
+
+GRY_stars <-GRY_stars_tibble |> 
+  select(model, term, stars) |>
+  pivot_wider(names_from = term, values_from = stars)
+
+gt_GRY <- gt(GRY_stars)
+```
+
+#Grain anovas 
+```{r}
+my_modelsNG <- c(modNXG1, modNYG1, modNYGadj1)
+anovasNG <- purrr::map(my_modelsNG, ~anova(.))
+names(anovasNG) <- c("Year 1", "Year 2 (unadjusted)",  "Year 2 (adjusted with year 1 data)")
+
+
+# Function to format p-values as stars
+format_p_value <- function(p_val) {
+  stars <- ifelse(p_val < 0.001, "***", ifelse(p_val < 0.01, "**", ifelse(p_val < 0.05, "*", "")))
+  return(stars)
+}
+
+# Apply the function to your ANOVA results
+NG_stars_tibble <- map(anovasNG, as_tibble, rownames="term") %>%
+  bind_rows(.id = "model") %>%
+  mutate(stars = map_chr(`Pr(>F)`, format_p_value))
+
+NG_stars_tibble <- NG_stars_tibble %>%
+  mutate(term = ifelse(term == "P", "E", term)) %>%
+  mutate(term = ifelse(term == "N:P", "N:E", term))%>%
+  mutate(term = ifelse(term == "P:C", "E:C", term))%>%
+  mutate(term = ifelse(term == "N:P:C", "N:E:C", term))
+
+# Print the tibble
+print(NG_stars_tibble)
+
+NG_stars <-NG_stars_tibble |> 
+  select(model, term, stars) |>
+  pivot_wider(names_from = term, values_from = stars)
+
+gt_NG <- gt(NG_stars)
+
+gt_NG |> gtsave("gt_NG.png", expand = 10)
+```
+
+
+***
+Looking for Outliers in important variables 
+
+Nrate Paper 
+
+#Grain (outliers may change after updating to dehulled weight)
+```{r}
+identify_outliers(NdXSIG[, 155]) #2 outliers.. OK
+identify_outliers(DATA31[, 157]) #2 outliers..OK 
+```
+
+#Weeds? Heights?
