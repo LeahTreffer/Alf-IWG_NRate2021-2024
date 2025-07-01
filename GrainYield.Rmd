@@ -729,13 +729,13 @@ bn <- bestNormalize(NdXSIG$G)
 bn$chosen_transform
 NdXSIG$G_trans <- bn$x.t
 
-modNXG1<-lmer(G_trans~N*P*C + (1|Rep), data=NdXSIG)
-summary(modNXG1)
-anova(modNXG1)
-NXG_resid1<-resid(modNXG1)
-qqnorm(NXG_resid1)
-qqline(NXG_resid1)
-plot(modNXG1)
+modNXG2<-lmer(G_trans~N*P*C + (1|Rep), data=NdXSIG)
+summary(modNXG2)
+anova(modNXG2)
+NXG_resid2<-resid(modNXG2)
+qqnorm(NXG_resid2)
+qqline(NXG_resid2)
+plot(modNXG2)
 
 monoIformean<-NdXSIG[NdXSIG$C == 'monoculture',]
 mean(monoIformean$G)

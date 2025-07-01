@@ -1218,7 +1218,8 @@ library(kableExtra)
 #Total forage year 1 summer
 ```{r}
 #linear
-modNXST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdXS)
+#modNXST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdXS) # NOT this one
+modNXST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdXS)
 anova(modNXST)
 #Check Assumptions
 NXST_resid<-resid(modNXST)
@@ -1226,7 +1227,7 @@ qqnorm(NXST_resid)
 qqline(NXST_resid)
 plot(modNXST)
 #Logtransform
-modNXST1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdXS)
+modNXST1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|P:Rep), data=NdXS)
 anova(modNXST1)
 summary(modNXST1)
 #check assumptions logtransform (makes it BETTER)
@@ -1234,6 +1235,19 @@ NXST_resid1<-resid(modNXST1)
 qqnorm(NXST_resid1)
 qqline(NXST_resid1)
 plot(modNXST1)
+
+library(bestNormalize)
+bn <- bestNormalize(NdXS$PlotTotForageKgHa)
+bn$chosen_transform
+NdXS$PlotTotForageKgHa_trans <- bn$x.t
+modNXST2<-lmer(PlotTotForageKgHa_trans~N*P*CROP + (1|P:Rep), data=NdXS)
+anova(modNXST2)
+summary(modNXST2)
+NXST_resid2<-resid(modNXST2)
+qqnorm(NXST_resid2)
+qqline(NXST_resid2)
+plot(modNXST2)
+
 
 modNXST1_summary <- summary(modNXST1)
 modNXST1_coeff <- as.data.frame(modNXST1_summary$coefficients)%>%
@@ -1315,7 +1329,7 @@ sorted_df <- new_df %>%
 ```{r}
 #linear
 NdXF$PlotTotForageKgHa<-as.numeric(NdXF$PlotTotForageKgHa)
-modNXFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdXF)
+modNXFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdXF)
 anova(modNXFT)
 summary(modNXFT)
 #Check Assumptions
@@ -1324,25 +1338,25 @@ qqnorm(NXFT_resid)
 qqline(NXFT_resid)
 plot(modNXFT)
 #Check Assumptions Linear logtrans
-modNXFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdXF)
+modNXFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|P:Rep), data=NdXF)
 anova(modNXFT1)
 NXFT1_resid<-resid(modNXFT1)
 qqnorm(NXFT1_resid)
 qqline(NXFT1_resid)
 plot(modNXFT1)
 
-modNXFT1_summary <- summary(modNXFT1)
-modNXFT1_coeff <- as.data.frame(modNXFT1_summary$coefficients)%>%
-  filter(`Pr(>|t|)` < 0.05)
-rownames(modNXFT1_coeff)[2]<-"WI"
-rownames(modNXFT1_coeff)[3]<-"monoI"
-rownames(modNXFT1_coeff)[4]<-"Nrate:monoI"
-rownames(modNXFT1_coeff)[5]<-"WI:monoA"
-rownames(modNXFT1_coeff)[6]<-"NY:monoI"
-colnames(modNXFT1_coeff)[5]<-"Pr(>t)"
+#modNXFT1_summary <- summary(modNXFT1)
+#modNXFT1_coeff <- as.data.frame(modNXFT1_summary$coefficients)%>%
+#  filter(`Pr(>|t|)` < 0.05)
+#rownames(modNXFT1_coeff)[2]<-"WI"
+#rownames(modNXFT1_coeff)[3]<-"monoI"
+#rownames(modNXFT1_coeff)[4]<-"Nrate:monoI"
+#rownames(modNXFT1_coeff)[5]<-"WI:monoA"
+#rownames(modNXFT1_coeff)[6]<-"NY:monoI"
+#colnames(modNXFT1_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-knitr::kable(modNXFT1_coeff, caption = "Fall 2022 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
-  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+#knitr::kable(modNXFT1_coeff, caption = "Fall 2022 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
+#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
 
 
 #plots
@@ -1407,7 +1421,7 @@ sorted_df <- new_df %>%
 #Total forage year 2 summer
 ```{r}
 #linear
-modNYST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdYS)
+modNYST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdYS)
 anova(modNYST)
 #Check Assumptions
 NYST_resid<-resid(modNYST)
@@ -1415,7 +1429,7 @@ qqnorm(NYST_resid)
 qqline(NYST_resid)
 plot(modNYST)
 #Logtransform
-modNYST1<-lmer(log(PlotTotForageKgHa+0.0001)~N*P*CROP + (1|Rep), data=NdYS)
+modNYST1<-lmer(log(PlotTotForageKgHa+0.0001)~N*P*CROP + (1|P:Rep), data=NdYS)
 anova(modNYST1)
 summary(modNYST1)
 #check assumptions logtransform (makes it BETTERISH)
@@ -1505,7 +1519,7 @@ sorted_df <- new_df %>%
 #linear
 NdYF$PlotTotForageKgHa<-as.numeric(NdYF$PlotTotForageKgHa)
 NdYF$N<-as.numeric(NdYF$N)
-modNYFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdYF) #linear 
+modNYFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdYF) #linear 
 anova(modNYFT)
 summary(modNYFT)
 #Check Assumptions
@@ -1515,23 +1529,23 @@ qqline(NYFT_resid)
 plot(modNYFT)
 abline(h = 0, col="red")
 #Logtransform
-modNYFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdYF)
+modNYFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|P:Rep), data=NdYF)
 NYFT_resid1<-resid(modNYFT1)
 qqnorm(NYFT_resid1)
 qqline(NYFT_resid1)
 plot(modNYFT1)
 anova(modNYFT1)
 
-modNYFT1_summary <- summary(modNYFT1)
-modNYFT1_coeff <- as.data.frame(modNYFT1_summary$coefficients)%>%
-  filter(`Pr(>|t|)` < 0.05)
-rownames(modNYFT1_coeff)[2]<-"monoA"
-rownames(modNYFT1_coeff)[3]<-"monoI"
-rownames(modNYFT1_coeff)[4]<-"WI:monoI"
-colnames(modNYFT1_coeff)[5]<-"Pr(>t)"
+#modNYFT1_summary <- summary(modNYFT1)
+#modNYFT1_coeff <- as.data.frame(modNYFT1_summary$coefficients)%>%
+#  filter(`Pr(>|t|)` < 0.05)
+#rownames(modNYFT1_coeff)[2]<-"monoA"
+#rownames(modNYFT1_coeff)[3]<-"monoI"
+#rownames(modNYFT1_coeff)[4]<-"WI:monoI"
+#colnames(modNYFT1_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-knitr::kable(modNYST1_coeff, caption = "Fall 2023 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
-  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+#knitr::kable(modNYST1_coeff, caption = "Fall 2023 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
+#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
 
 
 #linear plots
@@ -1625,7 +1639,7 @@ sorted_df <- new_df %>%
 NdZS_2 <- NdZS[NdZS$PlotTotForageKgHa != 0, ] # remove rows where the total forage was 0
 
 #linear
-modNZST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdZS_2)
+modNZST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdZS_2)
 anova(modNZST)
 #Check Assumptions
 NZST_resid<-resid(modNZST)
@@ -1633,7 +1647,7 @@ qqnorm(NZST_resid)
 qqline(NZST_resid)
 plot(modNZST)
 #Logtransform
-modNZST1<-lmer(log(PlotTotForageKgHa+0.01)~N*P*CROP + (1|Rep), data=NdZS_2) 
+modNZST1<-lmer(log(PlotTotForageKgHa+0.01)~N*P*CROP + (1|P:Rep), data=NdZS_2) 
 anova(modNZST1)
 summary(modNZST1)
 #check assumptions logtransform (makes it BETTERISH)
@@ -1651,19 +1665,30 @@ qqnorm(NZST_resid2)
 qqline(NZST_resid2)
 plot(NZST_resid2)
 
+library(bestNormalize)
+bn <- bestNormalize(NdZS$PlotTotForageKgHa)
+bn$chosen_transform
+NdZS$PlotTotForageKgHa_trans <- bn$x.t
+modNZST3<-lmer(PlotTotForageKgHa_trans~N*P*CROP + (1|P:Rep), data=NdZS)
+summary(modNZST3)
+anova(modNZST3)
+NZST_resid3<-resid(modNZST3)
+qqnorm(NZST_resid3)
+qqline(NZST_resid3)
+plot(modNZST3)
 
-modNZST1_summary <- summary(modNZST1)
-modNZST1_coeff <- as.data.frame(modNZST1_summary$coefficients)%>%
-  filter(`Pr(>|t|)` < 0.05)
-rownames(modNZST1_coeff)[2]<-"NY"
-rownames(modNZST1_coeff)[3]<-"WI"
-colnames(modNZST1_coeff)[5]<-"Pr(>t)"
+#modNZST1_summary <- summary(modNZST1)
+#modNZST1_coeff <- as.data.frame(modNZST1_summary$coefficients)%>%
+#  filter(`Pr(>|t|)` < 0.05)
+#rownames(modNZST1_coeff)[2]<-"NY"
+#rownames(modNZST1_coeff)[3]<-"WI"
+#colnames(modNZST1_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-knitr::kable(modNZST1_coeff, caption = "Summer 2024 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
-  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+#knitr::kable(modNZST1_coeff, caption = "Summer 2024 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
+#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
 
 
-max(NdZS$PlotTotForageKgHa)
+#max(NdZS$PlotTotForageKgHa)
 
 #linear plots
 NdZS_2$predicted <- predict(modNZST1, newdata = NdZS_2, re.form = NA)
@@ -1753,9 +1778,9 @@ NdZF_2 <- NdZF[NdZF$PlotTotForageKgHa != 0, ] # remove rows where the total fora
 #linear
 NdZF_2$PlotTotForageKgHa<-as.numeric(NdZF_2$PlotTotForageKgHa)
 NdZF_2$N<-as.numeric(NdZF_2$N)
-modNZFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdZF_2) #linear 
+#modNZFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdZF_2) #linear 
 # Error: boundary (singular) fit: see help('isSingular')
-modNZFT<-lm(PlotTotForageKgHa~N*P*CROP, data=NdZF_2) #modified until more locations 
+modNZFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdZF_2) #linear 
 anova(modNYFT)
 summary(modNZFT)
 #Check Assumptions
@@ -1765,9 +1790,9 @@ qqline(NZFT_resid)
 plot(modNZFT)
 abline(h = 0, col="red")
 #Logtransform
-modNZFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdZF_2)
+#modNZFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdZF_2)
 # boundary (singular) fit: see help('isSingular')
-modNZFT1<-lm(log(PlotTotForageKgHa)~N*P*CROP, data=NdZF_2) #modified until more locations 
+modNZFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|P:Rep), data=NdZF_2)
 NZFT_resid1<-resid(modNZFT1)
 qqnorm(NZFT_resid1)
 qqline(NZFT_resid1)
@@ -1775,16 +1800,16 @@ plot(modNZFT1)
 anova(modNZFT1)
 
 
-modNZFT1_summary <- summary(modNZFT1)
-modNZFT1_coeff <- as.data.frame(modNZFT1_summary$coefficients)%>%
-  filter(`Pr(>|t|)` < 0.05)
-rownames(modNYFT1_coeff)[2]<-"monoA"
-rownames(modNYFT1_coeff)[3]<-"monoI"
-rownames(modNYFT1_coeff)[4]<-"WI:monoI"
-colnames(modNYFT1_coeff)[5]<-"Pr(>t)"
+#modNZFT1_summary <- summary(modNZFT1)
+#modNZFT1_coeff <- as.data.frame(modNZFT1_summary$coefficients)%>%
+#  filter(`Pr(>|t|)` < 0.05)
+#rownames(modNYFT1_coeff)[2]<-"monoA"
+#rownames(modNYFT1_coeff)[3]<-"monoI"
+#rownames(modNYFT1_coeff)[4]<-"WI:monoI"
+#colnames(modNYFT1_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-knitr::kable(modNYFT1_coeff, caption = "Fall 2024 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
-  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+#knitr::kable(modNYFT1_coeff, caption = "Fall 2024 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
+#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
 
 #linear plots
 NdZF_2$predicted <- predict(modNZFT1, newdata = NdZF_2, re.form = NA)
@@ -2056,23 +2081,30 @@ Vd_2FA<-Vd_2F[Vd_2F$Crop1 != "IWG",]
 
 
 
-modN<-lmer(PlotTotForageKgHa~N*P*CROP + (1|YearCode) + (1|Rep), data=NdS)
+modN<-lmer(PlotTotForageKgHa~N*P*CROP + (1|YearCode) + (1|P:Rep), data=NdS)
 modN_resid<-resid(modN)
 qqnorm(modN_resid)
 qqline(modN_resid)
 plot(modN_resid)
-anova(modN)
+# assumptions not good
+#modN<-lmer(log(PlotTotForageKgHa+0.0001)~N*P*CROP + (1|YearCode) + (1|P:Rep), data=NdS)
+#modN_resid<-resid(modN)
+#qqnorm(modN_resid)
+#qqline(modN_resid)
+#plot(modN_resid)
 
+
+anova(modN)
 anova_results <- anova(modN)
 # Filter out only significant predictors (e.g., p-value < 0.05)
-significant_terms <- rownames(anova_results)[anova_results$`Pr(>F)` < 0.05]
+#significant_terms <- rownames(anova_results)[anova_results$`Pr(>F)` < 0.05]
 # Create a new formula with only significant predictors
-significant_formula <- as.formula(paste("PlotTotForageKgHa ~", paste(significant_terms, collapse = " + "), "+ (1 | YearCode) + (1 | Rep)"))
+#significant_formula <- as.formula(paste("PlotTotForageKgHa ~", paste(significant_terms, collapse = " + "), "+ #(1 | YearCode) + (1 | Rep)"))
 # Fit the new model with only significant predictors
-modN_significant <- lmer(significant_formula, data = NdS)
+#modN_significant <- lmer(significant_formula, data = NdS)
 # Create the table of only significant predictors
-tab_model(modN_significant, 
-          title = "Significant Predictors: PlotTotForageKgHa ~ Significant Terms")
+#tab_model(modN_significant, 
+#          title = "Significant Predictors: PlotTotForageKgHa ~ Significant Terms")
 
 #tab_model(modN, title = "Mixed-Effects Model: PlotTotForageKgHa ~ N * P * CROP + (1 | YearCode) + (1 | Rep)",
                    # css = list('table' = 'width: 100%;'))  # Adjust width to fit title
@@ -2080,16 +2112,16 @@ tab_model(modN_significant,
 plot_model(modN)
 
 mod_summary <- summary(modN)
-mod_coeff <- as.data.frame(mod_summary$coefficients)%>%
-  filter(`Pr(>|t|)` < 0.05)
-rownames(mod_coeff)[1]<-"Location(MN)"
-rownames(mod_coeff)[2]<-"Alfalfa_Monoculture"
-rownames(mod_coeff)[3]<-"Location(MN) : IWG_Monoculture"
-rownames(mod_coeff)[4]<-"Location(NY) : IWG_Monoculture"
-colnames(mod_coeff)[5]<-"Pr(>t)"
+#mod_coeff <- as.data.frame(mod_summary$coefficients)%>%
+#  filter(`Pr(>|t|)` < 0.05)
+#rownames(mod_coeff)[1]<-"Location(MN)"
+#rownames(mod_coeff)[2]<-"Alfalfa_Monoculture"
+#rownames(mod_coeff)[3]<-"Location(MN) : IWG_Monoculture"
+#rownames(mod_coeff)[4]<-"Location(NY) : IWG_Monoculture"
+#colnames(mod_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-knitr::kable(mod_coeff, caption = "Mixed-Effects Model: PlotTotForageKgHa ~ N * P * CROP + (1 | YearCode) + (1 | Rep)") %>%
-  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+#knitr::kable(mod_coeff, caption = "Mixed-Effects Model: PlotTotForageKgHa ~ N * P * CROP + (1 | YearCode) + (1 #| Rep)") %>%
+#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
 
 
 #Threeway means
@@ -2163,6 +2195,8 @@ new_df <- merged_df %>%
 sorted_df <- new_df %>%
   arrange( CROP)
 view(sorted_df)
+
+# there's something wrong with this
 
 ```
 
@@ -3062,7 +3096,7 @@ ggsave("IYSC.jpg", plot = IYSC, width = 8, height = 6, dpi = 300)
 #Alf forage year 1 summer
 ```{r}
 #LINEAR 
-modNXSA<-lmer(PlotAlfDryKgHa~N*P*CROP + (1|Rep), data=NdXSA)
+modNXSA<-lmer(PlotAlfDryKgHa~N*P*CROP + (1|P:Rep), data=NdXSA)
 anova(modNXSA)
 #Check assumptions
 NXSA_resid<-resid(modNXSA)
@@ -3070,14 +3104,15 @@ qqnorm(NXSA_resid)
 qqline(NXSA_resid)
 plot(modNXSA)
 #log transform
-modNXSA1<-lmer(log(PlotAlfDryKgHa)~N*P*CROP + (1|Rep), data=NdXSA)
+modNXSA1<-lmer(log(PlotAlfDryKgHa)~N*P*CROP + (1|P:Rep), data=NdXSA)
 anova(modNXSA1)
 summary(modNXSA1)
-emtrends(modNXSA1, ~P*C, var= "N")
-emtrends(modNXSA1, ~1, var= "N", infer= TRUE) #(averages 8 slopes across interactions)
-emmip(modNXSA1, P~N|CROP, at=list(N=c(40, 80, 120)))
+# normal is better
+emtrends(modNXSA, ~P*CROP, var= "N")
+emtrends(modNXSA, ~1, var= "N", infer= TRUE) #(averages 8 slopes across interactions)
+emmip(modNXSA, P~N|CROP, at=list(N=c(40, 80, 120)))
 
-modNXSA1_summary <- summary(modNXSA1)
+modNXSA1_summary <- summary(modNXSA)
 modNXSA1_coeff <- as.data.frame(modNXSA1_summary$coefficients)%>%
   filter(`Pr(>|t|)` < 0.05)
 rownames(modNXSA1_coeff)[2]<-"MN"
@@ -3092,7 +3127,7 @@ knitr::kable(modNXSA1_coeff, caption = "Mixed-Effects Model: AlfalfaForageKgHa ~
 
 
 #rec
-modNXSA1N<-lmer(log(PlotAlfDryKgHa)~N+P*CROP + (1|Rep), data=NdXSA)
+modNXSA1N<-lmer(log(PlotAlfDryKgHa)~N+P*CROP + (1|P:Rep), data=NdXSA)
 emtrends(modNXSA1N, ~1, var= "N", infer= TRUE)
 emmip(modNXSA1N, P~N|CROP, at=list(N=c(0, 80, 160)))
 
@@ -3105,7 +3140,7 @@ plot(modNXSA1)
 
 max(NdXSA$PlotAlfDryKgHa)
 #linear plots
-NdXSA$predicted <- predict(modNXSA1, newdata = NdXSA, re.form = NA)
+NdXSA$predicted <- predict(modNXSA, newdata = NdXSA, re.form = NA)
 ggplot(NdXSA, aes(x = N, y = PlotAlfDryKgHa, color = C, group= C)) +
     geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
   labs(x = "N-Rate (Kg/ha)", y = "Alf Forage Yield (Kg/ha)") +  # Label the axes
@@ -3116,17 +3151,17 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   scale_color_discrete(name = "Cropping System")  #legend for colors
 
 #Threeway means
-NXSA1emm <- compute_emmeansNXS("modNXSA1")
+NXSA1emm <- compute_emmeansNXS("modNXSA")
 
 #Pairwise P
-emmsP <- emmeans(modNXSA1, ~ P, type = "response") # Obtain estimated marginal means
+emmsP <- emmeans(modNXSA, ~ P, type = "response") # Obtain estimated marginal means
 cld_dataNXSAP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
 #Pairwise C
-emmsC <- emmeans(modNXSA1, ~ CROP, type = "response") # Obtain estimated marginal means 
+emmsC <- emmeans(modNXSA, ~ CROP, type = "response") # Obtain estimated marginal means 
 cld_dataNXSAC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
 #Pairwise N
 N_levels <- c(0, 40, 80, 120, 160)
-emmsN <- emmeans(modNXSA1, specs = ~ N, at = list(N = N_levels), type = "response")
+emmsN <- emmeans(modNXSA, specs = ~ N, at = list(N = N_levels), type = "response")
 cld_dataNXSAN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
 cld_dataNXSAN$response <- format(cld_dataNXSAN$response, digits = 5)
 cld_dataNXSAN<- cld_dataNXSAN %>%
@@ -3138,7 +3173,7 @@ cld_dataNXSAN  |>
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
 #Pairwise P:C
-emmsPC <- emmeans(modNXSA1, ~ P*CROP, type= "response") # Obtain estimated marginal means
+emmsPC <- emmeans(modNXSA, ~ P*CROP, type= "response") # Obtain estimated marginal means
 cld_dataNXSAPC <- cld(emmsPC, Letters=custom_letters) # Create compact letter display
 cld_dataNXSAPC$response <- format(cld_dataNXSAPC$response, digits = 5)
 rownames(cld_dataNXSAPC) <- NULL
@@ -3152,19 +3187,19 @@ cld_dataNXSAPC  |>
   column_spec(1, bold = T)
 
 #This gives us the slope for each interactions as well as a P value indicating significance level for that slope
-emtrends(modNXSA1,~ P*CROP, var= "N", infer=TRUE)
-emtrends(modNXSA1,~ P, var= "N", infer=TRUE)
-emtrends(modNXSA1,~ CROP, var= "N", infer=TRUE)
-emtrends(modNXSA1,~N, var= "N", infer=TRUE)
-summary(modNXSA1)
-emtrends(modNXSA1,~ P, var= "N", infer=TRUE)
+emtrends(modNXSA,~ P*CROP, var= "N", infer=TRUE)
+emtrends(modNXSA,~ P, var= "N", infer=TRUE)
+emtrends(modNXSA,~ CROP, var= "N", infer=TRUE)
+emtrends(modNXSA,~N, var= "N", infer=TRUE)
+summary(modNXSA)
+emtrends(modNXSA,~ P, var= "N", infer=TRUE)
 
-summary(modNXSA1)
+summary(modNXSA)
 
 #EQUATION tables JUST N 
-emtrends_result<-emtrends(modNXSA1,~ 1, var= "N", infer=TRUE)
+emtrends_result<-emtrends(modNXSA,~ 1, var= "N", infer=TRUE)
 emtrends_df <- as.data.frame(emtrends_result)
-emmeans_results<-emmeans(modNXSA1, ~1, at=list(N=0))
+emmeans_results<-emmeans(modNXSA, ~1, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 emtrends_df <- emtrends_df %>% mutate(key = 1)
 emmeans_df <- emmeans_df %>% mutate(key = 1)
