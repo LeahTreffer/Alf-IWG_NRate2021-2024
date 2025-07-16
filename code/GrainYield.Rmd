@@ -14,7 +14,7 @@ rm(list = ls(all.names = TRUE))
 
 ```{r}
 #data<-read.csv('MasterDataSpreadsheet  - All locations All years combined.csv')
-data<-read.csv('MasterDataSpreadsheet.csv')
+data<-read.csv('data/MasterDataSpreadsheet.csv')
 ```
 
 #just loading these in, unsure if I need to again but might as well
