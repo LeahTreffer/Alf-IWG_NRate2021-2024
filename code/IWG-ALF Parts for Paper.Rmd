@@ -1,0 +1,212 @@
+---
+title: "IWG-ALF Parts for Paper"
+author: "Leah Treffer"
+date: "2025-07-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Estimation of Dehulled Grain Yield
+
+The IWG grain threshability visibly varied by site, and not all grains were fully dehulled, so it was deemed necessary to estimate the true mass of dehulled grain in order to prevent poorly threshed plots from being incorrectly represented as higher yielding. To correct for this, 3-gram samples were taken from each plot’s grain yield. These samples were weighed and imaged, and the images were analyzed using the software ilastik, which visually estimated the proportion of grain still in the hull, naked grain, grain still in the spikelet, and empty hulls and spikelets. The resulting proportions were used to create an estimated dehulled grain weight for the sample, which was then extrapolated to derive an adjusted dehulled grain yield for each experimental plot (Altendorf et al., 2021)
+
+Adjusted plot grain yield= (estimated dehulled sample weight/ sample weight)*(plot grain yield weight) 
+
+## Land Equivalent Ratio (LER)
+
+Land Equivalent Ratio (LER) was calculated to compare the performance of intercrops to that of monocultures... Indicates a relative total forage yield advantage for intercropped plots if the TLER is greater than 1(Mead & Willey, 1980). 
+
+Total LER: TLER= LA+LB= YA/SA + YB/SB
+where LA and LB are the partial land equivalent ratio (PLER) for the individual crops. YA and YB are the yields of an individual crop within the intercropped plot, and SA and SB are the yields of an individual crop within a monoculture plot (Mead & Willey, 1980). 
+
+Proportional LER (PrLER) was calculated for each species’ biomass yield to determine each species’ relative contribution to the total LER (Oyejola & Mead, 1982). PLERs can be compared to determine competitive effects between the species in intercrop... A PLER greater than 0.5 indicates a relative yield advantage for a single crop in intercrop compared to its yield at the same seeding rate in monoculture. The proportional partial land equivalent ratio (PrPLER) is the proportion of component crop A to the TLER and can be used to understand how much each intercropped crop contributes to the TLER. 
+
+Proportional LER: PrPLER= LA/TLER
+where LA is the partial land equivalent ratio (PLER) for an individual crops and TLER is the total land equivalent ratio for an intercropped plot. 
+
+
+TLER, PLER, and PrLER were calculated using plots of the same N rate to allow for comparison in the performance of the intercropped system at different N rates (Oyejola & Mead, 1982). TLER and PrLER could not be calculated for grain yields, as IWG only represented one grain-bearing crop in the intercrop, but PLER was calculated for grain yield to allow for comparison between N rates
+
+## Effects and interactions of N rate (N), cropping system (CROP), and environment (E)
+
+Log-linear mixed-effects models with replication as a random effect (ϵ) 
+log(Response variable) ~ N*E*C + ϵ
+Models for each year-harvest ( Year 1 Summer, Year 1 Fall, Year 2 Summer, Year 2 Fall, Year 3 Summer, Year 3 Fall) as Summer and Fall harvests were expected to have large differences in yield, and so that the change in response variables between years could be easily captured and compared.
+
+Response variables: Yields
+- Grain yield
+- Total forage yield 
+- IWG forage yield
+- Alfalfa forage yield 
+Response variables: LER
+- TLER
+- PLER of grain 
+- PLER of IWG
+- PLER of alfalfa 
+- PrPLER of IWG 
+- PrPLER of alfalfa 
+Cropping system (C) was not included as a fixed effect for LER, as LER values are calculated as a ratio of yield in intercropping to yield in monoculture.
+Response variables: Forage quality
+- Total forage CP and RFV 
+- IWG forage CP and RFV
+- Alfalfa CP and RFV
+
+Analysis of covariance (ANCOVA) was used to determine significant differences (P<0.05) between independent variables and their interactions. Estimated marginal means (EMMs) were calculated and pairwise comparisons were used to understand and rank results between independent variables. 
+
+# Grain Yield 
+
+* Table (Grain yield significance of variables and interactions for each model): Grain anovas 
+
+* Figure (Grain yield response to nitrogen rate (N-Rate) and site by harvest) : Grain Figures Redo N:E
+
+* Figure (Grain yield response to cropping system and site by harvest) : combined grain year 1 and 2 plots E:C
+
+#Grain anovas 
+```{r}
+my_modelsNG <- c(modNXG1, modNYG1, modNYGadj1)
+anovasNG <- purrr::map(my_modelsNG, ~anova(.))
+names(anovasNG) <- c("Year 1", "Year 2 (unadjusted)",  "Year 2 (adjusted with year 1 data)")
+
+
+# Function to format p-values as stars
+format_p_value <- function(p_val) {
+  stars <- ifelse(p_val < 0.001, "***", ifelse(p_val < 0.01, "**", ifelse(p_val < 0.05, "*", "")))
+  return(stars)
+}
+
+# Apply the function to your ANOVA results
+NG_stars_tibble <- map(anovasNG, as_tibble, rownames="term") %>%
+  bind_rows(.id = "model") %>%
+  mutate(stars = map_chr(`Pr(>F)`, format_p_value))
+
+NG_stars_tibble <- NG_stars_tibble %>%
+  mutate(term = ifelse(term == "P", "E", term)) %>%
+  mutate(term = ifelse(term == "N:P", "N:E", term))%>%
+  mutate(term = ifelse(term == "P:C", "E:C", term))%>%
+  mutate(term = ifelse(term == "N:P:C", "N:E:C", term))
+
+# Print the tibble
+print(NG_stars_tibble)
+
+NG_stars <-NG_stars_tibble |> 
+  select(model, term, stars) |>
+  pivot_wider(names_from = term, values_from = stars)
+
+gt_NG <- gt(NG_stars)
+
+gt_NG |> gtsave("gt_NG.png", expand = 10)
+```
+
+#grain figures redo N:E
+```{r}
+#N:E
+# Layer all the plots together!
+colors <- c("Year 1 Summer Harvest" = "red", 
+            "Year 1 Fall Harvest" = "green", 
+            "Year 2 Summer Harvest" = "blue", 
+            "Year 2 Fall Harvest" = "purple")
+legend_order2 <- c("Year 1 Summer Harvest", 
+                  "Year 2 Summer Harvest")
+# Define the desired order of 'P'
+desired_order <- c("MN", "NY", "KS", "WI")
+NdXSIG$P <- factor(NdXSIG$P, levels = desired_order)
+
+GraincomboplotNE <- ggplot(data=NdXSIG) +
+  geom_point(data = NdXSIG, aes(x = N, y = G, color = "Year 1 Summer Harvest", shape = C)) +
+  geom_point(data = DATA32, aes(x = N, y = GAdjY, color = "Year 2 Summer Harvest", shape = C)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "Grain Yield", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 1550) +
+  facet_wrap(~P, scales = "free_y", ncol = 2) +
+  scale_shape_manual(values = c(4, 25),labels = c("Intercropped","Monoculture IWG"))+
+    scale_color_manual(values = colors, limits = legend_order2)+
+  geom_function(data=subset(NdXSIG, P== "MN"), fun=~179.38*exp(0.0021*.x),color='red')+
+  geom_function(data=subset(NdXSIG, P== "NY"), fun=~408.24*exp(0.0047*.x),color='red')+
+  geom_function(data=subset(NdXSIG, P== "KS"), fun=~407.18*exp(-0.0002*.x),color='red')+
+  geom_function(data=subset(NdXSIG, P== "WI"), fun=~736.77*exp(-0.0001*.x),color='red')+
+  geom_function(data=subset(DATA32, P== "NY"), fun=~222.27*exp(0.0009*.x),color='blue')+
+  geom_function(data=subset(DATA32, P== "KS"), fun=~99.20*exp(0.0005*.x),color='blue')+
+  geom_function(data=subset(DATA32, P== "WI"), fun=~278.01*exp(0.0065*.x),color='blue')
+print(GraincomboplotNE)
+
+ggsave("GraincomboplotNE.jpg", plot = GraincomboplotNE, width = 8, height = 6, dpi = 300)
+
+
+```
+
+#grain figure E:C (X)
+```{r}
+
+NXGemmsPC <- emmeans(modNXG1, ~ P*C, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(NXGemmsPC)
+cld_dataNXGPC <- cld(NXGemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNXGPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "C"))
+custom_labels <- c("Intercrop", "Monoculture IWG")
+custom_colors <- c("darkmagenta", "cyan") 
+GXPC<-ggplot(NdXSIG, aes(x = P, y = exp(predicted), color = C)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Grain Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 1.8)+
+  scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)+
+    guides(color = "none")+
+     ggtitle("Year 1")+
+  theme(plot.title = element_text(hjust = 0.5))
+print(GXPC)
+ggsave("GXPC.jpg", plot = GXPC, width = 8, height = 6, dpi = 300)
+```
+
+#grain figure E:C (Y)
+```{r}
+
+NYGemmsPC <- emmeans(modNYGadj1, ~ P*C, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(NYGemmsPC)
+cld_dataNYGPC <- cld(NYGemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNYGPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "C"))
+custom_labels <- c("Intercrop", "Monoculture IWG")
+custom_colors <- c("darkmagenta", "cyan") 
+GYPC<-ggplot(DATA32, aes(x = P, y = exp(predicted), color = C)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Grain Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 3)+
+  scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)+
+     ggtitle("Year 2")+
+  theme(plot.title = element_text(hjust = 0.5))+
+    scale_y_continuous(breaks = c(250, 500, 750, 1000, 1250), limits = c(0, 1260))
+
+
+print(GYPC)
+ggsave("GYPC.jpg", plot = GYPC, width = 8, height = 6, dpi = 300)
+```
+
+#combined grain year 1 and 2 plots E:C
+# Probably need to add in yr 3 ! 
+```{r}
+GEC<-grid.arrange(GXPC, GYPC, ncol = 2)
+ggsave("GEC.jpg", plot = GEC, width =12, height = 6, dpi = 350)
+```
+
+# Total Forage Yield 
+
+* Table (Estimated effect of nitrogen rate on total forage yield for each environment (Site) and cropping system across harvests) : combine the "sorted_df" that is created at the end of the chunk for each forage model
+
+* Figure (Total forage yield response to environment and cropping system for Year 2 Fall) : total forage figure E:C (YF)
+
+# IWG Forage Yield 
+
+
+
