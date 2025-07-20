@@ -9,6 +9,251 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#just loading these in, unsure which exactly are still used
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(ggthemes)
+library(gapminder)
+library(multcomp)
+library(emmeans)
+library(multcompView)
+library(lmerTest)
+library(scales)
+library(tidyverse)
+library(readxl)
+library(lme4)
+library(gvlma)
+library(rstatix)
+library(sjPlot)
+library(gt)
+library(car)
+library(Rmisc)
+library(nlme)
+library(pgirmess)
+library(MuMIn)
+library(sjPlot)
+library(grateful)
+library(cowplot)
+library(kableExtra)
+library(MuMIn)
+library(ggpmisc)
+```
+
+#making emmeans functions 
+```{r}
+# Define a 3 WAY function for year 1 summer
+compute_emmeansNXS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Summer")
+  
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 1 fall
+compute_emmeansNXF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 2 Summer
+compute_emmeansNYS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a 3 WAY function for year 2 Fall
+compute_emmeansNYF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a 3 WAY function for year 3 summer
+compute_emmeansNZS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Summer")
+  
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 3 fall
+compute_emmeansNZF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Fall")
+  return(emm_df)}
+
+
+
+# Define a NP function for year 1 summer
+compute_emmeansNXS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP  function for year 1 fall
+compute_emmeansNXF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a NP  function for year 2 Summer
+compute_emmeansNYS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP function for year 2 Fall
+compute_emmeansNYF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a NP function for year 3 summer
+compute_emmeansNZS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP  function for year 3 fall
+compute_emmeansNZF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Fall")
+  return(emm_df)}
+```
+
 ## Estimation of Dehulled Grain Yield
 
 The IWG grain threshability visibly varied by site, and not all grains were fully dehulled, so it was deemed necessary to estimate the true mass of dehulled grain in order to prevent poorly threshed plots from being incorrectly represented as higher yielding. To correct for this, 3-gram samples were taken from each plot’s grain yield. These samples were weighed and imaged, and the images were analyzed using the software ilastik, which visually estimated the proportion of grain still in the hull, naked grain, grain still in the spikelet, and empty hulls and spikelets. The resulting proportions were used to create an estimated dehulled grain weight for the sample, which was then extrapolated to derive an adjusted dehulled grain yield for each experimental plot (Altendorf et al., 2021)
@@ -53,8 +298,125 @@ Response variables: Forage quality
 - Total forage CP and RFV 
 - IWG forage CP and RFV
 - Alfalfa CP and RFV
+Forage quality only on year 1 and year 2 harvests
 
 Analysis of covariance (ANCOVA) was used to determine significant differences (P<0.05) between independent variables and their interactions. Estimated marginal means (EMMs) were calculated and pairwise comparisons were used to understand and rank results between independent variables. 
+
+## Data prep for analysis 
+
+```{r}
+data<-read.csv('data/MasterDataSpreadsheet.csv')
+```
+# Rows to remove due to missing data
+NY 208 s22 missing alfalfa 
+MN 1122 s23 missing grain 
+```{r}
+# 2022 Summer NY 208 is the first row in the data table
+data <- data[-1, ] # 2022 Summer NY 208
+# then the new row 1 becomes the next row needing to be taken out
+data <- data[-1, ] # 2023 Summer MN 1122
+```
+# Rename variables to match models 
+```{r}
+data2 <- data |> 
+  separate_wider_delim(Crop, delim = " + ", 
+                       names = c("first_value", "second_value"), 
+                       too_few = "align_start") |> 
+  mutate(C = if_else(is.na(second_value), "monoculture", "intercrop")) |> 
+  mutate(CROP = case_when(
+    Intercropped == "y" ~ "Intercropped",  # If intercrop is "y", set CROP to intercrop
+    Monocrop == "y" & ALF == "y" ~ "Mono_ALF",  # If monoculture is "y" and alfalfa is "y", set CROP to alfalfa
+    Monocrop == "y" & IWG == "y" ~ "Mono_IWG",  # If monoculture is "y" and iwg is "y", set CROP to iwg
+    Monocrop == "y" ~ "NA",  # If monoculture is "y" and neither alfalfa nor iwg is "y", set CROP to NA
+    TRUE ~ NA_character_  # If no condition matches, assign NA
+  ))
+
+V<-data2$first_value #Variety (IWG, Shockwave, Higest, WL)
+data2$V<-as.factor(V)
+N<-data2$NRate # Nitrogen Rate (0, 40, 80, 120, 160)
+data2$N<-as.numeric(N)
+P<-data2$Location # Location ("MN", "NY", "WI", "KS")
+data2$P<-as.factor(P)
+data2$Rep<-as.factor(data2$Rep) # (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
+data2$C<-as.factor(data2$C) # Crop (intercrop, monoculture)
+data2$CROP <- as.factor(data2$CROP) # Crop (intercrop, monoculture_IWG, monoculture_Alfalfa)
+```
+# Making things numeric as needed 
+```{r}
+#data2$G<-as.numeric(data2$G)
+data2$PlotIWGDryKgHa<-as.numeric(data2$PlotIWGDryKgHa)
+data2$PlotAlfDryKgHa<-as.numeric(data2$PlotAlfDryKgHa)
+data2$PlotTotForageKgHa<-as.numeric(data2$PlotTotForageKgHa)
+data2$IWGCP<-as.numeric(data2$IWGCP)
+data2$IWGdNDF48<-as.numeric(data2$IWGdNDF48)
+data2$IWGLignin<-as.numeric(data2$IWGLignin)
+data2$ALFCP<-as.numeric(data2$ALFCP)
+data2$ALFdNDF48<-as.numeric(data2$ALFdNDF48)
+data2$ALFLignin<-as.numeric(data2$ALFLignin)
+data2$ALFADF<-as.numeric(data2$ALFADF)
+data2$IWGADF<-as.numeric(data2$IWGADF)
+data2$ALFaNDF<-as.numeric(data2$ALFaNDF)
+custom_letters <- c("a", "b", "c", "d", "e", "f", "g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z")  # Customize the letters as needed
+```
+# Nrate data isolation
+```{r}
+#Just shockwave 
+Nd<-data2[data2$first_value != "WL" & data2$first_value != "Higest" ,]
+
+Nd <- Nd %>%
+  mutate(CROP = case_when(
+    `Crop1` == "Shockwave" ~ "monoA",
+    `Crop1` == "IWG" ~ "monoI",
+    `Crop1` == "Shockwave + IWG" ~ "inter",
+    TRUE ~ NA_character_  # Handle other cases if any
+  ))
+
+# MN 2024 has some Filler plots which get the NA character, but code later in this script dosn't like it. 
+# So removing these here
+Nd <- Nd %>%
+  filter(!is.na(CROP))
+```
+
+```{r}
+#Year
+NdX<-Nd[Nd$YearCode == "X",]
+NdY<-Nd[Nd$YearCode == "Y",]
+NdZ<-Nd[Nd$YearCode == "Z",]
+
+#REMOVE this once you get the corrected year 2 grain values in 
+NdY$G<-NdY$PlotThreshedGrainKgHa
+
+#Harvest 
+NdXS<-NdX[NdX$Harvest == "Summer",]
+NdXF<-NdX[NdX$Harvest == "Fall",]
+
+NdYS<-NdY[NdY$Harvest == "Summer",]
+NdYF<-NdY[NdY$Harvest == "Fall",]
+
+NdZS<-NdZ[NdZ$Harvest == "Summer",]
+NdZF<-NdZ[NdZ$Harvest == "Fall",]
+
+#IWG vs ALF 
+NdXSI<-NdXS[NdXS$Crop1 != "Shockwave",]
+NdXSA<-NdXS[NdXS$Crop1 != "IWG",]
+
+NdXFI<-NdXF[NdXF$Crop1 != "Shockwave",]
+NdXFA<-NdXF[NdXF$Crop1 != "IWG",]
+
+NdYSI<-NdYS[NdYS$Crop1 != "Shockwave" ,]
+NdYSA<-NdYS[NdYS$Crop1 != "IWG",]
+
+NdYFI<-NdYF[NdYF$Crop1 != "Shockwave",]
+NdYFA<-NdYF[NdYF$Crop1 != "IWG",]
+
+NdZSI<-NdZS[NdZS$Crop1 != "Shockwave" ,]
+NdZSA<-NdZS[NdZS$Crop1 != "IWG",]
+
+NdZFI<-NdZF[NdZF$Crop1 != "Shockwave",]
+NdZFA<-NdZF[NdZF$Crop1 != "IWG",]
+```
+
+## Analysis for the paper
 
 # Grain Yield 
 
@@ -205,6 +567,713 @@ ggsave("GEC.jpg", plot = GEC, width =12, height = 6, dpi = 350)
 * Table (Estimated effect of nitrogen rate on total forage yield for each environment (Site) and cropping system across harvests) : combine the "sorted_df" that is created at the end of the chunk for each forage model
 
 * Figure (Total forage yield response to environment and cropping system for Year 2 Fall) : total forage figure E:C (YF)
+
+#Total forage year 1 summer
+```{r}
+#linear
+#modNXST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdXS) # NOT this one
+modNXST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdXS)
+anova(modNXST)
+#Check Assumptions
+NXST_resid<-resid(modNXST)
+qqnorm(NXST_resid)
+qqline(NXST_resid)
+plot(modNXST)
+#Logtransform
+modNXST1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|P:Rep), data=NdXS)
+anova(modNXST1)
+summary(modNXST1)
+#check assumptions logtransform (makes it BETTER)
+NXST_resid1<-resid(modNXST1)
+qqnorm(NXST_resid1)
+qqline(NXST_resid1)
+plot(modNXST1)
+
+library(bestNormalize)
+bn <- bestNormalize(NdXS$PlotTotForageKgHa)
+bn$chosen_transform
+NdXS$PlotTotForageKgHa_trans <- bn$x.t
+modNXST2<-lmer(PlotTotForageKgHa_trans~N*P*CROP + (1|P:Rep), data=NdXS)
+anova(modNXST2)
+summary(modNXST2)
+NXST_resid2<-resid(modNXST2)
+qqnorm(NXST_resid2)
+qqline(NXST_resid2)
+plot(modNXST2)
+
+
+modNXST1_summary <- summary(modNXST1)
+modNXST1_coeff <- as.data.frame(modNXST1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+rownames(modNXST1_coeff)[2]<-"NY"
+rownames(modNXST1_coeff)[3]<-"KS"
+rownames(modNXST1_coeff)[4]<-"WI"
+rownames(modNXST1_coeff)[5]<-"monoI"
+rownames(modNXST1_coeff)[6]<-"Nrate:monoI"
+rownames(modNXST1_coeff)[7]<-"WI:monoA"
+rownames(modNXST1_coeff)[8]<-"KS:monoI"
+rownames(modNXST1_coeff)[9]<-"WI:monoI"
+colnames(modNXST1_coeff)[5]<-"Pr(>t)"
+# Create custom table using kable and kableExtra
+knitr::kable(modNXST1_coeff, caption = "Summer 2022 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+
+desired_order_P <- c("MN", "NY", "KS", "WI")
+N_levels <- c(0, 40, 80, 120, 160)
+
+#plot log-linear by location (log)
+NdXS$predicted <- predict(modNXST1, newdata = NdXS, re.form = NA)
+ggplot(NdXS, aes(x = N, y = PlotTotForageKgHa , color = CROP, group = CROP)) +
+    geom_point() + 
+  geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Grain Yield (log scale)") +
+  ggtitle("Yr 1 S Relationship between Total Forage Yield and Nrate") +
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0,15000)+
+  facet_wrap(~P, scales = "free_y", ncol = 2) +
+  scale_color_discrete(name = "Cropping System")
+
+#Three way means
+#NXST1emm <- compute_emmeansNXS("modNXST1")
+
+#Pairwise N:P:C
+emmsNPC <- emmeans(modNXST1, ~ N*P*CROP,at= list(N = N_levels), type= "response") 
+cld_dataNXSTNPC <- cld(emmsNPC, Letters=custom_letters) # Create compact letter display
+cld_dataNXSTNPC$response <- format(cld_dataNXSTNPC$response, digits = 5)
+rownames(cld_dataNXSTNPC) <- NULL
+cld_dataNXSTNPC<- cld_dataNXSTNPC %>%
+  select(N, P, CROP, response, .group)
+colnames(cld_dataNXSTNPC) <- c("N", "Site", "Cropping System", "Total Forage (kg ha-1)", "Group")
+cld_dataNXSTNPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#This gives us the slope for each interactions as well as a P value indicating significance level for that slope
+emtrends(modNXST1,~ P*CROP, var= "N", infer=TRUE)
+  summary(modNXST1)
+emtrends(modNXST1,~ P, var= "N", infer=TRUE)
+emtrends(modNXST1,~ CROP, var= "N", infer=TRUE)
+
+#emmeans for intercepts! via erika
+emtrends_result<-emtrends(modNXST1,~ P*CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNXST1, ~P*CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "CROP")) %>%
+  select(P, CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI","monoA"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P, CROP)
+#view(sorted_df)
+```
+
+#Total forage year 1 fall 
+#assumptions BAD!!
+```{r}
+#linear
+NdXF$PlotTotForageKgHa<-as.numeric(NdXF$PlotTotForageKgHa)
+modNXFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdXF)
+anova(modNXFT)
+summary(modNXFT)
+#Check Assumptions
+NXFT_resid<-resid(modNXFT)
+qqnorm(NXFT_resid)
+qqline(NXFT_resid)
+plot(modNXFT)
+#Check Assumptions Linear logtrans
+modNXFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|P:Rep), data=NdXF)
+anova(modNXFT1)
+NXFT1_resid<-resid(modNXFT1)
+qqnorm(NXFT1_resid)
+qqline(NXFT1_resid)
+plot(modNXFT1)
+
+#modNXFT1_summary <- summary(modNXFT1)
+#modNXFT1_coeff <- as.data.frame(modNXFT1_summary$coefficients)%>%
+#  filter(`Pr(>|t|)` < 0.05)
+#rownames(modNXFT1_coeff)[2]<-"WI"
+#rownames(modNXFT1_coeff)[3]<-"monoI"
+#rownames(modNXFT1_coeff)[4]<-"Nrate:monoI"
+#rownames(modNXFT1_coeff)[5]<-"WI:monoA"
+#rownames(modNXFT1_coeff)[6]<-"NY:monoI"
+#colnames(modNXFT1_coeff)[5]<-"Pr(>t)"
+# Create custom table using kable and kableExtra
+#knitr::kable(modNXFT1_coeff, caption = "Fall 2022 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
+#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+
+
+#plots
+NdXF$predicted <- predict(modNXFT1, newdata = NdXF, re.form = NA)
+ggplot(NdXF, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
+    geom_point() + 
+  geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Total Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 1 F Relationship between Total Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 3300) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+
+#Threeway means
+#NXFT1emm <- compute_emmeansNXF("modNXFT1")
+
+#Pairwise N:P:C
+emmsNPC <- emmeans(modNXFT1, ~ N*P*CROP,at= list(N = N_levels), type= "response") 
+cld_dataNXFTNPC <- cld(emmsNPC, Letters=custom_letters) # Create compact letter display
+cld_dataNXFTNPC$response <- format(cld_dataNXFTNPC$response, digits = 5)
+rownames(cld_dataNXFTNPC) <- NULL
+cld_dataNXFTNPC<- cld_dataNXFTNPC %>%
+  select(N, P, CROP, response, .group)
+colnames(cld_dataNXFTNPC) <- c("N", "Site", "Cropping System", "Total Forage (kg ha-1)", "Group")
+cld_dataNXFTNPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#This gives us the slope for each interactions as well as a P value indicating significance level for that slope
+emtrends_result<-emtrends(modNXFT1,~ P*CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  #view(emtrends_df)
+emtrends(modNXFT1,~ P, var= "N", infer=TRUE)
+emtrends(modNXFT1,~ CROP, var= "N", infer=TRUE)
+
+#equations table
+emtrends_result<-emtrends(modNXFT1,~ P*CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNXFT1, ~P*CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "CROP")) %>%
+  select(P, CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI","monoA"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P, CROP)
+#view(sorted_df)
+```
+
+#Total forage year 2 summer
+```{r}
+#linear
+modNYST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdYS)
+anova(modNYST)
+#Check Assumptions
+NYST_resid<-resid(modNYST)
+qqnorm(NYST_resid)
+qqline(NYST_resid)
+plot(modNYST)
+#Logtransform
+modNYST1<-lmer(log(PlotTotForageKgHa+0.0001)~N*P*CROP + (1|P:Rep), data=NdYS)
+anova(modNYST1)
+summary(modNYST1)
+#check assumptions logtransform (makes it BETTERISH)
+NYST_resid1<-resid(modNYST1)
+qqnorm(NYST_resid1)
+qqline(NYST_resid1)
+plot(modNYST1)
+
+modNYST_summary <- summary(modNYST)
+#modNYST_coeff <- as.data.frame(modNYST_summary$coefficients)%>%
+#  filter(`Pr(>|t|)` < 0.05)
+#rownames(modNYST1_coeff)[2]<-"KS"
+#rownames(modNYST1_coeff)[3]<-"monoA"
+#rownames(modNYST1_coeff)[4]<-"monoI"
+#rownames(modNYST1_coeff)[5]<-"Nrate:monoI"
+#rownames(modNYST1_coeff)[6]<-"KS:monoI"
+#rownames(modNYST1_coeff)[7]<-"Nrate:KS:monoA"
+#colnames(modNYST1_coeff)[5]<-"Pr(>t)"
+# Create custom table using kable and kableExtra
+#knitr::kable(modNYST1_coeff, caption = "Summer 2023 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+
+
+max(NdYS$PlotTotForageKgHa)
+#linear plots
+NdYS$predicted <- predict(modNYST1, newdata = NdYS, re.form = NA)
+ggplot(NdYS, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
+  geom_point() +
+  geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Total Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 2 S Relationship between Total Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 9000) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+
+#Threeway means
+#NYST1emm <- compute_emmeansNYS("modNYST1")
+
+#Pairwise N:P:C
+emmsNPC <- emmeans(modNYST1, ~ N*P*CROP,at= list(N = N_levels), type= "response") 
+cld_dataNYSTNPC <- cld(emmsNPC, Letters=custom_letters) # Create compact letter display
+cld_dataNYSTNPC$response <- format(cld_dataNYSTNPC$response, digits = 5)
+rownames(cld_dataNYSTNPC) <- NULL
+cld_dataNYSTNPC<- cld_dataNYSTNPC %>%
+  select(N, P, CROP, response, .group)
+colnames(cld_dataNYSTNPC) <- c("N", "Site", "Cropping System", "Total Forage (kg ha-1)", "Group")
+cld_dataNYSTNPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+
+#This gives us the slope for each interactions as well as a P value indicating significance level for that slope
+emtrends_result<-emtrends(modNYST1,~ P*CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  #view(emtrends_df)
+emtrends(modNYST1,~ P, var= "N", infer=TRUE)
+emtrends(modNYST1,~ CROP, var= "N", infer=TRUE)
+
+#equations table
+emtrends_result<-emtrends(modNYST1,~ P*CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNYST1, ~P*CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "CROP")) %>%
+  select(P, CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI","monoA"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P, CROP)
+#view(sorted_df)
+```
+
+#Total forage year 2 fall
+```{r}
+#linear
+NdYF$PlotTotForageKgHa<-as.numeric(NdYF$PlotTotForageKgHa)
+NdYF$N<-as.numeric(NdYF$N)
+modNYFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdYF) #linear 
+anova(modNYFT)
+summary(modNYFT)
+#Check Assumptions
+NYFT_resid<-resid(modNYFT)
+qqnorm(NYFT_resid)
+qqline(NYFT_resid)
+plot(modNYFT)
+abline(h = 0, col="red")
+#Logtransform
+modNYFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|P:Rep), data=NdYF)
+NYFT_resid1<-resid(modNYFT1)
+qqnorm(NYFT_resid1)
+qqline(NYFT_resid1)
+plot(modNYFT1)
+anova(modNYFT1)
+
+#modNYFT1_summary <- summary(modNYFT1)
+#modNYFT1_coeff <- as.data.frame(modNYFT1_summary$coefficients)%>%
+#  filter(`Pr(>|t|)` < 0.05)
+#rownames(modNYFT1_coeff)[2]<-"monoA"
+#rownames(modNYFT1_coeff)[3]<-"monoI"
+#rownames(modNYFT1_coeff)[4]<-"WI:monoI"
+#colnames(modNYFT1_coeff)[5]<-"Pr(>t)"
+# Create custom table using kable and kableExtra
+#knitr::kable(modNYST1_coeff, caption = "Fall 2023 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
+#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+
+
+#linear plots
+NdYF$predicted <- predict(modNYFT1, newdata = NdYF, re.form = NA)
+ggplot(NdYF, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Total Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 2 F Relationship between Total Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 3500) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+
+#Threeway means
+#NYFT1emm <- compute_emmeansNYF("modNYFT1")
+
+#Pairwise NPC
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNPC <- emmeans(modNYFT1, specs = ~ N*P*CROP, at = list(N = N_levels), type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYFTNPC <- cld(emmsNPC, Letters=custom_letters )
+#Pairwise C
+emmsC <- emmeans(modNYFT1, ~ CROP, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYFTC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
+cld_dataNYFTC$response <- format(cld_dataNYFTC$response, digits = 5)
+cld_dataNYFTC<- cld_dataNYFTC %>%
+  select(CROP, response, .group)
+rownames(cld_dataNYFTC) <- NULL
+colnames(cld_dataNYFTC) <- c("Cropping System", "Total Forage (kg ha-1)", "Group")
+cld_dataNYFTC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise N:C
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNYFT <- emmeans(modNYFT1, specs = ~ N*CROP, at = list(N = N_levels), type = "response")
+cld_dataNYFTNC <- cld(emmsNYFT, Letters=custom_letters) # Create compact letter display
+cld_dataNYFTNC$response <- format(cld_dataNYFTNC$response, digits = 5)
+cld_dataNYFTNC<- cld_dataNYFTNC %>%
+  select(N, CROP, response, .group)
+rownames(cld_dataNYFTNC) <- NULL
+colnames(cld_dataNYFTNC) <- c("N", "Cropping System", "Total Forage (kg ha-1)", "Group")
+cld_dataNYFTNC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise P:C
+emmsNYFTPC <- emmeans(modNYFT1, specs = ~ P*CROP, type = "response")
+cld_dataNYFTPC <- cld(emmsNYFTPC, Letters=custom_letters) # Create compact letter display
+cld_dataNYFTPC$response <- format(cld_dataNYFTPC$response, digits = 5)
+cld_dataNYFTPC<- cld_dataNYFTPC %>%
+  select(P, CROP, response, .group)
+rownames(cld_dataNYFTPC) <- NULL
+colnames(cld_dataNYFTPC) <- c("Location", "Cropping System", "Total Forage (kg ha-1)", "Group")
+cld_dataNYFTPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+
+#This gives us the slope for each interactions as well as a P value indicating significance level for that slope
+emtrends(modNYFT1,~ P*CROP, var= "N", infer=TRUE)
+emtrends(modNYFT1,~ P, var= "N", infer=TRUE)
+emtrends(modNYFT1,~ CROP, var= "N", infer=TRUE)
+
+#equations table
+emtrends_result<-emtrends(modNYFT1,~ CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNYFT1, ~CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c( "CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI","monoA"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange( CROP)
+#view(sorted_df)
+```
+
+
+#Total forage year 3 summer
+# Assumptions not great
+```{r}
+NdZS_2 <- NdZS[NdZS$PlotTotForageKgHa != 0, ] # remove rows where the total forage was 0
+
+#linear
+modNZST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdZS_2)
+anova(modNZST)
+#Check Assumptions
+NZST_resid<-resid(modNZST)
+qqnorm(NZST_resid)
+qqline(NZST_resid)
+plot(modNZST)
+#Logtransform
+modNZST1<-lmer(log(PlotTotForageKgHa+0.01)~N*P*CROP + (1|P:Rep), data=NdZS_2) 
+anova(modNZST1)
+summary(modNZST1)
+#check assumptions logtransform (makes it BETTERISH)
+NZST_resid1<-resid(modNZST1)
+qqnorm(NZST_resid1)
+qqline(NZST_resid1)
+plot(modNZST1)
+#Sqrttransform
+modNZST2<-lmer(sqrt(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdZS) 
+anova(modNZST2)
+summary(modNZST2)
+#check assumptions Sqrttransform (makes it BETTERISH)
+NZST_resid2<-resid(modNZST2)
+qqnorm(NZST_resid2)
+qqline(NZST_resid2)
+plot(NZST_resid2)
+
+library(bestNormalize)
+bn <- bestNormalize(NdZS$PlotTotForageKgHa)
+bn$chosen_transform
+NdZS$PlotTotForageKgHa_trans <- bn$x.t
+modNZST3<-lmer(PlotTotForageKgHa_trans~N*P*CROP + (1|P:Rep), data=NdZS)
+summary(modNZST3)
+anova(modNZST3)
+NZST_resid3<-resid(modNZST3)
+qqnorm(NZST_resid3)
+qqline(NZST_resid3)
+plot(modNZST3)
+
+#modNZST1_summary <- summary(modNZST1)
+#modNZST1_coeff <- as.data.frame(modNZST1_summary$coefficients)%>%
+#  filter(`Pr(>|t|)` < 0.05)
+#rownames(modNZST1_coeff)[2]<-"NY"
+#rownames(modNZST1_coeff)[3]<-"WI"
+#colnames(modNZST1_coeff)[5]<-"Pr(>t)"
+# Create custom table using kable and kableExtra
+#knitr::kable(modNZST1_coeff, caption = "Summer 2024 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
+#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+
+
+#max(NdZS$PlotTotForageKgHa)
+
+#linear plots
+NdZS_2$predicted <- predict(modNZST1, newdata = NdZS_2, re.form = NA)
+ggplot(NdZS_2, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
+  geom_point() +
+  geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Total Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 3 S Relationship between Total Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 9000) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+
+ggplot(NdZS_2, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
+  geom_point() +
+  geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Total Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Relationship between Total Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 3500) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+
+# removed y lim so the y axis is free; WI was extremly compact so this allows each line for WI to be visable
+ggplot(NdZS_2, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
+  geom_point() +
+  geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Total Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 3 S Relationship between Total Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+
+#Threeway means
+#NYST1emm <- compute_emmeansNYS("modNYST1")
+
+#Pairwise N:P:C
+emmsNPC <- emmeans(modNZST1, ~ N*P*CROP,at= list(N = N_levels), type= "response") 
+cld_dataNZSTNPC <- cld(emmsNPC, Letters=custom_letters) # Create compact letter display
+cld_dataNZSTNPC$response <- format(cld_dataNZSTNPC$response, digits = 5)
+rownames(cld_dataNZSTNPC) <- NULL
+cld_dataNZSTNPC<- cld_dataNZSTNPC %>%
+  select(N, P, CROP, response, .group)
+colnames(cld_dataNZSTNPC) <- c("N", "Site", "Cropping System", "Total Forage (kg ha-1)", "Group")
+cld_dataNZSTNPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+
+#This gives us the slope for each interactions as well as a P value indicating significance level for that slope
+emtrends_result<-emtrends(modNZST1,~ P*CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  #view(emtrends_df)
+emtrends(modNZST1,~ P, var= "N", infer=TRUE)
+emtrends(modNZST1,~ CROP, var= "N", infer=TRUE)
+
+#equations table
+emtrends_result<-emtrends(modNZST1,~ P*CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNZST1, ~P*CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "CROP")) %>%
+  select(P, CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI","monoA"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P, CROP)
+#view(sorted_df)
+```
+
+
+#Total forage year 3 fall
+```{r}
+NdZF_2 <- NdZF[NdZF$PlotTotForageKgHa != 0, ] # remove rows where the total forage was 0
+
+#linear
+NdZF_2$PlotTotForageKgHa<-as.numeric(NdZF_2$PlotTotForageKgHa)
+NdZF_2$N<-as.numeric(NdZF_2$N)
+#modNZFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdZF_2) #linear 
+# Error: boundary (singular) fit: see help('isSingular')
+modNZFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdZF_2) #linear 
+anova(modNYFT)
+summary(modNZFT)
+#Check Assumptions
+NZFT_resid<-resid(modNZFT)
+qqnorm(NZFT_resid)
+qqline(NZFT_resid)
+plot(modNZFT)
+abline(h = 0, col="red")
+#Logtransform
+#modNZFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdZF_2)
+# boundary (singular) fit: see help('isSingular')
+modNZFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|P:Rep), data=NdZF_2)
+NZFT_resid1<-resid(modNZFT1)
+qqnorm(NZFT_resid1)
+qqline(NZFT_resid1)
+plot(modNZFT1)
+anova(modNZFT1)
+
+
+#modNZFT1_summary <- summary(modNZFT1)
+#modNZFT1_coeff <- as.data.frame(modNZFT1_summary$coefficients)%>%
+#  filter(`Pr(>|t|)` < 0.05)
+#rownames(modNYFT1_coeff)[2]<-"monoA"
+#rownames(modNYFT1_coeff)[3]<-"monoI"
+#rownames(modNYFT1_coeff)[4]<-"WI:monoI"
+#colnames(modNYFT1_coeff)[5]<-"Pr(>t)"
+# Create custom table using kable and kableExtra
+#knitr::kable(modNYFT1_coeff, caption = "Fall 2024 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
+#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+
+#linear plots
+NdZF_2$predicted <- predict(modNZFT1, newdata = NdZF_2, re.form = NA)
+ggplot(NdZF_2, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Total Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 3 F Relationship between Total Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 3500) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+
+#Threeway means
+#NYFT1emm <- compute_emmeansNYF("modNYFT1")
+
+#Pairwise NPC
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNPC <- emmeans(modNYFT1, specs = ~ N*P*CROP, at = list(N = N_levels), type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYFTNPC <- cld(emmsNPC, Letters=custom_letters )
+#Pairwise C
+emmsC <- emmeans(modNYFT1, ~ CROP, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYFTC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
+cld_dataNYFTC$response <- format(cld_dataNYFTC$response, digits = 5)
+cld_dataNYFTC<- cld_dataNYFTC %>%
+  select(CROP, response, .group)
+rownames(cld_dataNYFTC) <- NULL
+colnames(cld_dataNYFTC) <- c("Cropping System", "Total Forage (kg ha-1)", "Group")
+cld_dataNYFTC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise N:C
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNYFT <- emmeans(modNYFT1, specs = ~ N*CROP, at = list(N = N_levels), type = "response")
+cld_dataNYFTNC <- cld(emmsNYFT, Letters=custom_letters) # Create compact letter display
+cld_dataNYFTNC$response <- format(cld_dataNYFTNC$response, digits = 5)
+cld_dataNYFTNC<- cld_dataNYFTNC %>%
+  select(N, CROP, response, .group)
+rownames(cld_dataNYFTNC) <- NULL
+colnames(cld_dataNYFTNC) <- c("N", "Cropping System", "Total Forage (kg ha-1)", "Group")
+cld_dataNYFTNC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise P:C
+emmsNYFTPC <- emmeans(modNYFT1, specs = ~ P*CROP, type = "response")
+cld_dataNYFTPC <- cld(emmsNYFTPC, Letters=custom_letters) # Create compact letter display
+cld_dataNYFTPC$response <- format(cld_dataNYFTPC$response, digits = 5)
+cld_dataNYFTPC<- cld_dataNYFTPC %>%
+  select(P, CROP, response, .group)
+rownames(cld_dataNYFTPC) <- NULL
+colnames(cld_dataNYFTPC) <- c("Location", "Cropping System", "Total Forage (kg ha-1)", "Group")
+cld_dataNYFTPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+
+#This gives us the slope for each interactions as well as a P value indicating significance level for that slope
+emtrends(modNYFT1,~ P*CROP, var= "N", infer=TRUE)
+emtrends(modNYFT1,~ P, var= "N", infer=TRUE)
+emtrends(modNYFT1,~ CROP, var= "N", infer=TRUE)
+
+#equations table
+emtrends_result<-emtrends(modNYFT1,~ CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNYFT1, ~CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c( "CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI","monoA"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange( CROP)
+#view(sorted_df)
+```
+
+#total forage figure E:C (YF)
+```{r}
+max(NdYF$predicted)
+exp(7.828112)
+YFTFemmsPC <- emmeans(modNYFT1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(YFTFemmsPC)
+cld_dataYFTFPC <- cld(YFTFemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataYFTFPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+custom_labels <- c("Intercrop", "Monoculture Alfalfa","Monoculture IWG")
+custom_colors <- c("darkmagenta","coral1", "cyan") 
+TFYFPC<-ggplot(NdYF, aes(x = P, y = exp(predicted), color = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Total Forage Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)+
+  theme(plot.title = element_text(hjust = 0.5))
+
+print(TFYFPC)
+ggsave("TFYFPC.jpg", plot = TFYFPC, width = 8, height = 6, dpi = 300)
+```
 
 # IWG Forage Yield 
 
