@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#just loading these in, unsure which exactly are still used
+# just loading these in, unsure which exactly are still used
 ```{r}
 library(dplyr)
 library(tidyr)
@@ -41,9 +41,10 @@ library(cowplot)
 library(kableExtra)
 library(MuMIn)
 library(ggpmisc)
+library(bestNormalize)
 ```
 
-#making emmeans functions 
+# making emmeans functions 
 ```{r}
 # Define a 3 WAY function for year 1 summer
 compute_emmeansNXS <- function(model_name) {
@@ -254,13 +255,13 @@ compute_emmeansNZF2 <- function(model_name) {
   return(emm_df)}
 ```
 
-## Estimation of Dehulled Grain Yield
+### Estimation of Dehulled Grain Yield
 
 The IWG grain threshability visibly varied by site, and not all grains were fully dehulled, so it was deemed necessary to estimate the true mass of dehulled grain in order to prevent poorly threshed plots from being incorrectly represented as higher yielding. To correct for this, 3-gram samples were taken from each plot’s grain yield. These samples were weighed and imaged, and the images were analyzed using the software ilastik, which visually estimated the proportion of grain still in the hull, naked grain, grain still in the spikelet, and empty hulls and spikelets. The resulting proportions were used to create an estimated dehulled grain weight for the sample, which was then extrapolated to derive an adjusted dehulled grain yield for each experimental plot (Altendorf et al., 2021)
 
 Adjusted plot grain yield= (estimated dehulled sample weight/ sample weight)*(plot grain yield weight) 
 
-## Land Equivalent Ratio (LER)
+### Land Equivalent Ratio (LER)
 
 Land Equivalent Ratio (LER) was calculated to compare the performance of intercrops to that of monocultures... Indicates a relative total forage yield advantage for intercropped plots if the TLER is greater than 1(Mead & Willey, 1980). 
 
@@ -275,7 +276,7 @@ where LA is the partial land equivalent ratio (PLER) for an individual crops and
 
 TLER, PLER, and PrLER were calculated using plots of the same N rate to allow for comparison in the performance of the intercropped system at different N rates (Oyejola & Mead, 1982). TLER and PrLER could not be calculated for grain yields, as IWG only represented one grain-bearing crop in the intercrop, but PLER was calculated for grain yield to allow for comparison between N rates
 
-## Effects and interactions of N rate (N), cropping system (CROP), and environment (E)
+### Effects and interactions of N rate (N), cropping system (CROP), and environment (E)
 
 Log-linear mixed-effects models with replication as a random effect (ϵ) 
 log(Response variable) ~ N*E*C + ϵ
@@ -302,7 +303,7 @@ Forage quality only on year 1 and year 2 harvests
 
 Analysis of covariance (ANCOVA) was used to determine significant differences (P<0.05) between independent variables and their interactions. Estimated marginal means (EMMs) were calculated and pairwise comparisons were used to understand and rank results between independent variables. 
 
-## Data prep for analysis 
+### Data prep for analysis 
 
 ```{r}
 data<-read.csv('data/MasterDataSpreadsheet.csv')
@@ -416,9 +417,9 @@ NdZFI<-NdZF[NdZF$Crop1 != "Shockwave",]
 NdZFA<-NdZF[NdZF$Crop1 != "IWG",]
 ```
 
-## Analysis for the paper
+### Analysis for the paper
 
-# Grain Yield 
+## Grain Yield 
 
 * Table (Grain yield significance of variables and interactions for each model): Grain anovas 
 
@@ -426,7 +427,7 @@ NdZFA<-NdZF[NdZF$Crop1 != "IWG",]
 
 * Figure (Grain yield response to cropping system and site by harvest) : combined grain year 1 and 2 plots E:C
 
-#Grain anovas 
+# Grain anovas 
 ```{r}
 my_modelsNG <- c(modNXG1, modNYG1, modNYGadj1)
 anovasNG <- purrr::map(my_modelsNG, ~anova(.))
@@ -462,7 +463,7 @@ gt_NG <- gt(NG_stars)
 gt_NG |> gtsave("gt_NG.png", expand = 10)
 ```
 
-#grain figures redo N:E
+# grain figures redo N:E
 ```{r}
 #N:E
 # Layer all the plots together!
@@ -499,7 +500,7 @@ ggsave("GraincomboplotNE.jpg", plot = GraincomboplotNE, width = 8, height = 6, d
 
 ```
 
-#grain figure E:C (X)
+# grain figure E:C (X)
 ```{r}
 
 NXGemmsPC <- emmeans(modNXG1, ~ P*C, type = "response") # Obtain estimated marginal means (excluding N)
@@ -526,7 +527,7 @@ print(GXPC)
 ggsave("GXPC.jpg", plot = GXPC, width = 8, height = 6, dpi = 300)
 ```
 
-#grain figure E:C (Y)
+# grain figure E:C (Y)
 ```{r}
 
 NYGemmsPC <- emmeans(modNYGadj1, ~ P*C, type = "response") # Obtain estimated marginal means (excluding N)
@@ -555,24 +556,23 @@ print(GYPC)
 ggsave("GYPC.jpg", plot = GYPC, width = 8, height = 6, dpi = 300)
 ```
 
-#combined grain year 1 and 2 plots E:C
+# combined grain year 1 and 2 plots E:C
 # Probably need to add in yr 3 ! 
 ```{r}
 GEC<-grid.arrange(GXPC, GYPC, ncol = 2)
 ggsave("GEC.jpg", plot = GEC, width =12, height = 6, dpi = 350)
 ```
 
-# Total Forage Yield 
+## Total Forage Yield 
 
 * Table (Estimated effect of nitrogen rate on total forage yield for each environment (Site) and cropping system across harvests) : combine the "sorted_df" that is created at the end of the chunk for each forage model
 
 * Figure (Total forage yield response to environment and cropping system for Year 2 Fall) : total forage figure E:C (YF)
 
-#Total forage year 1 summer
+# Total forage year 1 summer
 ```{r}
 #linear
-#modNXST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdXS) # NOT this one
-modNXST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdXS)
+modNXST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdXS)
 anova(modNXST)
 #Check Assumptions
 NXST_resid<-resid(modNXST)
@@ -580,43 +580,23 @@ qqnorm(NXST_resid)
 qqline(NXST_resid)
 plot(modNXST)
 #Logtransform
-modNXST1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|P:Rep), data=NdXS)
+modNXST1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdXS)
 anova(modNXST1)
 summary(modNXST1)
-#check assumptions logtransform (makes it BETTER)
+#check assumptions logtransform
 NXST_resid1<-resid(modNXST1)
 qqnorm(NXST_resid1)
 qqline(NXST_resid1)
 plot(modNXST1)
 
-library(bestNormalize)
-bn <- bestNormalize(NdXS$PlotTotForageKgHa)
-bn$chosen_transform
-NdXS$PlotTotForageKgHa_trans <- bn$x.t
-modNXST2<-lmer(PlotTotForageKgHa_trans~N*P*CROP + (1|P:Rep), data=NdXS)
-anova(modNXST2)
-summary(modNXST2)
-NXST_resid2<-resid(modNXST2)
-qqnorm(NXST_resid2)
-qqline(NXST_resid2)
-plot(modNXST2)
-
 
 modNXST1_summary <- summary(modNXST1)
 modNXST1_coeff <- as.data.frame(modNXST1_summary$coefficients)%>%
   filter(`Pr(>|t|)` < 0.05)
-rownames(modNXST1_coeff)[2]<-"NY"
-rownames(modNXST1_coeff)[3]<-"KS"
-rownames(modNXST1_coeff)[4]<-"WI"
-rownames(modNXST1_coeff)[5]<-"monoI"
-rownames(modNXST1_coeff)[6]<-"Nrate:monoI"
-rownames(modNXST1_coeff)[7]<-"WI:monoA"
-rownames(modNXST1_coeff)[8]<-"KS:monoI"
-rownames(modNXST1_coeff)[9]<-"WI:monoI"
-colnames(modNXST1_coeff)[5]<-"Pr(>t)"
+colnames(modNXFT1_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-knitr::kable(modNXST1_coeff, caption = "Summer 2022 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
-  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+knitr::kable(modNXST1_coeff, caption = "Y1 Summer Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr1S.html")
 
 desired_order_P <- c("MN", "NY", "KS", "WI")
 N_levels <- c(0, 40, 80, 120, 160)
@@ -634,7 +614,8 @@ ggplot(NdXS, aes(x = N, y = PlotTotForageKgHa , color = CROP, group = CROP)) +
   scale_color_discrete(name = "Cropping System")
 
 #Three way means
-#NXST1emm <- compute_emmeansNXS("modNXST1")
+NXST1emm <- compute_emmeansNXS("modNXST1")
+#write.csv(NXST1emm, 'data/NXST1emm.csv')
 
 #Pairwise N:P:C
 emmsNPC <- emmeans(modNXST1, ~ N*P*CROP,at= list(N = N_levels), type= "response") 
@@ -674,15 +655,15 @@ new_df <- merged_df %>%
   select(-emmean, -N.trend)
 sorted_df <- new_df %>%
   arrange(P, CROP)
-#view(sorted_df)
+#View(sorted_df)
+#write.csv(sorted_df, "data/Nrate_esteff_total_forage_yr1S.csv")
 ```
 
-#Total forage year 1 fall 
-#assumptions BAD!!
+# Total forage year 1 fall 
 ```{r}
 #linear
 NdXF$PlotTotForageKgHa<-as.numeric(NdXF$PlotTotForageKgHa)
-modNXFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdXF)
+modNXFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdXF)
 anova(modNXFT)
 summary(modNXFT)
 #Check Assumptions
@@ -691,26 +672,21 @@ qqnorm(NXFT_resid)
 qqline(NXFT_resid)
 plot(modNXFT)
 #Check Assumptions Linear logtrans
-modNXFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|P:Rep), data=NdXF)
+modNXFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdXF)
 anova(modNXFT1)
 NXFT1_resid<-resid(modNXFT1)
 qqnorm(NXFT1_resid)
 qqline(NXFT1_resid)
 plot(modNXFT1)
 
-#modNXFT1_summary <- summary(modNXFT1)
-#modNXFT1_coeff <- as.data.frame(modNXFT1_summary$coefficients)%>%
-#  filter(`Pr(>|t|)` < 0.05)
-#rownames(modNXFT1_coeff)[2]<-"WI"
-#rownames(modNXFT1_coeff)[3]<-"monoI"
-#rownames(modNXFT1_coeff)[4]<-"Nrate:monoI"
-#rownames(modNXFT1_coeff)[5]<-"WI:monoA"
-#rownames(modNXFT1_coeff)[6]<-"NY:monoI"
-#colnames(modNXFT1_coeff)[5]<-"Pr(>t)"
-# Create custom table using kable and kableExtra
-#knitr::kable(modNXFT1_coeff, caption = "Fall 2022 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
-#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
-
+modNXFT1_summary <- summary(modNXFT1)
+modNXFT1_coeff <- as.data.frame(modNXFT1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+colnames(modNXFT1_coeff)[5]<-"Pr(>t)"
+ #Create custom table using kable and kableExtra
+knitr::kable(modNXFT1_coeff, caption = "Y1 Fall Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr1F.html")
+# save table_significant_coeff_yr1F
 
 #plots
 NdXF$predicted <- predict(modNXFT1, newdata = NdXF, re.form = NA)
@@ -723,9 +699,11 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 3300) +
   facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
   scale_color_discrete(name = "Cropping System")  #legend for colors
+# save total_forage_Nrate_yr1F.jpeg
 
 #Threeway means
 #NXFT1emm <- compute_emmeansNXF("modNXFT1")
+#write.csv(NXFT1emm, 'data/NXFT1emm.csv')
 
 #Pairwise N:P:C
 emmsNPC <- emmeans(modNXFT1, ~ N*P*CROP,at= list(N = N_levels), type= "response") 
@@ -768,13 +746,14 @@ new_df <- merged_df %>%
   select(-emmean, -N.trend)
 sorted_df <- new_df %>%
   arrange(P, CROP)
-#view(sorted_df)
+#View(sorted_df)
+#write.csv(sorted_df, "data/Nrate_esteff_total_forage_yr1F.csv")
 ```
 
-#Total forage year 2 summer
+# Total forage year 2 summer
 ```{r}
 #linear
-modNYST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdYS)
+modNYST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdYS)
 anova(modNYST)
 #Check Assumptions
 NYST_resid<-resid(modNYST)
@@ -782,28 +761,23 @@ qqnorm(NYST_resid)
 qqline(NYST_resid)
 plot(modNYST)
 #Logtransform
-modNYST1<-lmer(log(PlotTotForageKgHa+0.0001)~N*P*CROP + (1|P:Rep), data=NdYS)
+modNYST1<-lmer(log(PlotTotForageKgHa+0.0001)~N*P*CROP + (1|Rep), data=NdYS)
 anova(modNYST1)
 summary(modNYST1)
-#check assumptions logtransform (makes it BETTERISH)
+#check assumptions logtransform
 NYST_resid1<-resid(modNYST1)
 qqnorm(NYST_resid1)
 qqline(NYST_resid1)
 plot(modNYST1)
+# normal looks better than log transformed 
 
 modNYST_summary <- summary(modNYST)
-#modNYST_coeff <- as.data.frame(modNYST_summary$coefficients)%>%
-#  filter(`Pr(>|t|)` < 0.05)
-#rownames(modNYST1_coeff)[2]<-"KS"
-#rownames(modNYST1_coeff)[3]<-"monoA"
-#rownames(modNYST1_coeff)[4]<-"monoI"
-#rownames(modNYST1_coeff)[5]<-"Nrate:monoI"
-#rownames(modNYST1_coeff)[6]<-"KS:monoI"
-#rownames(modNYST1_coeff)[7]<-"Nrate:KS:monoA"
-#colnames(modNYST1_coeff)[5]<-"Pr(>t)"
+modNYST_coeff <- as.data.frame(modNYST_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+colnames(modNYST_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-#knitr::kable(modNYST1_coeff, caption = "Summer 2023 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
-#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+knitr::kable(modNYST_coeff, caption = "Summer 2023 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr2S.html")
 
 
 max(NdYS$PlotTotForageKgHa)
@@ -818,9 +792,11 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 9000) +
   facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
   scale_color_discrete(name = "Cropping System")  #legend for colors
+# save total_forage_Nrate_yr2S.jpeg
 
 #Threeway means
-#NYST1emm <- compute_emmeansNYS("modNYST1")
+NYST1emm <- compute_emmeansNYS("modNYST1")
+#write.csv(NYST1emm, 'data/NYST1emm.csv')
 
 #Pairwise N:P:C
 emmsNPC <- emmeans(modNYST1, ~ N*P*CROP,at= list(N = N_levels), type= "response") 
@@ -864,15 +840,16 @@ new_df <- merged_df %>%
   select(-emmean, -N.trend)
 sorted_df <- new_df %>%
   arrange(P, CROP)
-#view(sorted_df)
+#View(sorted_df)
+#write.csv(sorted_df, "data/Nrate_esteff_total_forage_yr2S.csv")
 ```
 
-#Total forage year 2 fall
+# Total forage year 2 fall
 ```{r}
 #linear
 NdYF$PlotTotForageKgHa<-as.numeric(NdYF$PlotTotForageKgHa)
 NdYF$N<-as.numeric(NdYF$N)
-modNYFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdYF) #linear 
+modNYFT<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdYF) #linear 
 anova(modNYFT)
 summary(modNYFT)
 #Check Assumptions
@@ -882,23 +859,20 @@ qqline(NYFT_resid)
 plot(modNYFT)
 abline(h = 0, col="red")
 #Logtransform
-modNYFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|P:Rep), data=NdYF)
+modNYFT1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdYF)
 NYFT_resid1<-resid(modNYFT1)
 qqnorm(NYFT_resid1)
 qqline(NYFT_resid1)
 plot(modNYFT1)
 anova(modNYFT1)
 
-#modNYFT1_summary <- summary(modNYFT1)
-#modNYFT1_coeff <- as.data.frame(modNYFT1_summary$coefficients)%>%
-#  filter(`Pr(>|t|)` < 0.05)
-#rownames(modNYFT1_coeff)[2]<-"monoA"
-#rownames(modNYFT1_coeff)[3]<-"monoI"
-#rownames(modNYFT1_coeff)[4]<-"WI:monoI"
-#colnames(modNYFT1_coeff)[5]<-"Pr(>t)"
+modNYFT1_summary <- summary(modNYFT1)
+modNYFT1_coeff <- as.data.frame(modNYFT1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+colnames(modNYFT1_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-#knitr::kable(modNYST1_coeff, caption = "Fall 2023 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
-#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+knitr::kable(modNYFT1_coeff, caption = "Yr 2 F Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr2F.html")
 
 
 #linear plots
@@ -911,9 +885,11 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 3500) +
   facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
   scale_color_discrete(name = "Cropping System")  #legend for colors
+# save total_forage_Nrate_yr2F.jpeg
 
 #Threeway means
-#NYFT1emm <- compute_emmeansNYF("modNYFT1")
+NYFT1emm <- compute_emmeansNYF("modNYFT1")
+#write.csv(NYFT1emm, 'data/NYFT1emm.csv')
 
 #Pairwise NPC
 N_levels <- c(0, 40, 80, 120, 160)
@@ -983,16 +959,16 @@ new_df <- merged_df %>%
 sorted_df <- new_df %>%
   arrange( CROP)
 #view(sorted_df)
+#write.csv(sorted_df, "data/Nrate_esteff_total_forage_yr2F.csv")
 ```
 
-
-#Total forage year 3 summer
-# Assumptions not great
+# Total forage year 3 summer
+# Leah Stopped HERE - Relationship between Total Forage Yield and N-rate looks weird *****
 ```{r}
 NdZS_2 <- NdZS[NdZS$PlotTotForageKgHa != 0, ] # remove rows where the total forage was 0
 
 #linear
-modNZST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|P:Rep), data=NdZS_2)
+modNZST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdZS_2)
 anova(modNZST)
 #Check Assumptions
 NZST_resid<-resid(modNZST)
@@ -1000,48 +976,23 @@ qqnorm(NZST_resid)
 qqline(NZST_resid)
 plot(modNZST)
 #Logtransform
-modNZST1<-lmer(log(PlotTotForageKgHa+0.01)~N*P*CROP + (1|P:Rep), data=NdZS_2) 
+modNZST1<-lmer(log(PlotTotForageKgHa+0.01)~N*P*CROP + (1|Rep), data=NdZS_2) 
 anova(modNZST1)
 summary(modNZST1)
-#check assumptions logtransform (makes it BETTERISH)
+#check assumptions logtransform
 NZST_resid1<-resid(modNZST1)
 qqnorm(NZST_resid1)
 qqline(NZST_resid1)
 plot(modNZST1)
-#Sqrttransform
-modNZST2<-lmer(sqrt(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdZS) 
-anova(modNZST2)
-summary(modNZST2)
-#check assumptions Sqrttransform (makes it BETTERISH)
-NZST_resid2<-resid(modNZST2)
-qqnorm(NZST_resid2)
-qqline(NZST_resid2)
-plot(NZST_resid2)
+# niether of these are great
 
-library(bestNormalize)
-bn <- bestNormalize(NdZS$PlotTotForageKgHa)
-bn$chosen_transform
-NdZS$PlotTotForageKgHa_trans <- bn$x.t
-modNZST3<-lmer(PlotTotForageKgHa_trans~N*P*CROP + (1|P:Rep), data=NdZS)
-summary(modNZST3)
-anova(modNZST3)
-NZST_resid3<-resid(modNZST3)
-qqnorm(NZST_resid3)
-qqline(NZST_resid3)
-plot(modNZST3)
-
-#modNZST1_summary <- summary(modNZST1)
-#modNZST1_coeff <- as.data.frame(modNZST1_summary$coefficients)%>%
-#  filter(`Pr(>|t|)` < 0.05)
-#rownames(modNZST1_coeff)[2]<-"NY"
-#rownames(modNZST1_coeff)[3]<-"WI"
-#colnames(modNZST1_coeff)[5]<-"Pr(>t)"
+modNZST1_summary <- summary(modNZST1)
+modNZST1_coeff <- as.data.frame(modNZST1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+colnames(modNZST1_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-#knitr::kable(modNZST1_coeff, caption = "Summer 2024 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
-#  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
-
-
-#max(NdZS$PlotTotForageKgHa)
+knitr::kable(modNZST1_coeff, caption = "Yr 3 S Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
+  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr3S.html")
 
 #linear plots
 NdZS_2$predicted <- predict(modNZST1, newdata = NdZS_2, re.form = NA)
@@ -1124,7 +1075,7 @@ sorted_df <- new_df %>%
 ```
 
 
-#Total forage year 3 fall
+# Total forage year 3 fall
 ```{r}
 NdZF_2 <- NdZF[NdZF$PlotTotForageKgHa != 0, ] # remove rows where the total forage was 0
 
@@ -1248,7 +1199,7 @@ sorted_df <- new_df %>%
 #view(sorted_df)
 ```
 
-#total forage figure E:C (YF)
+# total forage figure E:C (YF)
 ```{r}
 max(NdYF$predicted)
 exp(7.828112)
@@ -1275,7 +1226,7 @@ print(TFYFPC)
 ggsave("TFYFPC.jpg", plot = TFYFPC, width = 8, height = 6, dpi = 300)
 ```
 
-# IWG Forage Yield 
+## IWG Forage Yield 
 
 
 
