@@ -967,8 +967,24 @@ sorted_df <- new_df %>%
 ```{r}
 NdZS_2 <- NdZS[NdZS$PlotTotForageKgHa != 0, ] # remove rows where the total forage was 0
 
+# WI yr 3 is looking way higher than the previous two years. I am wondering is the data they sent, in kg biomass in quadrat, we was off by a decimal. This would make it more similar to the other two years. 
+NdZS_2_WI <- NdZS_2[NdZS_2$Location == 'WI', ]
+NdZS_2_WI$PlotIWGDryKG <- NdZS_2_WI$PlotIWGDryKG * 0.1
+NdZS_2_WI$PlotIWGDryKgHa <- NdZS_2_WI$PlotIWGDryKG/NdZS_2_WI$QAreaHa
+NdZS_2_WI$PlotAlfDryKG <- NdZS_2_WI$PlotAlfDryKG * 0.1
+NdZS_2_WI$PlotAlfDryKgHa <- NdZS_2_WI$PlotAlfDryKG/NdZS_2_WI$QAreaHa
+NdZS_2_WI$PlotTotForageKgHa <- NdZS_2_WI$PlotIWGDryKgHa + NdZS_2_WI$PlotAlfDryKgHa
+
+NdZS_3 <- NdZS_2[NdZS_2$Location != 'WI', ]
+NdZS_3 <- rbind(NdZS_3, NdZS_2_WI)
+
+NdZS_3$P <- as.factor(NdZS_3$P)
+NdZS_3$CROP <- as.factor(NdZS_3$CROP)
+NdZS_3$Rep <- as.factor(NdZS_3$Rep)
+NdZS_3$N <- as.numeric(NdZS_3$N)
+
 #linear
-modNZST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdZS_2)
+modNZST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdZS_3)
 anova(modNZST)
 #Check Assumptions
 NZST_resid<-resid(modNZST)
@@ -976,7 +992,7 @@ qqnorm(NZST_resid)
 qqline(NZST_resid)
 plot(modNZST)
 #Logtransform
-modNZST1<-lmer(log(PlotTotForageKgHa+0.01)~N*P*CROP + (1|Rep), data=NdZS_2) 
+modNZST1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdZS_3) 
 anova(modNZST1)
 summary(modNZST1)
 #check assumptions logtransform
@@ -984,7 +1000,6 @@ NZST_resid1<-resid(modNZST1)
 qqnorm(NZST_resid1)
 qqline(NZST_resid1)
 plot(modNZST1)
-# niether of these are great
 
 modNZST1_summary <- summary(modNZST1)
 modNZST1_coeff <- as.data.frame(modNZST1_summary$coefficients)%>%
@@ -995,36 +1010,16 @@ knitr::kable(modNZST1_coeff, caption = "Yr 3 S Mixed-Effects Model: PlotTotForag
   kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr3S.html")
 
 #linear plots
-NdZS_2$predicted <- predict(modNZST1, newdata = NdZS_2, re.form = NA)
-ggplot(NdZS_2, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
-  geom_point() +
-  geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+NdZS_3$predicted <- predict(modNZST1, newdata = NdZS_3, re.form = NA)
+ggplot(NdZS_3, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
   labs(x = "N-Rate (Kg/ha)", y = "Total Forage Yield (Kg/ha)") +  # Label the axes
   ggtitle("Yr 3 S Relationship between Total Forage Yield and N-rate") +  # Add a title
-scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
-  ylim(0, 9000) +
-  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
-  scale_color_discrete(name = "Cropping System")  #legend for colors
-
-ggplot(NdZS_2, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
-  geom_point() +
-  geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
-  labs(x = "N-Rate (Kg/ha)", y = "Total Forage Yield (Kg/ha)") +  # Label the axes
-  ggtitle("Relationship between Total Forage Yield and N-rate") +  # Add a title
 scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 3500) +
   facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
   scale_color_discrete(name = "Cropping System")  #legend for colors
-
-# removed y lim so the y axis is free; WI was extremly compact so this allows each line for WI to be visable
-ggplot(NdZS_2, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
-  geom_point() +
-  geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
-  labs(x = "N-Rate (Kg/ha)", y = "Total Forage Yield (Kg/ha)") +  # Label the axes
-  ggtitle("Yr 3 S Relationship between Total Forage Yield and N-rate") +  # Add a title
-scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
-  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
-  scale_color_discrete(name = "Cropping System")  #legend for colors
+# save total_forage_Nrate_yr2F.jpeg
 
 #Threeway means
 #NYST1emm <- compute_emmeansNYS("modNYST1")
