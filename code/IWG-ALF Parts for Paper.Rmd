@@ -3,6 +3,8 @@ title: "IWG-ALF Parts for Paper"
 author: "Leah Treffer"
 date: "2025-07-18"
 output: html_document
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -593,10 +595,15 @@ plot(modNXST1)
 modNXST1_summary <- summary(modNXST1)
 modNXST1_coeff <- as.data.frame(modNXST1_summary$coefficients)%>%
   filter(`Pr(>|t|)` < 0.05)
-colnames(modNXFT1_coeff)[5]<-"Pr(>t)"
+colnames(modNXST1_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-knitr::kable(modNXST1_coeff, caption = "Y1 Summer Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
-  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr1S.html")
+save_kable(
+   knitr::kable(modNXST1_coeff, 
+                caption = "Y1 Summer Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+       kable_styling(full_width = TRUE, 
+                     position = "center", 
+                     bootstrap_options = c("striped", "hover", "condensed")),
+   file = "figures/table_significant_coeff_yr1S.html")
 
 desired_order_P <- c("MN", "NY", "KS", "WI")
 N_levels <- c(0, 40, 80, 120, 160)
@@ -612,6 +619,7 @@ ggplot(NdXS, aes(x = N, y = PlotTotForageKgHa , color = CROP, group = CROP)) +
   ylim(0,15000)+
   facet_wrap(~P, scales = "free_y", ncol = 2) +
   scale_color_discrete(name = "Cropping System")
+# save figures/total_forage_Nrate_yr1S.jpeg
 
 #Three way means
 NXST1emm <- compute_emmeansNXS("modNXST1")
@@ -684,8 +692,13 @@ modNXFT1_coeff <- as.data.frame(modNXFT1_summary$coefficients)%>%
   filter(`Pr(>|t|)` < 0.05)
 colnames(modNXFT1_coeff)[5]<-"Pr(>t)"
  #Create custom table using kable and kableExtra
-knitr::kable(modNXFT1_coeff, caption = "Y1 Fall Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
-  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr1F.html")
+save_kable(
+   knitr::kable(modNXFT1_coeff, 
+                caption = "Y1 Fall Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+       kable_styling(full_width = TRUE, 
+                     position = "center", 
+                     bootstrap_options = c("striped", "hover", "condensed")),
+   file = "figures/table_significant_coeff_yr1F.html")
 # save table_significant_coeff_yr1F
 
 #plots
@@ -702,7 +715,7 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
 # save total_forage_Nrate_yr1F.jpeg
 
 #Threeway means
-#NXFT1emm <- compute_emmeansNXF("modNXFT1")
+NXFT1emm <- compute_emmeansNXF("modNXFT1")
 #write.csv(NXFT1emm, 'data/NXFT1emm.csv')
 
 #Pairwise N:P:C
@@ -776,8 +789,14 @@ modNYST_coeff <- as.data.frame(modNYST_summary$coefficients)%>%
   filter(`Pr(>|t|)` < 0.05)
 colnames(modNYST_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-knitr::kable(modNYST_coeff, caption = "Summer 2023 Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
-  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr2S.html")
+save_kable(
+   knitr::kable(modNYST_coeff, 
+                caption = "Y2 Summer Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+       kable_styling(full_width = TRUE, 
+                     position = "center", 
+                     bootstrap_options = c("striped", "hover", "condensed")),
+   file = "figures/table_significant_coeff_yr2S.html")
+# save table_significant_coeff_yr2S
 
 
 max(NdYS$PlotTotForageKgHa)
@@ -871,9 +890,14 @@ modNYFT1_coeff <- as.data.frame(modNYFT1_summary$coefficients)%>%
   filter(`Pr(>|t|)` < 0.05)
 colnames(modNYFT1_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-knitr::kable(modNYFT1_coeff, caption = "Yr 2 F Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
-  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr2F.html")
-
+save_kable(
+   knitr::kable(modNYFT1_coeff, 
+                caption = "Y2 Fall Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+       kable_styling(full_width = TRUE, 
+                     position = "center", 
+                     bootstrap_options = c("striped", "hover", "condensed")),
+   file = "figures/table_significant_coeff_yr2F.html")
+# save table_significant_coeff_yr2F
 
 #linear plots
 NdYF$predicted <- predict(modNYFT1, newdata = NdYF, re.form = NA)
@@ -963,7 +987,6 @@ sorted_df <- new_df %>%
 ```
 
 # Total forage year 3 summer
-# Leah Stopped HERE - Relationship between Total Forage Yield and N-rate looks weird *****
 ```{r}
 NdZS_2 <- NdZS[NdZS$PlotTotForageKgHa != 0, ] # remove rows where the total forage was 0
 
@@ -990,8 +1013,14 @@ modNZST1_coeff <- as.data.frame(modNZST1_summary$coefficients)%>%
   filter(`Pr(>|t|)` < 0.05)
 colnames(modNZST1_coeff)[5]<-"Pr(>t)"
 # Create custom table using kable and kableExtra
-knitr::kable(modNZST1_coeff, caption = "Yr 3 S Mixed-Effects Model: PlotTotForageKgHa ~ Nrate * Location * #CROPsystem + (1 | Rep)") %>%
-  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr3S.html")
+save_kable(
+   knitr::kable(modNZST1_coeff, 
+                caption = "Y3 Summer Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+       kable_styling(full_width = TRUE, 
+                     position = "center", 
+                     bootstrap_options = c("striped", "hover", "condensed")),
+   file = "figures/table_significant_coeff_yr3S.html")
+# save table_significant_coeff_yr3S
 
 #linear plots
 NdZS_2$predicted <- predict(modNZST1, newdata = NdZS_2, re.form = NA)
