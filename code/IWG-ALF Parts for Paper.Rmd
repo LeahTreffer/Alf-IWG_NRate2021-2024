@@ -967,24 +967,8 @@ sorted_df <- new_df %>%
 ```{r}
 NdZS_2 <- NdZS[NdZS$PlotTotForageKgHa != 0, ] # remove rows where the total forage was 0
 
-# WI yr 3 is looking way higher than the previous two years. I am wondering is the data they sent, in kg biomass in quadrat, we was off by a decimal. This would make it more similar to the other two years. 
-NdZS_2_WI <- NdZS_2[NdZS_2$Location == 'WI', ]
-NdZS_2_WI$PlotIWGDryKG <- NdZS_2_WI$PlotIWGDryKG * 0.1
-NdZS_2_WI$PlotIWGDryKgHa <- NdZS_2_WI$PlotIWGDryKG/NdZS_2_WI$QAreaHa
-NdZS_2_WI$PlotAlfDryKG <- NdZS_2_WI$PlotAlfDryKG * 0.1
-NdZS_2_WI$PlotAlfDryKgHa <- NdZS_2_WI$PlotAlfDryKG/NdZS_2_WI$QAreaHa
-NdZS_2_WI$PlotTotForageKgHa <- NdZS_2_WI$PlotIWGDryKgHa + NdZS_2_WI$PlotAlfDryKgHa
-
-NdZS_3 <- NdZS_2[NdZS_2$Location != 'WI', ]
-NdZS_3 <- rbind(NdZS_3, NdZS_2_WI)
-
-NdZS_3$P <- as.factor(NdZS_3$P)
-NdZS_3$CROP <- as.factor(NdZS_3$CROP)
-NdZS_3$Rep <- as.factor(NdZS_3$Rep)
-NdZS_3$N <- as.numeric(NdZS_3$N)
-
 #linear
-modNZST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdZS_3)
+modNZST<-lmer(PlotTotForageKgHa~N*P*CROP + (1|Rep), data=NdZS_2)
 anova(modNZST)
 #Check Assumptions
 NZST_resid<-resid(modNZST)
@@ -992,7 +976,7 @@ qqnorm(NZST_resid)
 qqline(NZST_resid)
 plot(modNZST)
 #Logtransform
-modNZST1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdZS_3) 
+modNZST1<-lmer(log(PlotTotForageKgHa)~N*P*CROP + (1|Rep), data=NdZS_2) 
 anova(modNZST1)
 summary(modNZST1)
 #check assumptions logtransform
@@ -1010,8 +994,8 @@ knitr::kable(modNZST1_coeff, caption = "Yr 3 S Mixed-Effects Model: PlotTotForag
   kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed")) %>% readr::write_file("figures/table_significant_coeff_yr3S.html")
 
 #linear plots
-NdZS_3$predicted <- predict(modNZST1, newdata = NdZS_3, re.form = NA)
-ggplot(NdZS_3, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
+NdZS_2$predicted <- predict(modNZST1, newdata = NdZS_2, re.form = NA)
+ggplot(NdZS_2, aes(x = N, y = PlotTotForageKgHa, color = CROP, group= CROP)) +
     geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
   labs(x = "N-Rate (Kg/ha)", y = "Total Forage Yield (Kg/ha)") +  # Label the axes
   ggtitle("Yr 3 S Relationship between Total Forage Yield and N-rate") +  # Add a title
