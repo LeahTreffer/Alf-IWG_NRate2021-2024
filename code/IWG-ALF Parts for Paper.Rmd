@@ -1236,5 +1236,602 @@ ggsave("TFYFPC.jpg", plot = TFYFPC, width = 8, height = 6, dpi = 300)
 
 ## IWG Forage Yield 
 
+# IWG forage year 1 summer
+
+```{r}
+#Linear
+modNXSI<-lmer(PlotIWGDryKgHa~N*P*CROP + (1|Rep), data=NdXSI)
+anova(modNXSI)
+#Check Assumptions
+NXSI_resid<-resid(modNXSI)
+qqnorm(NXSI_resid)
+qqline(NXSI_resid)
+plot(modNXSI)
+#log transform 
+modNXSI1<-lmer(log(PlotIWGDryKgHa)~N*P*CROP + (1|Rep), data=NdXSI)
+anova(modNXSI1)
+#Check Assumptions
+NXSI1_resid<-resid(modNXSI1)
+qqnorm(NXSI1_resid)
+qqline(NXSI1_resid)
+plot(modNXSI1)
+
+modNXSI1_summary <- summary(modNXSI1)
+modNXSI1_coeff <- as.data.frame(modNXSI1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+colnames(modNXSI1_coeff)[5]<-"Pr(>t)"
+# Create custom table using kable and kableExtra
+save_kable(
+  knitr::kable(modNXSI1_coeff, 
+               caption = "Y1 Summer Mixed-Effects Model: log(IWGForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+    kable_styling(full_width = TRUE, 
+                  position = "center", 
+                  bootstrap_options = c("striped", "hover", "condensed")),
+  file = "figures/iwg_table_significant_coeff_yr1S.html")
+# save iwg_table_significant_coeff_yr1S
 
 
+max(NdXSI$PlotIWGDryKgHa)
+#linear plots
+NdXSI$predicted <- predict(modNXSI1, newdata = NdXSI, re.form = NA)
+ggplot(NdXSI, aes(x = N, y = PlotIWGDryKgHa, color = C, group= C)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "IWG Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 1 S Relationship between IWG Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 15000) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+# save iwg_forage_Nrate_yr1S.jpeg
+
+#Threeway means
+NXSI1emm <- compute_emmeansNXS("modNXSI1")
+#write.csv(NXSI1emm, 'data/NXSI1emm.csv')
+
+#Pairwise P
+emmsP <- emmeans(modNXSI1, ~ P, type = "response") # Obtain estimated marginal means
+cld_dataNXSIP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+#Pairwise C
+emmsC <- emmeans(modNXSI1, ~ CROP, type = "response") # Obtain estimated marginal means 
+cld_dataNXSIC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
+#Pairwise N
+N_levels <- c(0, 40, 80, 120, 160)
+emmsN <- emmeans(modNXSI1, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataNXSIN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+#Pairwise P:C
+emmsPC <- emmeans(modNXSI1, ~ P*CROP, type= "response") # Obtain estimated marginal means
+cld_dataNXSIPC <- cld(emmsPC, Letters=custom_letters) # Create compact letter display
+cld_dataNXSIPC$response <- format(cld_dataNXSIPC$response, digits = 5)
+rownames(cld_dataNXSIPC) <- NULL
+cld_dataNXSIPC<- cld_dataNXSIPC %>%
+  select(P, CROP, response, .group)
+colnames(cld_dataNXSIPC) <- c("Site", "Cropping System", "IWG Forage (kg ha-1)", "Group")
+cld_dataNXSIPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise N:P
+emmsNP <- emmeans(modNXSI1, ~ N*P,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNXSINP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
+cld_dataNXSINP$response <- format(cld_dataNXSINP$response, digits = 5)
+rownames(cld_dataNXSINP) <- NULL
+cld_dataNXSINP<- cld_dataNXSINP %>%
+  select(N,P, response, .group)
+colnames(cld_dataNXSINP) <- c("N", "Site", "IWG Forage (kg ha-1)", "Group")
+cld_dataNXSINP  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#This gives us the slope for each interactions as well as a P value indicating significance level for that slope
+emtrends(modNXSI1,~ P*CROP, var= "N", infer=TRUE)
+emtrends_result<-emtrends(modNXSI1,~ P, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  #view(emtrends_df)
+emtrends(modNXSI1,~ CROP, var= "N", infer=TRUE)
+
+#equations table
+emtrends_result<-emtrends(modNXSI1,~ P, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNXSI1, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P)
+#view(sorted_df)
+#write.csv(sorted_df, "data/Nrate_esteff_iwg_forage_yr1S.csv")
+```
+
+# IWG forage year 1 fall
+*** sigularity issue *** 
+```{r}
+#linear 
+modNXFI<-lmer(PlotIWGDryKgHa~N*P*CROP + (1|Rep), data=NdXFI)
+# boundary (singular) fit: see help('isSingular')
+modNXFI<-lm(PlotIWGDryKgHa~N*P*CROP, data=NdXFI)
+anova(modNXFI)
+summary(modNXFI)
+#Check Assumptions
+NXFI_resid<-resid(modNXFI)
+qqnorm(NXFI_resid)
+qqline(NXFI_resid)
+plot(modNXFI)
+#log transform
+modNXFI1<-lmer(log(PlotIWGDryKgHa)~N*P*CROP + (1|Rep), data=NdXFI)
+# boundary (singular) fit: see help('isSingular')
+modNXFI1<-lm(log(PlotIWGDryKgHa)~N*P*CROP, data=NdXFI)
+anova(modNXFI1)
+NXFI1_resid<-resid(modNXFI1)
+qqnorm(NXFI1_resid)
+qqline(NXFI1_resid)
+plot(modNXFI1)
+
+
+modNXFI1_summary <- summary(modNXFI1)
+modNXFI1_coeff <- as.data.frame(modNXFI1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+rownames(modNXFI1_coeff)[2]<-"WI"
+rownames(modNXFI1_coeff)[3]<-"monoculture"
+rownames(modNXFI1_coeff)[4]<-"NY:monoculture"
+rownames(modNXFI1_coeff)[5]<-"WI:monoculture"
+colnames(modNXFI1_coeff)[5]<-"Pr(>t)"
+# Create custom table using kable and kableExtra
+knitr::kable(modNXFI1_coeff, caption = "Mixed-Effects Model: IWGForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+
+
+max(NdXFI$PlotIWGDryKgHa)
+#linear plots
+NdXFI$predicted <- predict(modNXFI1, newdata = NdXFI, re.form = NA)
+ggplot(NdXFI, aes(x = N, y = PlotIWGDryKgHa, color = CROP, group= CROP)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "IWG Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 1 F Relationship between IWG Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 2800) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+
+#Threeway means
+NXFI1emm <- compute_emmeansNXF("modNXFI1")
+
+#Pairwise P
+emmsP <- emmeans(modNXFI1, ~ P, type = "response") # Obtain estimated marginal means
+cld_dataNXFIP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+#Pairwise C
+emmsC <- emmeans(modNXFI1, ~ CROP, type = "response") # Obtain estimated marginal means 
+cld_dataNXFIC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
+#Pairwise N
+N_levels <- c(0, 40, 80, 120, 160)
+emmsN <- emmeans(modNXFI1, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataNXFIN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+#Pairwise P:C
+emmsPC <- emmeans(modNXFI1, ~ P*CROP, type= "response") # Obtain estimated marginal means
+cld_dataNXFIPC <- cld(emmsPC, Letters=custom_letters) # Create compact letter display
+cld_dataNXFIPC$response <- format(cld_dataNXFIPC$response, digits = 5)
+rownames(cld_dataNXFIPC) <- NULL
+cld_dataNXFIPC<- cld_dataNXFIPC %>%
+  select(P, CROP, response, .group)
+colnames(cld_dataNXFIPC) <- c("Site", "Cropping System", "IWG Forage (kg ha-1)", "Group")
+cld_dataNXFIPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise N:P
+emmsNP <- emmeans(modNXFI1, ~ N*P,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNXFINP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
+cld_dataNXFINP$response <- format(cld_dataNXFINP$response, digits = 5)
+rownames(cld_dataNXFINP) <- NULL
+cld_dataNXFINP<- cld_dataNXFINP %>%
+  select(N, P, response, .group)
+colnames(cld_dataNXFINP) <- c("N", "Site", "IWG Forage (kg ha-1)", "Group")
+cld_dataNXFINP  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#slope stuff
+emtrends_result<-emtrends(modNXFI1,~ P, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  #view(emtrends_df)
+  
+  #equations table
+  emtrends_result<-emtrends(modNXFI1,~ P, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNXFI1, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x)
+view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P)
+view(sorted_df)
+```
+
+
+#IWG forage year 2 summer
+*** sigularity issue *** 
+```{r}
+#LINEAR
+modNYSI<-lmer(PlotIWGDryKgHa~N*P*CROP + (1|Rep), data=NdYSI)
+# boundary (singular) fit: see help('isSingular')
+modNYSI<-lm(PlotIWGDryKgHa~N*P*CROP, data=NdYSI)
+anova(modNYSI)
+#Check Assumptions
+NYSI_resid<-resid(modNYSI)
+qqnorm(NYSI_resid)
+qqline(NYSI_resid)
+plot(modNYSI)
+#Logtransform
+modNYSI1<-lmer(log(PlotIWGDryKgHa)~N*P*CROP + (1|Rep), data=NdYSI)
+# boundary (singular) fit: see help('isSingular')
+modNYSI1<-lm(log(PlotIWGDryKgHa)~N*P*CROP, data=NdYSI)
+anova(modNYSI1)
+#check assumptions logtransform (makes it BETTER)
+NYSI_resid1<-resid(modNYSI1)
+qqnorm(NYSI_resid1)
+qqline(NYSI_resid1)
+plot(modNYSI1)
+
+modNYSI1_summary <- summary(modNYSI1)
+modNYSI1_coeff <- as.data.frame(modNYSI1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+rownames(modNYSI1_coeff)[2]<-"NY"
+rownames(modNYSI1_coeff)[3]<-"WI"
+rownames(modNYSI1_coeff)[4]<-"monoculture"
+rownames(modNYSI1_coeff)[5]<-"Nrate:NY"
+rownames(modNYSI1_coeff)[6]<-"Nrate:WI"
+colnames(modNYSI1_coeff)[5]<-"Pr(>t)"
+# Create custom table using kable and kableExtra
+knitr::kable(modNYSI1_coeff, caption = "Mixed-Effects Model: IWGForageKgHa ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+  kable_styling(full_width = TRUE, position = "center", bootstrap_options = c("striped", "hover", "condensed"))
+
+
+
+max(NdYSI$PlotIWGDryKgHa)
+#linear plots
+NdYSI$predicted <- predict(modNYSI1, newdata = NdYSI, re.form = NA)
+ggplot(NdYSI, aes(x = N, y = PlotIWGDryKgHa, color = CROP, group= CROP)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "IWG Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 2 S Relationship between IWG Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 9000) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+
+#Threeway means
+NYSI1emm <- compute_emmeansNYS("modNYSI1")
+
+#Pairwise P
+emmsP <- emmeans(modNYSI1, ~ P, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYSIP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+#Pairwise C
+emmsC <- emmeans(modNYSI1, ~ CROP, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYSIC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
+cld_dataNYSIC$response <- format(cld_dataNYSIC$response, digits = 5)
+rownames(cld_dataNYSIC) <- NULL
+cld_dataNYSIC<- cld_dataNYSIC %>%
+  select(CROP, response, .group)
+colnames(cld_dataNYSIC) <- c("Cropping System", "IWG Forage (kg ha-1)", "Group")
+cld_dataNYSIC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise N
+N_levels <- c(0, 40, 80, 120, 160)
+emmsN <- emmeans(modNYSI1, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataNYSIN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+#Pairwise N:P
+emmsNP <- emmeans(modNYSI1, ~ N*P,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNYSINP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
+cld_dataNYSINP$response <- format(cld_dataNYSINP$response, digits = 5)
+rownames(cld_dataNYSINP) <- NULL
+cld_dataNYSINP<- cld_dataNYSINP %>%
+  select(N, P, response, .group)
+colnames(cld_dataNYSINP) <- c("N", "Site", "IWG Forage (kg ha-1)", "Group")
+cld_dataNYSINP  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#slope stuff
+emtrends_result<-emtrends(modNYSI1,~ P, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  #view(emtrends_df)
+  
+    #equations table
+  emtrends_result<-emtrends(modNYSI1,~ P, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNYSI1, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x)
+view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P)
+view(sorted_df)
+```
+
+
+
+
+
+#IWG forage year 2 fall
+```{r}
+#LINEAR 
+modNYFI<-lmer(PlotIWGDryKgHa~N*P*CROP + (1|Rep), data=NdYFI)
+anova(modNYFI)
+#Check assumptions
+NYFI_resid<-resid(modNYFI)
+qqnorm(NYFI_resid)
+qqline(NYFI_resid)
+plot(modNYFI)
+#log
+modNYFI1<-lmer(log(PlotIWGDryKgHa)~N*P*CROP + (1|Rep), data=NdYFI)
+anova(modNYFI1)
+#Check assumptions
+NYFI1_resid<-resid(modNYFI1)
+qqnorm(NYFI1_resid)
+qqline(NYFI1_resid)
+plot(modNYFI1)
+
+modNYFI1_summary <- summary(modNYFI1)
+modNYFI1_coeff <- as.data.frame(modNYFI1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+colnames(modNYFI1_coeff)[5]<-"Pr(>t)"
+# Create custom table using kable and kableExtra
+save_kable(
+  knitr::kable(modNYFI1_coeff, 
+               caption = "Y2 Fall Mixed-Effects Model: log(IWGForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+    kable_styling(full_width = TRUE, 
+                  position = "center", 
+                  bootstrap_options = c("striped", "hover", "condensed")),
+  file = "figures/iwg_table_significant_coeff_yr2F.html")
+# save iwg_table_significant_coeff_yr1S
+
+max(NdYFI$PlotIWGDryKgHa)
+#LINEAR plots
+NdYFI$predicted <- predict(modNYFI1, newdata = NdYFI, re.form = NA)
+ggplot(NdYFI, aes(x = N, y = PlotIWGDryKgHa, color = CROP, group= CROP)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "IWG Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 2 F Relationship between IWG Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 1600) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+# save iwg_forage_Nrate_yr2F.jpeg
+
+#Threeway means
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNPC <- emmeans(modNYFI1, specs = ~ N*P*CROP, at = list(N = N_levels), type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYFINPC <- cld(emmsNPC , Letters=custom_letters)
+
+NYFI1emm <- compute_emmeansNYF("modNYFI1")
+#write.csv(NYFI1emm, 'data/NYFI1emm.csv')
+
+#Pairwise P
+emmsP <- emmeans(modNYFI1, ~ P, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYFIP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+#Pairwise C
+emmsC <- emmeans(modNYFI1, ~ CROP, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYFIC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
+#Pairwise N
+emmsN <- emmeans(modNYFI1, ~ N,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNYFIN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+#Pairwise N:C
+emmsNC <- emmeans(modNYFI1, ~ N*CROP,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNYFINC <- cld(emmsNC, Letters=custom_letters) # Create compact letter display
+cld_dataNYFINC$response <- format(cld_dataNYFINC$response, digits = 5)
+rownames(cld_dataNYFINC) <- NULL
+cld_dataNYFINC<- cld_dataNYFINC %>%
+  select(N, CROP, response, .group)
+colnames(cld_dataNYFINC) <- c("N", "Cropping System", "IWG Forage (kg ha-1)", "Group")
+cld_dataNYFINC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise P:C
+emmsPC <- emmeans(modNYFI1, ~ P*CROP,type= "response") # Obtain estimated marginal means
+cld_dataNYFIPC <- cld(emmsPC, Letters=custom_letters) # Create compact letter display
+cld_dataNYFIPC$response <- format(cld_dataNYFIPC$response, digits = 5)
+rownames(cld_dataNYFIPC) <- NULL
+cld_dataNYFIPC<- cld_dataNYFIPC %>%
+  select(P, CROP, response, .group)
+colnames(cld_dataNYFIPC) <- c("Site", "Cropping System", "IWG Forage (kg ha-1)", "Group")
+cld_dataNYFIPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#slope stuff
+emtrends_result<-emtrends(modNYFI1,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_C <- c("intercrop", "monoculture")
+  emtrends_df$CROP <- factor(emtrends_df$CROP, levels = desired_order_C)
+  #view(emtrends_df)
+  
+#equations table
+emtrends_result<-emtrends(modNYFI1,~ CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNYFI1, ~CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c( "CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("intercrop", "monoculture"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange( CROP)
+#view(sorted_df)
+#write.csv(sorted_df, "data/Nrate_esteff_iwg_forage_yr2F.csv")
+```
+
+
+
+#IWG forage year 3 summer
+*** error in predict for ggplot ***
+```{r}
+# KS not here
+NdZSI <- NdZSI %>%
+  filter(!is.na(PlotIWGDryKgHa))
+
+#LINEAR 
+modNZSI<-lmer(PlotIWGDryKgHa~N*P*CROP + (1|Rep), data=NdZSI)
+anova(modNZSI)
+#Check assumptions
+NZSI_resid<-resid(modNZSI)
+qqnorm(NZSI_resid)
+qqline(NZSI_resid)
+plot(modNZSI)
+#log
+modNZSI1<-lmer(log(PlotIWGDryKgHa)~N*P*CROP + (1|Rep), data=NdZSI)
+anova(modNZSI1)
+#Check assumptions
+NZSI1_resid<-resid(modNZSI1)
+qqnorm(NZSI1_resid)
+qqline(NZSI1_resid)
+plot(modNZSI1)
+
+modNZSI1_summary <- summary(modNZSI1)
+modNZSI1_coeff <- as.data.frame(modNZSI1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+colnames(modNZSI1_coeff)[5]<-"Pr(>t)"
+# Create custom table using kable and kableExtra
+save_kable(
+  knitr::kable(modNZSI1_coeff, 
+               caption = "Y3 Summer Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+    kable_styling(full_width = TRUE, 
+                  position = "center", 
+                  bootstrap_options = c("striped", "hover", "condensed")),
+  file = "figures/iwg_table_significant_coeff_yr3S.html")
+# iwg_table_significant_coeff_yr3S
+
+max(NdZSI$PlotIWGDryKgHa)
+#LINEAR plots
+NdZSI$predicted <- predict(modNZSI1, newdata = NdZSI, re.form = NA)
+ggplot(NdZSI, aes(x = N, y = PlotIWGDryKgHa, color = CROP, group= CROP)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "IWG Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 3 S Relationship between IWG Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 1600) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+# save iwg_forage_Nrate_yr3S.jpeg
+
+#Threeway means
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNPC <- emmeans(modNZSI1, specs = ~ N*P*CROP, at = list(N = N_levels), type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNZSINPC <- cld(emmsNPC , Letters=custom_letters)
+
+NZSI1emm <- compute_emmeansNZS("modNZSI1")
+#write.csv(NZSI1emm, 'data/NZSI1emm.csv')
+
+#Pairwise P
+emmsP <- emmeans(modNZSI1, ~ P, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNZSIP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+#Pairwise C
+emmsC <- emmeans(modNZSI1, ~ CROP, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNZSIC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
+#Pairwise N
+emmsN <- emmeans(modNZSI1, ~ N,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNZSIN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+#Pairwise N:C
+emmsNC <- emmeans(modNZSI1, ~ N*CROP,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNZSINC <- cld(emmsNC, Letters=custom_letters) # Create compact letter display
+cld_dataNZSINC$response <- format(cld_dataNZSINC$response, digits = 5)
+rownames(cld_dataNZSINC) <- NULL
+cld_dataNZSINC<- cld_dataNZSINC %>%
+  select(N, CROP, response, .group)
+colnames(cld_dataNZSINC) <- c("N", "Cropping System", "IWG Forage (kg ha-1)", "Group")
+cld_dataNZSINC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise P:C
+emmsPC <- emmeans(modNZSI1, ~ P*CROP,type= "response") # Obtain estimated marginal means
+cld_dataNZSIPC <- cld(emmsPC, Letters=custom_letters) # Create compact letter display
+cld_dataNZSIPC$response <- format(cld_dataNZSIPC$response, digits = 5)
+rownames(cld_dataNZSIPC) <- NULL
+cld_dataNZSIPC<- cld_dataNZSIPC %>%
+  select(P, CROP, response, .group)
+colnames(cld_dataNZSIPC) <- c("Site", "Cropping System", "IWG Forage (kg ha-1)", "Group")
+cld_dataNZSIPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#slope stuff
+emtrends_result<-emtrends(modNZSI1,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_C <- c("intercrop", "monoculture")
+  emtrends_df$CROP <- factor(emtrends_df$CROP, levels = desired_order_C)
+  #view(emtrends_df)
+  
+#equations table
+emtrends_result<-emtrends(modNZSI1,~ CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNZSI1, ~CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c( "CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("intercrop", "monoculture"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange( CROP)
+#view(sorted_df)
+#write.csv(sorted_df, "data/Nrate_esteff_iwg_forage_yr3S.csv")
+```
