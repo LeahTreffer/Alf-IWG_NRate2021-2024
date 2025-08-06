@@ -386,14 +386,18 @@ DATA3<-left_join(data2Y%>%select(-GXAdj),DATA)
 DATA3$GAdjY<-(DATA3$GXAdj)*(DATA3$PlotThreshedGrainKgHa)
 
 # Year 3 adjustments 
-
+# need to have naked seed weights to match the adjustments made in yr 1 and yr 2
+# NY yr3 was hand threshed, so looks clean as is. No need for adjustments or dehulling
+# KS sending to NY to dehull
+# MN asking if they have time to thresh and dehull
+# WI unknown
 
 
 ```
 
 # Making things numeric as needed 
 ```{r}
-#data2$G<-as.numeric(data2$G)
+data2$G<-as.numeric(data2$G)
 data2$PlotIWGDryKgHa<-as.numeric(data2$PlotIWGDryKgHa)
 data2$PlotAlfDryKgHa<-as.numeric(data2$PlotAlfDryKgHa)
 data2$PlotTotForageKgHa<-as.numeric(data2$PlotTotForageKgHa)
