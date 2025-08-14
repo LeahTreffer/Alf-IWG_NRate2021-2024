@@ -373,6 +373,7 @@ data2$WhSamDH = (0.905045351733363*data2$image_sample_wt_g)-((1.10627799960595E-
 data2$G<-((data2$WhSamDH)/(data2$image_sample_wt_g))*(data2$PlotThreshedGrainKgHa)
 
 #apply the adjustment above to the year 2 grain data
+# now that we should have yr 2 images we can change the below to year 2 specific adjustments
 data2$GXAdj<-((data2$WhSamDH)/(data2$image_sample_wt_g))
 data2GXAdj<-data2[data2$YearCode == "X",]
 data2GXAdj<-data2GXAdj[data2GXAdj$Harvest == "Summer",]
@@ -803,56 +804,56 @@ cld_dataNZGNPC
 
 #Pairwise done based on adjusted year 2 values!!!
 #Pairwise P:C
-emmsPC <- emmeans(modNYGadj1, ~ P*CROP, type= "response") # Obtain estimated marginal means (excluding N)
-cld_dataNYGadjPC <- cld(emmsPC, Letters=custom_letters) # Create compact letter display
-print(cld_dataNYGadjPC) # Print or view the compact letter display table
-cld_dataNYGadjPC$response <- format(cld_dataNYGadjPC$response, digits = 5)
-rownames(cld_dataNYGadjPC) <- NULL
-cld_dataNYGadjPC<- cld_dataNYGadjPC %>%
+emmsPC <- emmeans(modNZG1, ~ P*CROP, type= "response") # Obtain estimated marginal means (excluding N)
+cld_dataNZGPC <- cld(emmsPC, Letters=custom_letters) # Create compact letter display
+print(cld_dataNZGPC) # Print or view the compact letter display table
+cld_dataNZGPC$response <- format(cld_dataNZGPC$response, digits = 5)
+rownames(cld_dataNZGPC) <- NULL
+cld_dataNZGPC<- cld_dataNZGPC %>%
   select(P, CROP, response, .group)
-colnames(cld_dataNYGadjPC) <- c("Site","Cropping System","Grain Yield (kg ha-1)", "Group")
-cld_dataNYGadjPC  |> 
+colnames(cld_dataNZGPC) <- c("Site","Cropping System","Grain Yield (kg ha-1)", "Group")
+cld_dataNZGPC  |> 
   data.frame() |> 
   kbl(align = "c") |> 
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
 #Pairwise N:P
 N_levels <- c(0, 40, 80, 120, 160)
-emmsNP <- emmeans(modNYGadj1, ~ N*P,at= list(N = N_levels), type= "response") # Obtain estimated marginal means (excluding N)
-cld_dataNYGadjNP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
-print(cld_dataNYGadjNP) # Print or view the compact letter display table
-cld_dataNYGadjNP$response <- format(cld_dataNYGadjNP$response, digits = 5)
-rownames(cld_dataNYGadjNP) <- NULL
-cld_dataNYGadjNP<- cld_dataNYGadjNP %>%
+emmsNP <- emmeans(modNZG1, ~ N*P,at= list(N = N_levels), type= "response") # Obtain estimated marginal means (excluding N)
+cld_dataNZGNP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
+print(cld_dataNZGNP) # Print or view the compact letter display table
+cld_dataNZGNP$response <- format(cld_dataNZGNP$response, digits = 5)
+rownames(cld_dataNZGNP) <- NULL
+cld_dataNZGNP<- cld_dataNZGNP %>%
   select(N,P, response, .group)
-colnames(cld_dataNYGadjNP) <- c("N","Site","Grain Yield (kg ha-1)", "Group")
-cld_dataNYGadjNP  |> 
+colnames(cld_dataNZGNP) <- c("N","Site","Grain Yield (kg ha-1)", "Group")
+cld_dataNZGNP  |> 
   data.frame() |> 
   kbl(align = "c") |> 
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
 #Pairwise P
-emmsP <- emmeans(modNYGadj1, ~ P,type= "response") # Obtain estimated marginal means (excluding N)
+emmsP <- emmeans(modNZG1, ~ P,type= "response") # Obtain estimated marginal means (excluding N)
 cld_dataNYGadjP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
 print(cld_dataNYGadjP) # Print or view the compact letter display table
 #Pairwise N
 N_levels <- c(0, 40, 80, 120, 160)
-emmsCYGadj <- emmeans(modNYGadj1, specs= ~ N, at= list(N = N_levels), type= "response" ) # Obtain estimated marginal means (excluding N)
+emmsCYGadj <- emmeans(modNZG1, specs= ~ N, at= list(N = N_levels), type= "response" ) # Obtain estimated marginal means (excluding N)
 cld_dataNYGadjC <- cld(emmsCYGadj, Letters=custom_letters) # Create compact letter display
 print(cld_dataNYGadjC) # Print or view the compact letter display table
 
 
 #This gives us the slope for each interactions as well as a P value indicating significance level for that slope
 #emtrends(modNYGadj1,~ P*C, var= "N", infer=TRUE)
-emtrends(modNYGadj1,~ P, var= "N", infer=TRUE)
+emtrends(modNZG1,~ P, var= "N", infer=TRUE)
 #emtrends(modNYGadj1,~ C, var= "N", infer=TRUE)
-summary(modNYGadj1)
+summary(modNZG1)
 
-emtrends_result<-emtrends(modNYGadj1,~ P, var= "N", infer=TRUE)
+emtrends_result<-emtrends(modNZG1,~ P, var= "N", infer=TRUE)
   emtrends_df <- as.data.frame(emtrends_result)
   desired_order_P <- c("MN", "NY", "KS", "WI")
   emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
-emmeans_results<-emmeans(modNYGadj1, ~P, at=list(N=0))
+emmeans_results<-emmeans(modNZG1, ~P, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 merged_df <- emtrends_df %>%
   inner_join(emmeans_df, by = c("P")) %>%
