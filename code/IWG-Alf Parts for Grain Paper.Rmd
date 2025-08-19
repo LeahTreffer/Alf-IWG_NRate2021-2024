@@ -344,7 +344,7 @@ data2$NdkNHd<-data2$nkd_N/(data2$hull_N+data2$nkd_N+data2$spklt_N)
 data2$SpkltNHd <- ifelse(data2$spklt_N == 0, 0, data2$spklt_N / (data2$hull_N + data2$nkd_N + data2$spklt_N))
 
 #IGNORE (Lee's equation)
-# converted grain wieght using proportion information and his calibration values
+# converted grain weight using proportion information and his calibration values
 #then can just plug and chug into this equation 
 #data2$YldHdDH <- (1.26975580047546E-03) + (0.897057684933234 * data2$image_sample_wt_g) - ((1.07961789616701E-05) * data2$hullNHd * data2$hull_A) + ((4.61501772182347E-06) * data2$NdkNHd * data2$nkd_A) - ((2.00025159218368E-05) * ifelse(is.nan(data2$SpkltNHd), 0, data2$SpkltNHd) * ifelse(is.nan(data2$spklt_A), 0, data2$spklt_A))
 
