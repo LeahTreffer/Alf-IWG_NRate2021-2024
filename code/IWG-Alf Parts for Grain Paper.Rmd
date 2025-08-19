@@ -354,28 +354,15 @@ data2$WhSamDH = (0.905045351733363*data2$image_sample_wt_g)-((1.10627799960595E-
 
 
 #fix below to create the right proportion and save it  
-#samples sent for imaging were a subset, so have to apply the converstion factor to the subsample, need to calculate up to the whole plot samples
+#samples sent for imaging were a subset, so have to apply the conversion factor to the subsample, need to calculate up to the whole plot samples
 data2$G<-((data2$WhSamDH)/(data2$image_sample_wt_g))*(data2$PlotThreshedGrainKgHa)
 
-#apply the adjustment above to the year 2 grain data
-# now that we should have yr 2 images we can change the below to year 2 specific adjustments
-data2$GXAdj<-((data2$WhSamDH)/(data2$image_sample_wt_g))
-data2GXAdj<-data2[data2$YearCode == "X",]
-data2GXAdj<-data2GXAdj[data2GXAdj$Harvest == "Summer",]
-data2GXAdj<-data2GXAdj[data2GXAdj$P != "MN",]
-data2Y<-data2[data2$YearCode=="Y",]
-data2Y<-data2Y[data2Y$Harvest == "Summer",]
-DATA<-data2GXAdj%>%select(GXAdj, P, Plot, N, C)
-DATA2<-left_join(data2GXAdj%>%select(-GXAdj),DATA)
-DATA3<-left_join(data2Y%>%select(-GXAdj),DATA)
-#data2Y <- merge(data2Y, data2GXAdj$GXAdj, by = c("Location", "Plot"), all.x = TRUE)
-DATA3$GAdjY<-(DATA3$GXAdj)*(DATA3$PlotThreshedGrainKgHa)
 
 # Year 3 adjustments 
 # need to have naked seed weights to match the adjustments made in yr 1 and yr 2
 # NY yr3 was hand threshed, so looks clean as is. No need for adjustments or dehulling
-# KS sending to NY to dehull
-# MN asking if they have time to thresh and dehull
+# KS and MN sending to NY to dehull
+## weigh a subset of these after they are threshed. then clean that subset. Find the r^2 and if good (~80) then use to estimate a clean weight for the rest of the samples
 # WI unknown
 
 
@@ -599,21 +586,16 @@ stat_poly_eq(use_label(c("eq", "R2"))) #add equation and R2 to plot
 #Grain year 2 (all locations)
 
 ```{r}
-#paring down to just the necessary data from the dataset where we did the year 2 G adjusments based on the year 1 ajdustment values 
-DATA31<-DATA3[DATA3$Crop1 != "WL" & DATA3$Crop1 != "Shockwave" & DATA3$Crop1 != "Higest",]
-DATA31<- DATA31[complete.cases(DATA31$GAdjY), ]
-DATA32<-DATA31[DATA31$first_value != "WL" & DATA31$first_value != "Higest",]
-#linear (based on year 1 adjustments)
-modNYGadj<-lmer(GAdjY~N*P*CROP + (1|Rep), data=DATA32)
+#linear 
+modNYGadj<-lmer(G~N*P*CROP + (1|Rep), data=NdYSI)
 anova(modNYGadj)
 #Check Assumptions
 NYGadj_resid<-resid(modNYGadj)
 qqnorm(NYGadj_resid)
 qqline(NYGadj_resid)
 plot(modNYGadj)
-abline(h = 0, col="red")
 #check assumptions log-transform
-modNYGadj1<-lmer(log(GAdjY)~N*P*CROP + (1|Rep), data=DATA32)
+modNYGadj1<-lmer(log(G)~N*P*CROP + (1|Rep), data=NdYSI)
 anova(modNYGadj1)
 summary(modNYGadj1)
 NYGadj_resid1<-resid(modNYGadj1)
@@ -621,32 +603,15 @@ qqnorm(NYGadj_resid1)
 qqline(NYGadj_resid1)
 plot(modNYGadj1)
 
-monoIformean2<-DATA32[DATA32$C == 'monoculture',]
-mean(monoIformean2$GAdjY)
-Iformean2<-DATA32[DATA32$C == 'intercrop',]
-mean(Iformean2$GAdjY)
-
-#linear (year 2, unadjusted)
-modNYG<-lmer(G~N*P*CROP + (1|Rep), data=NdYSI)
-anova(modNYG)
-#Check Assumptions
-NYG_resid<-resid(modNYG)
-qqnorm(NYG_resid)
-qqline(NYG_resid)
-plot(modNYG)
-abline(h = 0, col="red")
-#check assumptions log-transform
-modNYG1<-lmer(log(G)~N*P*CROP + (1|Rep), data=NdYSI)
-anova(modNYG1)
-NYG_resid1<-resid(modNYG1)
-qqnorm(NYG_resid1)
-qqline(NYG_resid1)
-plot(modNYG1)
+monoIformean2<-NdYSI[NdYSI$C == 'monoculture',]
+mean(monoIformean2$G)
+Iformean2<-NdYSI[NdYSI$C == 'intercrop',]
+mean(Iformean2$G)
 
 
 #plot year 2 adjusted
-DATA32$predicted <- predict(modNYGadj1, newdata = DATA32, re.form = NA)
-ggplot(DATA32, aes(x = N, y = G, color = CROP, group= CROP)) +
+NdYSI$predicted <- predict(modNYGadj1, newdata = NdYSI, re.form = NA)
+ggplot(NdYSI, aes(x = N, y = G, color = CROP, group= CROP)) +
     geom_point() + 
   geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
   labs(x = "N-Rate (Kg/ha)", y = "Grain Yield (Kg/ha)") +  # Label the axes
@@ -659,11 +624,8 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
 
 #three way emmeans to compare ranks of adjusted and unadjusted
 N_levels <- c(0, 40, 80, 120, 160)
-emmsNGNPC <- emmeans(modNYG1, specs= ~ N*P*CROP, at= list(N = N_levels), type= "response")
-cld_dataNYGNPC <- cld(emmsNGNPC, Letters=custom_letters)
 emmsNGadjNPC <- emmeans(modNYGadj1, specs= ~ N*P*CROP, at= list(N = N_levels), type= "response")
 cld_dataNYGadjNPC <- cld(emmsNGadjNPC, Letters=custom_letters)
-cld_dataNYGNPC
 cld_dataNYGadjNPC
 
 #Pairwise done based on adjusted year 2 values!!!
@@ -737,8 +699,6 @@ view(sorted_df)
 #Grain year 3 (all locations)
 
 ```{r}
-#linear (year 3, adjusted)
-
 #linear (year 3, unadjusted)
 modNZG<-lmer(PlotThreshedGrainKgHa~N*P*CROP + (1|Rep), data=NdZSI)
 anova(modNZG)
