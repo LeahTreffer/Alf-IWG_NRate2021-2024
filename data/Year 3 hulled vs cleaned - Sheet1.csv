@@ -1,93 +1,93 @@
-Location,Sample ,G from MasterDataSpreadsheet,Threshed Weight,Cleaned weight,Notes
-KS,101,32.6,,,
-KS,102,,,,
-KS,103,14.8,,,
-KS,104,,,,
-KS,105,33.6,33.99,28.41,alfalfa seed
-KS,106,19,19.24,17.79,alfalfa seed
-KS,107,29.7,,,
-KS,108,37.6,,,
-KS,109,9,8.78,7.64,alfalfa seed
-KS,110,,,,
-KS,111,,,,
-KS,112,30.6,,,
-KS,113,25.1,,,
-KS,114,,,,
-KS,115,,,,
-KS,116,,,,
-KS,117,33.7,,,
-KS,118,,,,
-KS,119,11.1,10.95,9.82,alfalfa seed
-KS,120,26.2,,,
-KS,121,19.2,19.07,16.48,alfalfa seed
-KS,122,,,,
-KS,123,18.4,,,
-KS,201,,,,
-KS,202,,,,
-KS,203,6.9,6.96,6.54,alfalfa seed
-KS,204,21.9,21.91,13.17,alfalfa seed
-KS,205,,,,
-KS,206,18.2,,,
-KS,207,17.7,,,
-KS,208,,,,
-KS,209,,,,
-KS,210,23.1,,,
-KS,211,20.1,20.3,18.03,alfalfa seed
-KS,212,,,,
-KS,213,11.7,,,
-KS,214,14.7,14.47,10.79,alfalfa seed
-KS,215,,,,
-KS,216,25.2,25.14,24,
-KS,217,8.2,,,
-KS,218,13.9,13.93,9.86,alfalfa seed
-KS,219,12.3,,,
-KS,220,3,,,
-KS,221,,,,
-KS,222,,,,
-KS,223,12.9,,,
-KS,301,5.8,5.45,5.37,
-KS,302,27.9,,,
-KS,303,28.8,29.15,22.96,alfalfa seed
-KS,304,,,,
-KS,305,7.7,6.8,6.62,alfalfa seed
-KS,306,,,,
-KS,307,26.2,,,
-KS,308,,,,
-KS,309,19.1,,,
-KS,310,2,,,
-KS,311,42.7,,,
-KS,312,12.3,,,
-KS,313,31.1,,,
-KS,314,29.4,,,
-KS,315,22.4,22.23,20.32,alfalfa seed
-KS,316,,,,
-KS,317,,,,
-KS,318,,,,
-KS,319,3.4,3.07,2.93,alfalfa seed
-KS,320,52.5,,,
-KS,321,,,,
-KS,322,,,,
-KS,323,,,,
-KS,401,23.6,23.79,20.53,alfalfa seed
-KS,402,,,,
-KS,403,35.5,35.57,23.92,alfalfa seed
-KS,404,22.4,,,
-KS,405,22.5,,,
-KS,406,26.6,27.65,23.58,alfalfa seed
-KS,407,29.6,,,
-KS,408,28.8,,,
-KS,409,,,,
-KS,410,,,,
-KS,411,2.1,,,
-KS,412,,,,
-KS,413,10.8,,,
-KS,414,11.4,11.14,10.65,
-KS,415,20.7,20.51,16.59,alfalfa seed
-KS,416,13,,,
-KS,417,,,,
-KS,418,6.7,,,
-KS,419,,,,
-KS,420,5.2,,,
-KS,421,,,,
-KS,422,,,,
-KS,423,,,,
+Location,Sample ,Rep,Treatment,G from MasterDataSpreadsheet,Threshed Weight,Cleaned weight,Notes
+KS,101,1,Monoculture,32.6,,,
+KS,102,1,,,,,
+KS,103,1,Monoculture,14.8,,,
+KS,104,1,,,,,
+KS,105,1,Intercrop,33.6,33.99,28.41,alfalfa seed
+KS,106,1,Intercrop,19,19.24,17.79,alfalfa seed
+KS,107,1,Intercrop,29.7,,,
+KS,108,1,Intercrop,37.6,,,
+KS,109,1,Monoculture,9,8.78,7.64,alfalfa seed
+KS,110,1,,,,,
+KS,111,1,,,,,
+KS,112,1,Intercrop,30.6,,,
+KS,113,1,Monoculture,25.1,,,
+KS,114,1,,,,,
+KS,115,1,,,,,
+KS,116,1,,,,,
+KS,117,1,Intercrop,33.7,,,
+KS,118,1,,,,,
+KS,119,1,Intercrop,11.1,10.95,9.82,alfalfa seed
+KS,120,1,Intercrop,26.2,,,
+KS,121,1,Intercrop,19.2,19.07,16.48,alfalfa seed
+KS,122,1,,,,,
+KS,123,1,Monoculture,18.4,,,
+KS,201,2,,,,,
+KS,202,2,,,,,
+KS,203,2,Monoculture,6.9,6.96,6.54,alfalfa seed
+KS,204,2,Intercrop,21.9,21.91,13.17,alfalfa seed
+KS,205,2,,,,,
+KS,206,2,Intercrop,18.2,,,
+KS,207,2,Intercrop,17.7,,,
+KS,208,2,,,,,
+KS,209,2,,,,,
+KS,210,2,Intercrop,23.1,,,
+KS,211,2,Intercrop,20.1,20.3,18.03,alfalfa seed
+KS,212,2,,,,,
+KS,213,2,Intercrop,11.7,,,
+KS,214,2,Intercrop,14.7,14.47,10.79,alfalfa seed
+KS,215,2,,,,,
+KS,216,2,Intercrop,25.2,25.14,24,
+KS,217,2,Monoculture,8.2,,,
+KS,218,2,Monoculture,13.9,13.93,9.86,alfalfa seed
+KS,219,2,Intercrop,12.3,,,
+KS,220,2,Monoculture,3,,,
+KS,221,2,,,,,
+KS,222,2,,,,,
+KS,223,2,Monoculture,12.9,,,
+KS,301,3,Monoculture,5.8,5.45,5.37,
+KS,302,3,Intercrop,27.9,,,
+KS,303,3,Intercrop,28.8,29.15,22.96,alfalfa seed
+KS,304,3,,,,,
+KS,305,3,Monoculture,7.7,6.8,6.62,alfalfa seed
+KS,306,3,,,,,
+KS,307,3,Intercrop,26.2,,,
+KS,308,3,,,,,
+KS,309,3,Monoculture,19.1,,,
+KS,310,3,Monoculture,2,,,
+KS,311,3,Intercrop,42.7,,,
+KS,312,3,Intercrop,12.3,,,
+KS,313,3,Intercrop,31.1,,,
+KS,314,3,Intercrop,29.4,,,
+KS,315,3,Intercrop,22.4,22.23,20.32,alfalfa seed
+KS,316,3,,,,,
+KS,317,3,,,,,
+KS,318,3,,,,,
+KS,319,3,Monoculture,3.4,3.07,2.93,alfalfa seed
+KS,320,3,Intercrop,52.5,,,
+KS,321,3,,,,,
+KS,322,3,,,,,
+KS,323,3,,,,,
+KS,401,4,Intercrop,23.6,23.79,20.53,alfalfa seed
+KS,402,4,,,,,
+KS,403,4,Intercrop,35.5,35.57,23.92,alfalfa seed
+KS,404,4,Intercrop,22.4,,,
+KS,405,4,Intercrop,22.5,,,
+KS,406,4,Intercrop,26.6,27.65,23.58,alfalfa seed
+KS,407,4,Intercrop,29.6,,,
+KS,408,4,Intercrop,28.8,,,
+KS,409,4,,,,,
+KS,410,4,,,,,
+KS,411,4,Monoculture,2.1,,,
+KS,412,4,,,,,
+KS,413,4,Monoculture,10.8,,,
+KS,414,4,Monoculture,11.4,11.14,10.65,
+KS,415,4,Intercrop,20.7,20.51,16.59,alfalfa seed
+KS,416,4,Intercrop,13,,,
+KS,417,4,,,,,
+KS,418,4,Monoculture,6.7,,,
+KS,419,4,,,,,
+KS,420,4,Monoculture,5.2,,,
+KS,421,4,,,,,
+KS,422,4,,,,,
+KS,423,4,,,,,
