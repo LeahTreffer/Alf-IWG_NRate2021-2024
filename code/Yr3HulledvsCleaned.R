@@ -24,7 +24,6 @@ colnames(out)[2] <- "G"
 
 write.csv(out, 'KS_Year_3_G.csv')
 
-
 ##### MN
 
 grainweights <- read.csv('data/Year 3 hulled vs cleaned - Sheet2.csv')
