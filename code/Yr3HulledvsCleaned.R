@@ -26,7 +26,9 @@ summary(model3)
 summary(model4)
 r.squaredGLMM(model4)
 
-grainweights$Predicted_Dehulled <- predict(model2, newdata = grainweights)
+AIC(model2,model3)
+
+grainweights$Predicted_Dehulled <- predict(model2, newdata = grainweights) # intercept + Threshed Weights*Estimate
 
 out <- grainweights[,c("Sample", "Predicted_Dehulled")]
 
