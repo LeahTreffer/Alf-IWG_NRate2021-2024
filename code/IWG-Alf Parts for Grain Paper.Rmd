@@ -2,6 +2,8 @@
 title: "Grain"
 output: html_document
 date: "2025-07-01"
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -959,7 +961,7 @@ ggsave("GEC.jpg", plot = GEC, width =12, height = 6, dpi = 350)
 ***
 Grain PLER NEED TO UPDATE ALL OF THIS 
 
-#GPLER year 1 math (missing NY rep 2 for some reason but i dont think I can be bothered... I THINK ITS BECAUSE YOU took out 208...)
+#GPLER year 1 math 
 ```{r}
 #0 
 NdSW0GLER <- NdXSIG %>%
@@ -969,6 +971,7 @@ NdSW0GLER <- NdXSIG %>%
   )
 NdSW0GLER<-NdSW0GLER[NdSW0GLER$Harvest == "Summer",]
 print(NdSW0GLER)
+# 7 treatment 5 in MN and 4 of every other treatment  
 
 #40
 NdSW40GLER <- NdXSIG %>%
@@ -996,6 +999,7 @@ NdSW120GLER <- NdXSIG %>%
   )
 NdSW120GLER<-NdSW120GLER[NdSW120GLER$Harvest == "Summer",]
 print(NdSW120GLER)
+# only 3 treatment 8 for KS
 
 #160
 NdSW160GLER <- NdXSIG %>%
@@ -1005,6 +1009,7 @@ NdSW160GLER <- NdXSIG %>%
   )
 NdSW160GLER<-NdSW160GLER[NdSW160GLER$Harvest == "Summer",]
 print(NdSW160GLER)
+# only 2 treatment 14 for KS
 
 #merge dataframes 
 GLER1<-left_join(NdSW0GLER, NdSW40GLER, by = c("Rep", "P", "YearCode", "Harvest"))
@@ -1040,10 +1045,10 @@ print(GLERX)
 
 #Grain PLER year 1 model (use PLER to see if there is interaction between Cropping system and Nrate and yield)
 ```{r}
-NdXSIG
-GLERX$P<-as.factor(GLERX$P)
-as.numeric(GLERX$N)
-as.numeric(GLERX$LER)
+GLERX$P<- as.factor(GLERX$P)
+GLERX$N <- as.numeric(GLERX$N) # can use numeric if treatment values are evenly spaced and we want to model a linear trend. Otherwise set to factor
+GLERX$LER <- as.numeric(GLERX$LER)
+GLERX$Rep <- as.factor(GLERX$Rep)
 #linear
 modGPLERX<-lmer(LER~N*P + (1|Rep), data= GLERX)
 anova(modGPLERX)
@@ -1055,6 +1060,7 @@ plot(modGPLERX)
 #Logtransform
 modGPLERX1<-lmer(log(LER)~N*P + (1|Rep), data=GLERX)
 anova(modGPLERX1)
+summary(modGPLERX1)
 #check assumptions logtransform (makes BETTER!)
 GPLERX_resid1<-resid(modGPLERX1)
 qqnorm(GPLERX_resid1)
@@ -1068,6 +1074,7 @@ ggplot(GLERX, aes(x = P, y = LER, fill = as.factor(N))) +
   geom_boxplot() +
   labs(title = "Year 1 Grain Partial LER by Location and N Rate", x = "Location", y = "Grain Partial LER")+
   geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")
+# save GPLER_yr1_boxplot_N:P
 
 max(GLERX$LER)
 #plots
@@ -1081,6 +1088,7 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
   scale_color_discrete(name = "Cropping System")+
   geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")#legend for colors
+# save GPLER_yr2_relationshipN:X
 
 #TWO way emmeans
 GPLERX1emm <- compute_emmeansNXS2("modGPLERX1")
@@ -1118,43 +1126,48 @@ cld_dataNGPLERX1N  |>
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
 
+# No difference in LER by Nrate, but NY was different than other locations (lower PLER)
+
 ```
 
-#GPLER year 2 math (why is rep 2 also missing from year 2? oh because adjusted is made from year 1 and 208 was missing from the beginning of all this analysis for year 1 etc etc etc... ugh. I'm not going to fix it unless it becomes a problem.)
+#GPLER year 2 math ; The treatment IDs look off for yr 2 - messaged Megan to ask about this 
 ```{r}
 #0 
-NdSW0GLERY <- DATA32 %>%
+NdSW0GLERY <- NdYSI %>%
   group_by(Rep, P, YearCode, Harvest) %>%
   reframe(
-    PartialLERGSW0 = (GAdjY[Treatment == 10]) / (GAdjY[Treatment == 5])
+    PartialLERGSW0 = (G[Treatment == 10]) / (G[Treatment == 5])
   )
+# only 3 treatment 10 and 5 for KS
 
 #40
-NdSW40GLERY <- DATA32 %>%
+NdSW40GLERY <- NdYSI %>%
   group_by(Rep, P, YearCode, Harvest) %>%
   reframe(
-    PartialLERGSW40 = (GAdjY[Treatment == 11]) / (GAdjY[Treatment == 6])
+    PartialLERGSW40 = (G[Treatment == 11]) / (G[Treatment == 6])
   )
+# only 3 treatment 11 and 6 for KS
+# no treatment 11 or 6 for MN ??? But they do have Nrate values of 40
 
 #80
-NdSW80GLERY <- DATA32 %>%
+NdSW80GLERY <- NdYSI %>%
   group_by(Rep, P, YearCode, Harvest) %>%
   reframe(
-    PartialLERGSW80 = (GAdjY[Treatment == 12]) / (GAdjY[Treatment == 7])
+    PartialLERGSW80 = (G[Treatment == 12]) / (G[Treatment == 7])
   )
 
 #120
-NdSW120GLERY <- DATA32 %>%
+NdSW120GLERY <- NdYSI %>%
   group_by(Rep, P, YearCode, Harvest) %>%
   reframe(
-    PartialLERGSW120 = (GAdjY[Treatment == 13]) / (GAdjY[Treatment == 8])
+    PartialLERGSW120 = (G[Treatment == 13]) / (G[Treatment == 8])
   )
 
 #160
-NdSW160GLERY <- DATA32 %>%
+NdSW160GLERY <- NdYSI %>%
   group_by(Rep, P, YearCode, Harvest) %>%
   reframe(
-    PartialLERGSW160= (GAdjY[Treatment == 14]) / (GAdjY[Treatment == 9])
+    PartialLERGSW160= (G[Treatment == 14]) / (G[Treatment == 9])
   )
 
 #merge dataframes 
