@@ -958,10 +958,10 @@ ggsave("GEC.jpg", plot = GEC, width =12, height = 6, dpi = 350)
 
 
 
-***
-Grain PLER NEED TO UPDATE ALL OF THIS 
 
-#GPLER year 1 math 
+## Grain PLER  
+
+# GPLER year 1 math 
 ```{r}
 #0 
 NdSW0GLER <- NdXSIG %>%
@@ -970,7 +970,6 @@ NdSW0GLER <- NdXSIG %>%
     PartialLERGSW0 = (G[Treatment == 10]) / (G[Treatment == 5])
   )
 NdSW0GLER<-NdSW0GLER[NdSW0GLER$Harvest == "Summer",]
-print(NdSW0GLER)
 # 7 treatment 5 in MN and 4 of every other treatment  
 
 #40
@@ -980,7 +979,6 @@ NdSW40GLER <- NdXSIG %>%
     PartialLERGSW40 = (G[Treatment == 11]) / (G[Treatment == 6])
   )
 NdSW40GLER<-NdSW40GLER[NdSW40GLER$Harvest == "Summer",]
-print(NdSW40GLER)
 
 #80
 NdSW80GLER <- NdXSIG %>%
@@ -989,7 +987,6 @@ NdSW80GLER <- NdXSIG %>%
     PartialLERGSW80 = (G[Treatment == 12]) / (G[Treatment == 7])
   )
 NdSW80GLER<-NdSW80GLER[NdSW80GLER$Harvest == "Summer",]
-print(NdSW80GLER)
 
 #120
 NdSW120GLER <- NdXSIG %>%
@@ -998,7 +995,6 @@ NdSW120GLER <- NdXSIG %>%
     PartialLERGSW120 = (G[Treatment == 13]) / (G[Treatment == 8])
   )
 NdSW120GLER<-NdSW120GLER[NdSW120GLER$Harvest == "Summer",]
-print(NdSW120GLER)
 # only 3 treatment 8 for KS
 
 #160
@@ -1008,18 +1004,13 @@ NdSW160GLER <- NdXSIG %>%
     PartialLERGSW160= (G[Treatment == 14]) / (G[Treatment == 9])
   )
 NdSW160GLER<-NdSW160GLER[NdSW160GLER$Harvest == "Summer",]
-print(NdSW160GLER)
 # only 2 treatment 14 for KS
 
 #merge dataframes 
 GLER1<-left_join(NdSW0GLER, NdSW40GLER, by = c("Rep", "P", "YearCode", "Harvest"))
-print(GLER1)
 GLER2<-left_join(GLER1, NdSW80GLER, by = c("Rep", "P", "YearCode", "Harvest"))
-print(GLER2)
 GLER3<-left_join(GLER2, NdSW120GLER, by = c("Rep", "P", "YearCode", "Harvest"))
-print(GLER3)
 GLER4<-left_join(GLER3, NdSW160GLER, by = c("Rep", "P", "YearCode", "Harvest"))
-print(GLER4)
 
 #rearrange dataframe 
 GLER4 <- GLER4 %>%
@@ -1030,17 +1021,14 @@ GLER4 <- GLER4 %>%
 #cut off total and partial 
 GLER4$Type <- sub("^(Partial|Total)", "", GLER4$Nrate)
 GLER4$tot_or_part <- sub("^(Partial|Total).*", "\\1", GLER4$Nrate)
-print(GLER4)
 
 #cut off LERIWGSW and LERAlfSW and LERSW
 GLER4$NRATE <- sub("^(LERGSW|LERAlfSW|LERSW)", "", GLER4$Type)
 GLER4$PlotType <- sub("^(LERGSW|LERAlfSW|LERSW).*", "\\1", GLER4$Type)
-print(GLER4)
 GLER4$N<-as.numeric(GLER4$NRATE)
 
 #get rid of pesky NA results (caused by missing plots inherent in year 1 KS summer data)
 GLERX<- na.omit(GLER4)
-print(GLERX)
 ```
 
 #Grain PLER year 1 model (use PLER to see if there is interaction between Cropping system and Nrate and yield)
@@ -1088,7 +1076,7 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
   scale_color_discrete(name = "Cropping System")+
   geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")#legend for colors
-# save GPLER_yr2_relationshipN:X
+# save GPLER_yr1_relationshipN:X
 
 #TWO way emmeans
 GPLERX1emm <- compute_emmeansNXS2("modGPLERX1")
@@ -1130,7 +1118,28 @@ cld_dataNGPLERX1N  |>
 
 ```
 
-#GPLER year 2 math ; The treatment IDs look off for yr 2 - messaged Megan to ask about this 
+# GPLER E plot (X)
+```{r}
+NGLERXemmsP <- emmeans(modGPLERX1, ~ P, type = "response") 
+emms_df <- as.data.frame(NGLERXemmsP)
+cld_dataNGLERXP <- cld(NGLERXemmsP, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNGLERXP)
+merged_df <- merge(emms_df, cld_df,by = c("P"))
+GLERE<-ggplot(GLERX, aes(x = P, y = exp(predicted))) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7, color="darkgreen") +
+  labs(x = "Environment", y = "Grain PLER") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 1.8)
+
+print(GLERE)
+ggsave("figures/GPLER_yr1_E.jpg", plot = GLERE, width = 8, height = 6, dpi = 300)
+```
+
+# GPLER year 2 math  
 ```{r}
 #0 
 NdSW0GLERY <- NdYSI %>%
@@ -1147,7 +1156,6 @@ NdSW40GLERY <- NdYSI %>%
     PartialLERGSW40 = (G[Treatment == 11]) / (G[Treatment == 6])
   )
 # only 3 treatment 11 and 6 for KS
-# no treatment 11 or 6 for MN ??? But they do have Nrate values of 40
 
 #80
 NdSW80GLERY <- NdYSI %>%
@@ -1155,6 +1163,7 @@ NdSW80GLERY <- NdYSI %>%
   reframe(
     PartialLERGSW80 = (G[Treatment == 12]) / (G[Treatment == 7])
   )
+# only 3 treatment 12 and 7 for KS
 
 #120
 NdSW120GLERY <- NdYSI %>%
@@ -1162,6 +1171,7 @@ NdSW120GLERY <- NdYSI %>%
   reframe(
     PartialLERGSW120 = (G[Treatment == 13]) / (G[Treatment == 8])
   )
+# only 3 treatment 13 and 8 for KS
 
 #160
 NdSW160GLERY <- NdYSI %>%
@@ -1169,6 +1179,7 @@ NdSW160GLERY <- NdYSI %>%
   reframe(
     PartialLERGSW160= (G[Treatment == 14]) / (G[Treatment == 9])
   )
+# only 3 treatment 14 and 9 for KS
 
 #merge dataframes 
 GLER1<-left_join(NdSW0GLERY, NdSW40GLERY, by = c("Rep", "P", "YearCode", "Harvest"))
@@ -1178,7 +1189,6 @@ print(GLER2)
 GLER3<-left_join(GLER2, NdSW120GLERY, by = c("Rep", "P", "YearCode", "Harvest"))
 print(GLER3)
 GLER4<-left_join(GLER3, NdSW160GLERY, by = c("Rep", "P", "YearCode", "Harvest"))
-print(GLER4)
 
 #rearrange dataframe 
 GLER4 <- GLER4 %>%
@@ -1189,17 +1199,14 @@ GLER4 <- GLER4 %>%
 #cut off total and partial 
 GLER4$Type <- sub("^(Partial|Total)", "", GLER4$Nrate)
 GLER4$tot_or_part <- sub("^(Partial|Total).*", "\\1", GLER4$Nrate)
-print(GLER4)
 
 #cut off LERIWGSW and LERAlfSW and LERSW
 GLER4$NRATE <- sub("^(LERGSW|LERAlfSW|LERSW)", "", GLER4$Type)
 GLER4$PlotType <- sub("^(LERGSW|LERAlfSW|LERSW).*", "\\1", GLER4$Type)
-print(GLER4)
 GLER4$N<-as.numeric(GLER4$NRATE)
 
 #get rid of pesky NA results (caused by missing plots inherent in year 1 KS summer data)
 GLERY<- na.omit(GLER4)
-print(GLERY)
 ```
 
 #Grain PLER year 2 model 
@@ -1218,6 +1225,7 @@ plot(modGPLERY)
 #Logtransform
 modGPLERY1<-lmer(log(LER)~N*P + (1|Rep), data=GLERY)
 anova(modGPLERY1)
+summary(modGPLERY1)
 #check assumptions logtransform (makes BETTER!)
 GPLERY_resid1<-resid(modGPLERY1)
 qqnorm(GPLERY_resid1)
@@ -1229,7 +1237,10 @@ plot(modGPLERY1)
 # Boxplot for I Partial LER
 ggplot(GLERY, aes(x = P, y = LER, fill = as.factor(N))) +
   geom_boxplot() +
-  labs(title = "Year 2 Grain Partial LER by Location and N Rate", x = "Location", y = "Grain Partial LER")
+  labs(title = "Year 2 Grain Partial LER by Location and N Rate", x = "Location", y = "Grain Partial LER")+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")
+# save GPLER_yr2_boxplot_N:P
+
 
 max(GLERY$LER)
 #plots
@@ -1243,22 +1254,24 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
   scale_color_discrete(name = "Cropping System")+
   geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")#legend for colors
+# save GPLER_yr2_relationshipN:X
 
 #Pairwise P
 emmsP <- emmeans(modGPLERY1, specs = ~ P, type = "response")
-cld_dataNGPLERYP <- cld(emmsP) # Create compact letter display
+cld_dataNGPLERYP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
 cld_dataNGPLERYP $response <- format(cld_dataNGPLERYP $response, digits = 2)
 cld_dataNGPLERYP $lower.CL <- format(cld_dataNGPLERYP $lower.CL, digits = 2)
 cld_dataNGPLERYP $upper.CL <- format(cld_dataNGPLERYP $upper.CL, digits = 3)
 rownames(cld_dataNGPLERYP ) <- NULL
 cld_dataNGPLERYP <- cld_dataNGPLERYP  %>%
   select( P, response,lower.CL, upper.CL, .group)
-colnames(cld_dataNGPLERYP ) <- c( "Site", "APLER","l","h", "Group")
+colnames(cld_dataNGPLERYP ) <- c( "Site", "GPLER","l","h", "Group")
 cld_dataNGPLERYP  |> 
   data.frame() |> 
   kbl(align = "c") |> 
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
+
 #Pairwise comparison N 
 N_levels <- c(0, 40, 80, 120, 160)
 emmsNGPLERN <- emmeans(modGPLERY1, specs= ~ N, at= list(N = N_levels), type= "response")
@@ -1275,45 +1288,11 @@ cld_dataNGPLERY1N  |>
   kbl(align = "c") |> 
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
+
+# no difference between sites or Nrate in pairwise comparison. Although ANOVA summary shows that WI location is significantly different (higher LER) and the Nrate MN location interaction was approaching significance (higher LER)
 ```
 
-#Grain PLER combo plot
-```{r}
-# Layer all the plots together!
-colors <- c("Year 1 Summer Harvest" = "red", 
-            "Year 1 Fall Harvest" = "green", 
-            "Year 2 Summer Harvest" = "blue", 
-            "Year 2 Fall Harvest" = "purple")
-legend_order2 <- c("Year 1 Summer Harvest", 
-                  "Year 2 Summer Harvest")
-GLERX$P <- factor(GLERX$P, levels = desired_order)
-max(GLERX$LER)
-max(GLERY$LER)
-GPLERcomboplot <- ggplot() +
-  geom_line(data = GLERX, aes(N, exp(predicted), color = "Year 1 Summer Harvest")) +
-  geom_point(data =GLERX, aes(x = N, y = LER, color = "Year 1 Summer Harvest")) +
-  geom_line(data = GLERY, aes(N, exp(predicted), color = "Year 2 Summer Harvest")) +
-  geom_point(data = GLERY, aes(x = N, y = LER, color = "Year 2 Summer Harvest")) +
-  labs(x = "N-Rate (kg ha-1)", y = "Grain PLER",
-    color = "Harvest", 
-    linetype = "Cropping System", shape = "Cropping System") +
-  ggtitle("Relationship Between Grain PLER and N-rate") +
-  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
-  ylim(0, 7.1) +
-  facet_wrap(~P, scales = "free", ncol = 2) +
-  scale_color_manual(values = colors, limits = legend_order2)+
-  scale_shape_manual(values = c(4, 20))+
-  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")
-
-
-print(GPLERcomboplot)
-
-ggsave("GPLERcomboplot.jpg", plot = GPLERcomboplot, width = 8, height = 6, dpi = 300)
-```
-***
-Nrate Relative yield stuff
-
-#GPLER E plot (Y)
+# GPLER E plot (Y)
 ```{r}
 NGLERYemmsP <- emmeans(modGPLERY1, ~ P, type = "response") 
 emms_df <- as.data.frame(NGLERYemmsP)
@@ -1331,8 +1310,218 @@ GLERE<-ggplot(GLERY, aes(x = P, y = exp(predicted))) +
             color = "black", vjust = 0, hjust = 1.8)
 
 print(GLERE)
-ggsave("GLERE.jpg", plot = GLERE, width = 8, height = 6, dpi = 300)
+ggsave("figures/GPLER_yr2_E.jpg", plot = GLERE, width = 8, height = 6, dpi = 300)
 ```
+
+# GPLER year 3 math  
+```{r}
+#0 
+NdSW0GLERZ <- NdZSI %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW0 = (G[Treatment == 10]) / (G[Treatment == 5])
+  )
+
+
+#40
+NdSW40GLERZ <- NdZSI %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW40 = (G[Treatment == 11]) / (G[Treatment == 6])
+  )
+
+#80
+NdSW80GLERZ <- NdZSI %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW80 = (G[Treatment == 12]) / (G[Treatment == 7])
+  )
+
+#120
+NdSW120GLERZ <- NdZSI %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW120 = (G[Treatment == 13]) / (G[Treatment == 8])
+  )
+
+#160
+NdSW160GLERZ <- NdZSI %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW160= (G[Treatment == 14]) / (G[Treatment == 9])
+  )
+
+#merge dataframes 
+GLER1<-left_join(NdSW0GLERZ, NdSW40GLERZ, by = c("Rep", "P", "YearCode", "Harvest"))
+GLER2<-left_join(GLER1, NdSW80GLERZ, by = c("Rep", "P", "YearCode", "Harvest"))
+GLER3<-left_join(GLER2, NdSW120GLERZ, by = c("Rep", "P", "YearCode", "Harvest"))
+GLER4<-left_join(GLER3, NdSW160GLERZ, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#rearrange dataframe 
+GLER4 <- GLER4 %>%
+  pivot_longer(cols = starts_with("PartialLER") | starts_with("TotalLER"),
+               names_to = "Nrate",
+               values_to = "LER")
+
+#cut off total and partial 
+GLER4$Type <- sub("^(Partial|Total)", "", GLER4$Nrate)
+GLER4$tot_or_part <- sub("^(Partial|Total).*", "\\1", GLER4$Nrate)
+
+#cut off LERIWGSW and LERAlfSW and LERSW
+GLER4$NRATE <- sub("^(LERGSW|LERAlfSW|LERSW)", "", GLER4$Type)
+GLER4$PlotType <- sub("^(LERGSW|LERAlfSW|LERSW).*", "\\1", GLER4$Type)
+GLER4$N<-as.numeric(GLER4$NRATE)
+
+#get rid of pesky NA results (caused by missing plots inherent in year 1 KS summer data)
+GLERZ<- na.omit(GLER4)
+```
+
+#Grain PLER year 3 model 
+```{r}
+GLERZ$P<-as.factor(GLERZ$P)
+as.numeric(GLERZ$N)
+as.numeric(GLERZ$LER)
+#linear
+modGPLERZ<-lmer(LER~N*P + (1|Rep), data= GLERZ)
+anova(modGPLERZ)
+#check assumptions
+GPLERZ_resid<-resid(modGPLERZ)
+qqnorm(GPLERZ_resid)
+qqline(GPLERZ_resid)
+plot(modGPLERZ)
+#Logtransform
+modGPLERZ1<-lmer(log(LER)~N*P + (1|Rep), data=GLERZ)
+anova(modGPLERZ1)
+summary(modGPLERZ1)
+#check assumptions logtransform (makes BETTER!)
+GPLERZ_resid1<-resid(modGPLERZ1)
+qqnorm(GPLERZ_resid1)
+qqline(GPLERZ_resid1)
+plot(modGPLERZ1)
+
+#Comparison plots
+
+# Boxplot for I Partial LER
+ggplot(GLERZ, aes(x = P, y = LER, fill = as.factor(N))) +
+  geom_boxplot() +
+  labs(title = "Year 3 Grain Partial LER by Location and N Rate", x = "Location", y = "Grain Partial LER")+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")
+# save GPLER_yr3_boxplot_N:P
+
+
+max(GLERZ$LER)
+#plots
+GLERZ$predicted <- predict(modGPLERZ1, newdata = GLERZ, re.form = NA)
+ggplot(GLERZ, aes(x = N, y = LER)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Grain Partial LER (Kg/ha)") +  # Label the axes
+  ggtitle("Relationship between year 3 Grain Partial LER and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 7.1) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")#legend for colors
+# save GPLER_yr3_relationshipN:X
+
+#Pairwise P
+emmsP <- emmeans(modGPLERZ1, specs = ~ P, type = "response")
+cld_dataNGPLERZP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+cld_dataNGPLERZP $response <- format(cld_dataNGPLERZP $response, digits = 2)
+cld_dataNGPLERZP $lower.CL <- format(cld_dataNGPLERZP $lower.CL, digits = 2)
+cld_dataNGPLERZP $upper.CL <- format(cld_dataNGPLERZP $upper.CL, digits = 3)
+rownames(cld_dataNGPLERZP ) <- NULL
+cld_dataNGPLERZP <- cld_dataNGPLERZP  %>%
+  select( P, response,lower.CL, upper.CL, .group)
+colnames(cld_dataNGPLERZP ) <- c( "Site", "GPLER","l","h", "Group")
+cld_dataNGPLERZP  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#Pairwise comparison N 
+N_levels <- c(0, 40, 80, 120, 160)
+emmsNGPLERN <- emmeans(modGPLERZ1, specs= ~ N, at= list(N = N_levels), type= "response")
+cld_dataNGPLERZ1N <- cld(emmsNGPLERN, Letters=custom_letters)
+cld_dataNGPLERZ1N $response <- format(cld_dataNGPLERZ1N $response, digits = 2)
+cld_dataNGPLERZ1N $lower.CL <- format(cld_dataNGPLERZ1N $lower.CL, digits = 2)
+cld_dataNGPLERZ1N $upper.CL <- format(cld_dataNGPLERZ1N $upper.CL, digits = 3)
+rownames(cld_dataNGPLERZ1N ) <- NULL
+cld_dataNGPLERZ1N <- cld_dataNGPLERZ1N  %>%
+  select( N, response,lower.CL, upper.CL, .group)
+colnames(cld_dataNGPLERZ1N ) <- c( "N", "APLER","l","h", "Group")
+cld_dataNGPLERZ1N  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+# 
+```
+
+# GPLER E plot (X)
+```{r}
+NGLERZemmsP <- emmeans(modGPLERZ1, ~ P, type = "response") 
+emms_df <- as.data.frame(NGLERZemmsP)
+cld_dataNGLERZP <- cld(NGLERZemmsP, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNGLERZP)
+merged_df <- merge(emms_df, cld_df,by = c("P"))
+GLERE<-ggplot(GLERZ, aes(x = P, y = exp(predicted))) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7, color="darkgreen") +
+  labs(x = "Environment", y = "Grain PLER") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 1.8)
+
+print(GLERE)
+ggsave("figures/GPLER_yr3_E.jpg", plot = GLERE, width = 8, height = 6, dpi = 300)
+```
+
+# Grain PLER combo plot
+```{r}
+# Layer all the plots together!
+colors <- c("Year 1 Summer Harvest" = "red", 
+            "Year 1 Fall Harvest" = "green", 
+            "Year 2 Summer Harvest" = "blue", 
+            "Year 2 Fall Harvest" = "purple",
+            "Year 3 Summer Harvest" = "",
+            "Year 3 Fall Harvest" = "")
+legend_order2 <- c("Year 1 Summer Harvest", 
+                  "Year 2 Summer Harvest",
+                  "Year 3 Summer Harvest")
+GLERX$P <- factor(GLERX$P, levels = desired_order)
+max(GLERX$LER)
+max(GLERY$LER)
+GPLERcomboplot <- ggplot() +
+  geom_line(data = GLERX, aes(N, exp(predicted), color = "Year 1 Summer Harvest")) +
+  geom_point(data =GLERX, aes(x = N, y = LER, color = "Year 1 Summer Harvest")) +
+  geom_line(data = GLERY, aes(N, exp(predicted), color = "Year 2 Summer Harvest")) +
+  geom_point(data = GLERY, aes(x = N, y = LER, color = "Year 2 Summer Harvest")) +
+  geom_line(data = GLERZ, aes(N, exp(predicted), color = "Year 3 Summer Harvest")) +
+  geom_point(data = GLERZ, aes(x = N, y = LER, color = "Year 3 Summer Harvest")) +
+  labs(x = "N-Rate (kg ha-1)", y = "Grain PLER",
+    color = "Harvest", 
+    linetype = "Cropping System", shape = "Cropping System") +
+  ggtitle("Relationship Between Grain PLER and N-rate") +
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 7.1) +
+  facet_wrap(~P, scales = "free", ncol = 2) +
+  scale_color_manual(values = colors, limits = legend_order2)+
+  scale_shape_manual(values = c(4, 20))+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")
+
+
+print(GPLERcomboplot)
+
+ggsave("figures/GPLERcomboplot.jpg", plot = GPLERcomboplot, width = 8, height = 6, dpi = 300)
+```
+
+
+
+## Nrate Relative Yield 
 
 #Grain year 1 relative yields
 ```{r}
