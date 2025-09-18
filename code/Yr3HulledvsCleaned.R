@@ -37,6 +37,8 @@ colnames(out)[2] <- "G"
 
 write.csv(out, 'KS_Year_3_G.csv')
 
+rm(grainweights,model,model2,model3,model4,out)
+
 ##### MN
 
 grainweights <- read.csv('data/Year 3 hulled vs cleaned - Sheet2.csv')
@@ -62,7 +64,8 @@ write.csv(out, 'MN_Year_3_G.csv')
 
 grainweights <- read.csv('data/Year 3 hulled vs cleaned - WI.csv')
 grainweights$Rep <- as.factor(grainweights$Rep)
-grainweights$Treatment <- as.factor(grainweights$Treatment)
+grainweights$Sample <- as.character(grainweights$Sample)
+
 
 plot(grainweights$Cleaned.weight, grainweights$Threshed.Weight)
 
@@ -85,3 +88,6 @@ colnames(out)[1] <- "Plot"
 colnames(out)[2] <- "G"
 
 write.csv(out, 'WI_Year_3_G.csv')
+
+rm(grainweights,model,model2,model3,out)
+
