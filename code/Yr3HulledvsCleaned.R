@@ -9,7 +9,7 @@ library(MuMIn)
 
 ##### KS
 
-grainweights <- read.csv('data/Year 3 hulled vs cleaned - Sheet1.csv')
+grainweights <- read.csv('data/Year 3 hulled vs cleaned - KS.csv')
 grainweights$Rep <- as.factor(grainweights$Rep)
 grainweights$Treatment <- as.factor(grainweights$Treatment)
 
@@ -37,6 +37,8 @@ colnames(out)[2] <- "G"
 
 write.csv(out, 'KS_Year_3_G.csv')
 
+rm(grainweights,model,model2,model3,model4,out)
+
 ##### MN
 
 grainweights <- read.csv('data/Year 3 hulled vs cleaned - Sheet2.csv')
@@ -58,4 +60,34 @@ colnames(out)[2] <- "G"
 
 write.csv(out, 'MN_Year_3_G.csv')
 
+##### WI
+
+grainweights <- read.csv('data/Year 3 hulled vs cleaned - WI.csv')
+grainweights$Rep <- as.factor(grainweights$Rep)
+grainweights$Sample <- as.character(grainweights$Sample)
+
+
+plot(grainweights$Cleaned.weight, grainweights$Threshed.Weight)
+
+model <- lm(Cleaned.weight~Threshed.Weight, data=grainweights)
+model2 <- lm(Cleaned.weight~G.from.MasterDataSpreadsheet, data=grainweights)
+model3 <-lmer(Cleaned.weight~G.from.MasterDataSpreadsheet + (1|Rep), data=grainweights)
+
+summary(model)
+summary(model2)
+summary(model3)
+r.squaredGLMM(model3)
+
+AIC(model2,model3)
+
+grainweights$Predicted_Dehulled <- predict(model2, newdata = grainweights) # intercept + Threshed Weights*Estimate
+
+out <- grainweights[,c("Sample", "Predicted_Dehulled")]
+
+colnames(out)[1] <- "Plot"
+colnames(out)[2] <- "G"
+
+write.csv(out, 'WI_Year_3_G.csv')
+
+rm(grainweights,model,model2,model3,out)
 
