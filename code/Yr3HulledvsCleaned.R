@@ -9,7 +9,7 @@ library(MuMIn)
 
 ##### KS
 
-grainweights <- read.csv('data/Year 3 hulled vs cleaned - KS.csv')
+grainweights <- read.csv('data/Original_Data/Year 3 hulled vs cleaned - KS.csv')
 grainweights$Rep <- as.factor(grainweights$Rep)
 grainweights$Treatment <- as.factor(grainweights$Treatment)
 
@@ -35,13 +35,13 @@ out <- grainweights[,c("Sample", "Predicted_Dehulled")]
 colnames(out)[1] <- "Plot"
 colnames(out)[2] <- "G"
 
-write.csv(out, 'KS_Year_3_G.csv')
+write.csv(out, 'data/Intermediate_Data/KS_Year_3_G.csv')
 
 rm(grainweights,model,model2,model3,model4,out)
 
 ##### MN
 
-grainweights <- read.csv('data/Year 3 hulled vs cleaned - Sheet2.csv')
+grainweights <- read.csv('data/Original_Data/Year 3 hulled vs cleaned - MN.csv')
 
 plot(grainweights$Cleaned.weight, grainweights$Threshed.Weight)
 
@@ -58,11 +58,13 @@ out <- grainweights[,c("Sample", "Predicted_Dehulled")]
 colnames(out)[1] <- "Plot"
 colnames(out)[2] <- "G"
 
-write.csv(out, 'MN_Year_3_G.csv')
+write.csv(out, 'data/Intermediate_Data/MN_Year_3_G.csv')
+
+rm(grainweights,model,model2,out)
 
 ##### WI
 
-grainweights <- read.csv('data/Year 3 hulled vs cleaned - WI.csv')
+grainweights <- read.csv('data/Original_Data/Year 3 hulled vs cleaned - WI.csv')
 grainweights$Rep <- as.factor(grainweights$Rep)
 grainweights$Sample <- as.character(grainweights$Sample)
 
@@ -87,7 +89,7 @@ out <- grainweights[,c("Sample", "Predicted_Dehulled")]
 colnames(out)[1] <- "Plot"
 colnames(out)[2] <- "G"
 
-write.csv(out, 'WI_Year_3_G.csv')
+write.csv(out, 'data/Intermediate_Data/WI_Year_3_G.csv')
 
 rm(grainweights,model,model2,model3,out)
 
