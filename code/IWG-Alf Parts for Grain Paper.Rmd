@@ -262,6 +262,8 @@ The IWG grain threshability visibly varied by site, and not all grains were full
 
 Adjusted plot grain yield= (estimated dehulled sample weight/ sample weight)*(plot grain yield weight) 
 
+In year 3, dehulled weight was estimated for each location by hand cleaning a subset of the samples and using those to set up a model to predict all dehulled grain weights. A linear model of $y = \beta_0 + \beta X$, where y is dehulled weight and X is the original sample weight, achieved a $R^2 > 0.9$. The resulting estimates were used to obtaine predicted dehulled grain weights for each sample via the predict function. This function uses the equation : predicted value = intercept + Threshed Weights*Estimate. 
+
 ### Land Equivalent Ratio (LER)
 
 Land Equivalent Ratio (LER) was calculated to compare the performance of intercrops to that of monocultures... Indicates a relative total forage yield advantage for intercropped plots if the TLER is greater than 1(Mead & Willey, 1980). 
@@ -506,7 +508,7 @@ labs(x = "N-Rate (Kg/ha)", y = "Grain Yield (Kg/ha)") +  # Label the axes
 geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values 
 ylim(0, 1700)+ #set y axis scale 
 scale_color_discrete(name = "Cropping System")  #legend for colors
-# save figures/grain_Nrate_yr1.jpeg
+# save figures/grain/grain_Nrate_yr1.jpeg
 
 
 #Threeway means
@@ -586,7 +588,7 @@ labs(x = "N-Rate (Kg/ha)", y = "Grain Yield (Kg/ha)") +  # Label the axes
 ylim(0, 1700)+ #set y axis scale 
 scale_color_discrete(name = "Cropping System")+  #legend for colors
 stat_poly_eq(use_label(c("eq", "R2"))) #add equation and R2 to plot
-# save figures/grain_Nrate_r2_yr1.jpeg
+# save figures/grain/grain_Nrate_r2_yr1.jpeg
 
 ```
 
@@ -626,7 +628,7 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 1200) +
   facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
   scale_color_discrete(name = "Cropping System")  #legend for colors
-# save grain_Nrate_yr2
+# save figures/grain/grain_Nrate_yr2
 
 #three way emmeans to compare ranks of adjusted and unadjusted
 N_levels <- c(0, 40, 80, 120, 160)
@@ -680,7 +682,7 @@ ggplot(cld_dataNYGadjNP, aes(x = interaction(N, Site),
        title = "Estimated Grain Yield with Group Letters (EMMeans)") +
   theme_minimal(base_size = 14) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# save grain_Nrate_yr2_emmeans_N:P
+# save figures/grain/grain_Nrate_yr2_emmeans_N:P
 ###
 
 
@@ -762,7 +764,7 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 600) +
   facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
   scale_color_discrete(name = "Cropping System")  #legend for colors
-# save grain_Nrate_yr3
+# save figures/grain/grain_Nrate_yr3
 
 #three way emmeans to compare ranks of adjusted and unadjusted
 N_levels <- c(0, 40, 80, 120, 160)
@@ -873,7 +875,7 @@ NG_stars <-NG_stars_tibble |>
 
 gt_NG <- gt(NG_stars)
 
-gt_NG |> gtsave("figures/gt_NG.png", expand = 10)
+gt_NG |> gtsave("figures/grain/gt_NG.png", expand = 10)
 ```
 
 # grain figures redo N:E
@@ -917,7 +919,7 @@ GraincomboplotNE <- ggplot(data=NdXSIG) +
   geom_function(data=subset(NdZSI, P== "MN"), fun=~278.01*exp(0.0065*.x),color='orange')
 print(GraincomboplotNE)
 
-ggsave("figures/GraincomboplotNE.jpg", plot = GraincomboplotNE, width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GraincomboplotNE.jpg", plot = GraincomboplotNE, width = 8, height = 6, dpi = 300)
 ```
 
 # grain figure E:C (X)
@@ -943,7 +945,7 @@ GXPC<-ggplot(NdXSIG, aes(x = P, y = exp(predicted), color = CROP)) +
      ggtitle("Year 1")+
   theme(plot.title = element_text(hjust = 0.5))
 print(GXPC)
-ggsave("figures/GXPC.jpg", plot = GXPC, width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GXPC.jpg", plot = GXPC, width = 8, height = 6, dpi = 300)
 ```
 
 # grain figure E:C (Y)
@@ -969,7 +971,7 @@ GYPC<-ggplot(NdYSI, aes(x = P, y = exp(predicted), color = CROP)) +
   theme(plot.title = element_text(hjust = 0.5))+
     scale_y_continuous(breaks = c(250, 500, 750, 1000, 1250), limits = c(0, 1260))
 print(GYPC)
-ggsave("figures/GYPC.jpg", plot = GYPC, width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GYPC.jpg", plot = GYPC, width = 8, height = 6, dpi = 300)
 ```
 
 # grain figure E:C (Z)
@@ -995,13 +997,13 @@ GZPC<-ggplot(NdZSI, aes(x = P, y = exp(predicted), color = CROP)) +
   theme(plot.title = element_text(hjust = 0.5))+
     scale_y_continuous(breaks = c(250, 500, 750, 1000, 1250), limits = c(0, 1260))
 print(GZPC)
-ggsave("figures/GZPC.jpg", plot = GYPC, width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GZPC.jpg", plot = GZPC, width = 8, height = 6, dpi = 300)
 ```
 
-# combined grain year 1 and 2 plots E:C
+# combined grain years plots E:C
 ```{r}
 GEC<-grid.arrange(GXPC, GYPC, GZPC, ncol = 2)
-ggsave("figures/GEC.jpg", plot = GEC, width =12, height = 6, dpi = 350)
+ggsave("figures/grain/GEC.jpg", plot = GEC, width =12, height = 6, dpi = 350)
 ```
 
 
@@ -1185,7 +1187,7 @@ GLERE<-ggplot(GLERX, aes(x = P, y = exp(predicted))) +
             color = "black", vjust = 0, hjust = 1.8)
 
 print(GLERE)
-# ggsave("figures/GPLER_yr1_E.jpg", plot = GLERE, width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GPLER_yr1_E.jpg", plot = GLERE, width = 8, height = 6, dpi = 300)
 ```
 
 # GPLER year 2 math  
@@ -1359,7 +1361,7 @@ GLERE<-ggplot(GLERY, aes(x = P, y = exp(predicted))) +
             color = "black", vjust = 0, hjust = 1.8)
 
 print(GLERE)
-# ggsave("figures/GPLER_yr2_E.jpg", plot = GLERE, width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GPLER_yr2_E.jpg", plot = GLERE, width = 8, height = 6, dpi = 300)
 ```
 
 # GPLER year 3 math  
@@ -1533,7 +1535,7 @@ GLERE<-ggplot(GLERZ, aes(x = P, y = exp(predicted))) +
             color = "black", vjust = 0, hjust = 1.8)
 
 print(GLERE)
-# ggsave("figures/GPLER_yr3_E.jpg", plot = GLERE, width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GPLER_yr3_E.jpg", plot = GLERE, width = 8, height = 6, dpi = 300)
 ```
 
 # Grain PLER combo plot
@@ -1573,7 +1575,7 @@ GPLERcomboplot <- ggplot() +
   geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")
 print(GPLERcomboplot)
 
-# ggsave("figures/GPLERcomboplot.jpg", plot = GPLERcomboplot, width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GPLERcomboplot.jpg", plot = GPLERcomboplot, width = 8, height = 6, dpi = 300)
 ```
 
 
@@ -1656,7 +1658,7 @@ GRYXcomboplot<-ggplot(NGRY_long, aes(x = N, y = GRelativeYield)) +
   geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
   ggtitle("Year 1 Grain Relative Yield")+
     coord_cartesian(ylim = c(NA, NA))
-# ggsave("figures/GRYXcomboplot.jpg", plot = GRYXcomboplot, width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GRYXcomboplot.jpg", plot = GRYXcomboplot, width = 8, height = 6, dpi = 300)
 
 #Pairwise comparisons
 #Pairwise N
@@ -1770,7 +1772,7 @@ GRYYcomboplot<-ggplot(NGRY_longY, aes(x = N, y = GRelativeYield)) +
   geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
   ggtitle("Year 2 Grain Relative Yield")+
     coord_cartesian(ylim = c(NA, NA))
-# ggsave("figures/GRYYcomboplot.jpg", plot = GRYYcomboplot, width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GRYYcomboplot.jpg", plot = GRYYcomboplot, width = 8, height = 6, dpi = 300)
 
 #Pairwise comparisons
 #Pairwise N
@@ -1808,7 +1810,7 @@ cld_dataGRYYNP    |>
 
 ```
 
-#Grain year 2 relative yields
+#Grain year 3 relative yields
 ```{r}
 #0
 NZGRY0 <- NdZSI %>%
@@ -1884,7 +1886,7 @@ GRYZcomboplot<-ggplot(NGRY_longZ, aes(x = N, y = GRelativeYield)) +
   geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
   ggtitle("Year 2 Grain Relative Yield")+
     coord_cartesian(ylim = c(NA, NA))
-# ggsave("figures/GRYZcomboplot.jpg", plot = GRYZcomboplot, width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GRYZcomboplot.jpg", plot = GRYZcomboplot, width = 8, height = 6, dpi = 300)
 
 #Pairwise comparisons
 #Pairwise N
@@ -1950,5 +1952,5 @@ GRYcomboplot <- ggplot(combined_data, aes(x = N, y = GRelativeYield, fill = Year
 # Display the combined plot
 print(GRYcomboplot)
 
-# ggsave("figures/GRYcomboplot.jpg", plot = GRYcomboplot , width = 8, height = 6, dpi = 300)
+# ggsave("figures/grain/GRYcomboplot.jpg", plot = GRYcomboplot , width = 8, height = 6, dpi = 300)
 ```
