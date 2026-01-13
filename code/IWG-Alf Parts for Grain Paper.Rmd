@@ -1580,8 +1580,6 @@ print(GPLERcomboplot)
 
 ## Nrate Relative Yield 
 
-### STOPPED HERE JAN 11 1/11 ###
-
 #Grain year 1 relative yields
 ```{r}
 #0
@@ -1658,7 +1656,7 @@ GRYXcomboplot<-ggplot(NGRY_long, aes(x = N, y = GRelativeYield)) +
   geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
   ggtitle("Year 1 Grain Relative Yield")+
     coord_cartesian(ylim = c(NA, NA))
-ggsave("figures/GRYXcomboplot.jpg", plot = GRYXcomboplot, width = 8, height = 6, dpi = 300)
+# ggsave("figures/GRYXcomboplot.jpg", plot = GRYXcomboplot, width = 8, height = 6, dpi = 300)
 
 #Pairwise comparisons
 #Pairwise N
@@ -1772,8 +1770,7 @@ GRYYcomboplot<-ggplot(NGRY_longY, aes(x = N, y = GRelativeYield)) +
   geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
   ggtitle("Year 2 Grain Relative Yield")+
     coord_cartesian(ylim = c(NA, NA))
-
-ggsave("figures/GRYYcomboplot.jpg", plot = GRYYcomboplot, width = 8, height = 6, dpi = 300)
+# ggsave("figures/GRYYcomboplot.jpg", plot = GRYYcomboplot, width = 8, height = 6, dpi = 300)
 
 #Pairwise comparisons
 #Pairwise N
@@ -1811,19 +1808,131 @@ cld_dataGRYYNP    |>
 
 ```
 
-# TO DO 
 #Grain year 2 relative yields
+```{r}
+#0
+NZGRY0 <- NdZSI %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield0 = (G[Treatment == 10]) / (G[Treatment == 5]))
+#40
+NZGRY40 <- NdZSI %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield40 = (G[Treatment == 10]) / (G[Treatment == 6]))
+#80
+NZGRY80 <- NdZSI %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield80 = (G[Treatment == 10]) / (G[Treatment == 7]))
+#120
+NZGRY120 <- NdZSI %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield120 = (G[Treatment == 10]) / (G[Treatment == 8]))
+#160
+NZGRY160 <- NdZSI %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield160 = (G[Treatment == 10]) / (G[Treatment == 9]))
 
+#Join together all the tables
+NZGRY<-left_join(NZGRY0, NZGRY40, by = c("Rep", "P", "YearCode", "Harvest"))
+NZGRY<-left_join(NZGRY, NZGRY80, by = c("Rep", "P", "YearCode", "Harvest"))
+NZGRY<-left_join(NZGRY, NZGRY120, by = c("Rep", "P", "YearCode", "Harvest"))
+NZGRY<-left_join(NZGRY, NZGRY160, by = c("Rep", "P", "YearCode", "Harvest"))
+
+# Reshape the data from wide to long format
+NGRY_longZ <- NZGRY %>%
+  pivot_longer(cols = starts_with("GRelativeYield"),
+               names_to = "N_rate",
+               values_to = "GRelativeYield") %>%
+  separate(N_rate, into = c("N_rate", "N"), sep = "GRelativeYield") %>%
+  mutate(N = as.numeric(N))
+
+#models 
+#year 1 grain RY
+modGRYZ<-lmer(GRelativeYield~N*P + (1|Rep), data=NGRY_longZ)
+anova(modGRYZ)
+#check assumptions 
+GRYZ_resid<-resid(modGRYZ)
+qqnorm(GRYZ_resid)
+qqline(GRYZ_resid)
+plot(modGRYZ)
+#Logtransform
+modGRYZ1<-lmer(log(GRelativeYield+0.00001)~N*P + (1|Rep), data=NGRY_longZ)
+anova(modGRYZ1)
+summary(modGRYZ1)
+#check LOG assumptions 
+GRYZ_resid1<-resid(modGRYZ1)
+qqnorm(GRYZ_resid1)
+qqline(GRYZ_resid1)
+plot(modGRYZ1)
+
+# Create box plots: 
+# Define the order of factor levels and Convert N to a factor with specified levels
+factor_levels <- c("0", "40", "80", "120", "160")
+desired_order <- c("KS", "MN", "NY", "WI")
+NGRY_longZ$N <- factor(NGRY_longZ$N, levels = factor_levels)
+NGRY_longZ$P<-factor(NGRY_longZ$P, levels = desired_order)
+GRYZcomboplot<-ggplot(NGRY_longZ, aes(x = N, y = GRelativeYield)) +
+  geom_boxplot() +
+  facet_wrap(~P, scales = "free",ncol=2) +
+  labs(x = "N Rate", y = "Relative Yield") +
+  theme_minimal()+
+  scale_x_discrete(breaks = c(0, 40, 80, 120, 160))+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
+  ggtitle("Year 2 Grain Relative Yield")+
+    coord_cartesian(ylim = c(NA, NA))
+# ggsave("figures/GRYZcomboplot.jpg", plot = GRYZcomboplot, width = 8, height = 6, dpi = 300)
+
+#Pairwise comparisons
+#Pairwise N
+N_levels <- c(0, 40, 80, 120, 160)
+emmsN <- emmeans(modGRYZ1, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataGRYZN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataGRYZN$response <- format(cld_dataGRYZN$response, digits = 3)
+cld_dataGRYZN$lower.CL <- format(cld_dataGRYZN$lower.CL, digits = 3)
+cld_dataGRYZN$upper.CL <- format(cld_dataGRYZN$upper.CL, digits = 3)
+rownames(cld_dataGRYZN) <- NULL
+cld_dataGRYZN  <- cld_dataGRYZN%>%
+  select(N, response, lower.CL, upper.CL, .group)
+colnames(cld_dataGRYZN) <- c( "N", "TLER","l","h", "Group")
+cld_dataGRYZN    |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#Pairwise N:P
+emmsNP <- emmeans(modGRYZ1, specs = ~ N:P, at = list(N = N_levels), type = "response")
+cld_dataGRYZNP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
+cld_dataGRYZNP$response <- format(cld_dataGRYZNP$response, digits = 3)
+cld_dataGRYZNP$lower.CL <- format(cld_dataGRYZNP$lower.CL, digits = 3)
+cld_dataGRYZNP$upper.CL <- format(cld_dataGRYZNP$upper.CL, digits = 3)
+rownames(cld_dataGRYZNP) <- NULL
+cld_dataGRYZNP  <- cld_dataGRYZNP%>%
+  select(N, P, response, lower.CL, upper.CL, .group)
+colnames(cld_dataGRYZNP) <- c("N", "Site", "TLER","l","h", "Group")
+cld_dataGRYZNP    |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+```
 
 #combo GRY boxplot 
 ```{r}
 # Combine the data frames and create a new column to distinguish the years
+NGRY_longZ$Year <- "Year 3"
 NGRY_longY$Year <- "Year 2"
 NGRY_long$Year <- "Year 1"
-combined_data <- rbind(NGRY_longY, NGRY_long)
+combined_data <- rbind(NGRY_longZ, NGRY_longY, NGRY_long)
 
 colors3<-c("Year 1" = "red", 
-            "Year 2" = "blue")
+            "Year 2" = "blue",
+           "Year 3" = "orange")
 # Convert N to a factor for proper ordering on the x-axis
 combined_data$N <- factor(combined_data$N, levels = c("0", "40", "80", "120", "160"))
 
@@ -1841,5 +1950,5 @@ GRYcomboplot <- ggplot(combined_data, aes(x = N, y = GRelativeYield, fill = Year
 # Display the combined plot
 print(GRYcomboplot)
 
-ggsave("GRYcomboplot .jpg", plot = GRYcomboplot , width = 8, height = 6, dpi = 300)
+# ggsave("figures/GRYcomboplot.jpg", plot = GRYcomboplot , width = 8, height = 6, dpi = 300)
 ```
