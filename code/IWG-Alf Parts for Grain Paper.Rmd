@@ -895,6 +895,60 @@ legend_order2 <- c("Year 1 Summer Harvest",
 desired_order <- c("MN", "NY", "KS", "WI")
 NdXSIG$P <- factor(NdXSIG$P, levels = desired_order)
 
+
+# finding values for the function for each yr:location  
+emtrends_resultX<-emtrends(modNXG1,~ P, var= "N", infer=TRUE)
+  emtrends_dfX <- as.data.frame(emtrends_resultX)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_dfX$P <- factor(emtrends_dfX$P, levels = desired_order_P)
+emmeans_resultsX<-emmeans(modNXG1, ~P, at=list(N=0))
+emmeans_dfX <- as.data.frame(emmeans_resultsX)
+mergedX <- emtrends_dfX %>%
+  inner_join(emmeans_dfX, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x)
+mergedX$P <- factor(mergedX$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+X_df <- mergedX %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedX <- X_df %>%
+  arrange(P)
+sortedX
+
+emtrends_resultY<-emtrends(modNYGadj1,~ P, var= "N", infer=TRUE)
+  emtrends_dfY <- as.data.frame(emtrends_resultY)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_dfY$P <- factor(emtrends_dfY$P, levels = desired_order_P)
+emmeans_resultsY<-emmeans(modNYGadj1, ~P, at=list(N=0))
+emmeans_dfY <- as.data.frame(emmeans_resultsY)
+mergedY <- emtrends_dfY %>%
+  inner_join(emmeans_dfY, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x)
+mergedY$P <- factor(mergedY$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+Y_df <- mergedY %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedY <- Y_df %>%
+  arrange(P)
+sortedY
+
+emtrends_resultZ<-emtrends(modNZG1,~ P, var= "N", infer=TRUE)
+  emtrends_dfZ <- as.data.frame(emtrends_resultZ)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_dfZ$P <- factor(emtrends_dfZ$P, levels = desired_order_P)
+emmeans_resultsZ<-emmeans(modNZG1, ~P, at=list(N=0))
+emmeans_dfZ <- as.data.frame(emmeans_resultsZ)
+mergedZ <- emtrends_dfZ %>%
+  inner_join(emmeans_dfZ, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x)
+mergedZ$P <- factor(mergedZ$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+Z_df <- mergedZ %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedZ <- Z_df %>%
+  arrange(P)
+sortedZ
+
+#plot
 GraincomboplotNE <- ggplot(data=NdXSIG) +
   geom_point(data = NdXSIG, aes(x = N, y = G, color = "Year 1 Summer Harvest", shape = C)) +
   geom_point(data = NdYSI, aes(x = N, y = G, color = "Year 2 Summer Harvest", shape = C)) +
@@ -909,14 +963,14 @@ GraincomboplotNE <- ggplot(data=NdXSIG) +
   geom_function(data=subset(NdXSIG, P== "NY"), fun=~408.24*exp(0.0047*.x),color='red')+
   geom_function(data=subset(NdXSIG, P== "KS"), fun=~407.18*exp(-0.0002*.x),color='red')+
   geom_function(data=subset(NdXSIG, P== "WI"), fun=~736.77*exp(-0.0001*.x),color='red')+
-  geom_function(data=subset(NdYSI, P== "NY"), fun=~222.27*exp(0.0009*.x),color='blue')+
-  geom_function(data=subset(NdYSI, P== "KS"), fun=~99.20*exp(0.0005*.x),color='blue')+
-  geom_function(data=subset(NdYSI, P== "WI"), fun=~278.01*exp(0.0065*.x),color='blue')+
-  geom_function(data=subset(NdYSI, P== "MN"), fun=~278.01*exp(0.0065*.x),color='blue')+
-  geom_function(data=subset(NdZSI, P== "NY"), fun=~222.27*exp(0.0009*.x),color='orange')+
-  geom_function(data=subset(NdZSI, P== "KS"), fun=~99.20*exp(0.0005*.x),color='orange')+
-  geom_function(data=subset(NdZSI, P== "WI"), fun=~278.01*exp(0.0065*.x),color='orange')+
-  geom_function(data=subset(NdZSI, P== "MN"), fun=~278.01*exp(0.0065*.x),color='orange')
+  geom_function(data=subset(NdYSI, P== "MN"), fun=~56.23*exp(0.0021*.x),color='blue')+
+  geom_function(data=subset(NdYSI, P== "NY"), fun=~241.90*exp(0.0010*.x),color='blue')+
+  geom_function(data=subset(NdYSI, P== "KS"), fun=~113.83*exp(-0.0005*.x),color='blue')+
+  geom_function(data=subset(NdYSI, P== "WI"), fun=~307.25*exp(0.0065*.x),color='blue')+
+  geom_function(data=subset(NdZSI, P== "MN"), fun=~46.13*exp(0.0119*.x),color='orange')+
+  geom_function(data=subset(NdZSI, P== "NY"), fun=~32.90*exp(-0.0002*.x),color='orange')+
+  geom_function(data=subset(NdZSI, P== "KS"), fun=~43.90*exp(-0.0014*.x),color='orange')+
+  geom_function(data=subset(NdZSI, P== "WI"), fun=~49.18*exp(0.0040*.x),color='orange')
 print(GraincomboplotNE)
 
 # ggsave("figures/grain/GraincomboplotNE.jpg", plot = GraincomboplotNE, width = 8, height = 6, dpi = 300)
