@@ -1624,6 +1624,9 @@ NGRY_long <- NGRY %>%
   separate(N_rate, into = c("N_rate", "N"), sep = "GRelativeYield") %>%
   mutate(N = as.numeric(N))
 
+NGRY_long$N <- as.factor(NGRY_long$N)
+NGRY_long$P <- as.factor(NGRY_long$P)
+
 #models 
 #year 1 grain RY
 modGRYX<-lmer(GRelativeYield~N*P + (1|Rep), data=NGRY_long)
@@ -1693,6 +1696,48 @@ cld_dataGRYXP    |>
   kbl(align = "c") |> 
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
+
+#Pairwise N:P
+emmsNP <- emmeans(modGRYX1, specs = ~ N:P, type = "response")
+cld_dataGRYXNP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
+cld_dataGRYXNP$response <- format(cld_dataGRYXNP$response, digits = 3)
+cld_dataGRYXNP$lower.CL <- format(cld_dataGRYXNP$lower.CL, digits = 3)
+cld_dataGRYXNP$upper.CL <- format(cld_dataGRYXNP$upper.CL, digits = 3)
+rownames(cld_dataGRYXNP) <- NULL
+cld_dataGRYXNP <- cld_dataGRYXNP   %>%
+  select(N, P, response, lower.CL, upper.CL, .group)
+colnames(cld_dataGRYYNP) <- c("N", "Site", "TLER","l","h", "Group")
+cld_dataGRYYNP    |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+# same box plot with emmean letters added
+cld_df <-as.data.frame(cld_dataGRYXNP)
+cld_df$mergelist <- paste0(cld_df$N,'_',cld_df$P)
+emmsNP <- as.data.frame(emmsNP)
+emmsNP$mergelist <- paste0(emmsNP$N,'_',emmsNP$P)
+merged_df <- merge(emmsNP, cld_df,by = c("mergelist")) 
+merged_df <- merged_df[, !names(merged_df) %in% c("mergelist", "N.y", "P.y", "lower.CL.y", "upper.CL.y", "response.y")] #remove column
+names(merged_df)[names(merged_df) == "N.x"] <- "N" # rename column 
+names(merged_df)[names(merged_df) == "P.x"] <- "P" # rename column 
+names(merged_df)[names(merged_df) == "lower.CL.x"] <- "lower.CL" # rename column 
+names(merged_df)[names(merged_df) == "upper.CL.x"] <- "upper.CL" # rename column 
+names(merged_df)[names(merged_df) == "response.x"] <- "response" # rename column 
+
+GRYXcomboplot2<-ggplot(NGRY_long, aes(x = N, y = GRelativeYield)) +
+  geom_boxplot() +
+  facet_wrap(~P, scales = "free_y",ncol=2) +
+  labs(x = "N Rate", y = "Relative Yield") +
+  theme_minimal()+
+  scale_x_discrete(breaks = c(0, 40, 80, 120, 160))+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
+  ggtitle("Year 1 Grain Relative Yield")+
+    coord_cartesian(ylim = c(NA, NA))+
+  geom_text(data = merged_df, aes(x = N, y = response, label = .group), color = "black", vjust = -6)
+# ggsave("figures/grain/GRYXcomboplot2.jpg", plot = GRYXcomboplot2, width = 8, height = 6, dpi = 300)
+rm(cld_df,merged_df,emmsNP)
 
 ```
 
@@ -1795,19 +1840,47 @@ cld_dataGRYYN    |>
 #Pairwise N:P
 emmsNP <- emmeans(modGRYY1, specs = ~ N:P, at = list(N = N_levels), type = "response")
 cld_dataGRYYNP <- cld(emmsNP, Letters=custom_letters) # Create compact letter display
-cld_dataGRYYNP  $response <- format(cld_dataGRYYNP  $response, digits = 3)
-cld_dataGRYYNP $lower.CL <- format(cld_dataGRYYNP $lower.CL, digits = 3)
-cld_dataGRYYNP $upper.CL <- format(cld_dataGRYYNP $upper.CL, digits = 3)
-rownames(cld_dataGRYYNP  ) <- NULL
-cld_dataGRYYNP  <- cld_dataGRYYNP   %>%
-  select( N, P, response, lower.CL, upper.CL, .group)
-colnames(cld_dataGRYYNP  ) <- c( "N", "Site", "TLER","l","h", "Group")
-cld_dataGRYYNP    |> 
+cld_dataGRYYNP$response <- format(cld_dataGRYYNP$response, digits = 3)
+cld_dataGRYYNP$lower.CL <- format(cld_dataGRYYNP$lower.CL, digits = 3)
+cld_dataGRYYNP$upper.CL <- format(cld_dataGRYYNP$upper.CL, digits = 3)
+rownames(cld_dataGRYYNP ) <- NULL
+cld_dataGRYYNP <- cld_dataGRYYNP   %>%
+  select(N, P, response, lower.CL, upper.CL, .group)
+colnames(cld_dataGRYYNP ) <- c( "N", "Site", "TLER","l","h", "Group")
+cld_dataGRYYNP  |> 
   data.frame() |> 
   kbl(align = "c") |> 
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
 
+
+# same box plot with emmean letters added
+cld_df <-as.data.frame(cld_dataGRYYNP)
+cld_df$mergelist <- paste0(cld_df$N,'_',cld_df$Site)
+emmsNP <- as.data.frame(emmsNP)
+emmsNP$mergelist <- paste0(emmsNP$N,'_',emmsNP$P)
+merged_df <- merge(emmsNP, cld_df,by = c("mergelist")) 
+merged_df <- merged_df[, !names(merged_df) %in% c("mergelist", "N.y", "Site")] #remove column
+names(merged_df)[names(merged_df) == "N.x"] <- "N" # rename column 
+names(merged_df)[names(merged_df) == "Group"] <- ".group" # rename column 
+
+merged_df$N <- as.factor(merged_df$N)
+merged_df$P <- as.factor(merged_df$P)
+
+GRYYcomboplot2<-ggplot(NGRY_longY, aes(x = N, y = GRelativeYield)) +
+  geom_boxplot() +
+  facet_wrap(~P, scales = "free",ncol=2) +
+  labs(x = "N Rate", y = "Relative Yield") +
+  theme_minimal()+
+  scale_x_discrete(breaks = c(0, 40, 80, 120, 160))+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
+  ggtitle("Year 2 Grain Relative Yield")+
+    coord_cartesian(ylim = c(NA, NA))+
+  geom_text(data = merged_df, aes(x = N, y = response, label = .group), color = "black", vjust = -6)
+GRYYcomboplot2
+# ggsave("figures/grain/GRYYcomboplot2.jpg", plot = GRYYcomboplot2, width = 8, height = 6, dpi = 300)
+
+rm(cld_df,merged_df,emmsNP)
 ```
 
 #Grain year 3 relative yields
@@ -1884,7 +1957,7 @@ GRYZcomboplot<-ggplot(NGRY_longZ, aes(x = N, y = GRelativeYield)) +
   theme_minimal()+
   scale_x_discrete(breaks = c(0, 40, 80, 120, 160))+
   geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
-  ggtitle("Year 2 Grain Relative Yield")+
+  ggtitle("Year 3 Grain Relative Yield")+
     coord_cartesian(ylim = c(NA, NA))
 # ggsave("figures/grain/GRYZcomboplot.jpg", plot = GRYZcomboplot, width = 8, height = 6, dpi = 300)
 
@@ -1921,6 +1994,32 @@ cld_dataGRYZNP    |>
   kbl(align = "c") |> 
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
+
+
+# same box plot with emmean letters added
+cld_df <-as.data.frame(cld_dataGRYZNP)
+cld_df$mergelist <- paste0(cld_df$N,'_',cld_df$Site)
+emmsNP <- as.data.frame(emmsNP)
+emmsNP$mergelist <- paste0(emmsNP$N,'_',emmsNP$P)
+merged_df <- merge(emmsNP, cld_df,by = c("mergelist")) 
+merged_df <- merged_df[, !names(merged_df) %in% c("mergelist", "N.y", "Site")] #remove column
+names(merged_df)[names(merged_df) == "N.x"] <- "N" # rename column 
+names(merged_df)[names(merged_df) == "Group"] <- ".group" # rename column 
+merged_df$N <- as.factor(merged_df$N)
+merged_df$P <- as.factor(merged_df$P)
+
+GRYZcomboplot2<-ggplot(NGRY_longZ, aes(x = N, y = GRelativeYield)) +
+  geom_boxplot() +
+  facet_wrap(~P, scales = "free",ncol=2) +
+  labs(x = "N Rate", y = "Relative Yield") +
+  theme_minimal()+
+  scale_x_discrete(breaks = c(0, 40, 80, 120, 160))+
+  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")+
+  ggtitle("Year 3 Grain Relative Yield")+
+    coord_cartesian(ylim = c(NA, NA))+
+  geom_text(data = merged_df, aes(x = N, y = response, label = .group), color = "black", vjust = -6)
+# ggsave("figures/grain/GRYZcomboplot2.jpg", plot = GRYZcomboplot2, width = 8, height = 6, dpi = 300)
+rm(cld_df,merged_df,emmsNP)
 
 ```
 
