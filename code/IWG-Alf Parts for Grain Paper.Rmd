@@ -452,6 +452,14 @@ NdZFI<-NdZF[NdZF$Crop1 != "Shockwave",]
 NdZFA<-NdZF[NdZF$Crop1 != "IWG",]
 ```
 
+```{r}
+#adding year 1 mn grain to the G column because they were actually dehulled instead of imaged for using the equation
+NdXSInoMN<-NdXSI[NdXSI$Location != "MN",]
+NdXSIMN<-NdXSI[NdXSI$Location == "MN",]
+NdXSIMN$G<-NdXSIMN$X2023MNGrainDeHulledKgHa
+NdXSIG<-rbind(NdXSInoMN, NdXSIMN)
+```
+
 ### Analysis for the paper
 
 ## Grain Yield 
@@ -463,14 +471,6 @@ NdZFA<-NdZF[NdZF$Crop1 != "IWG",]
 * Figure (Grain yield response to cropping system and site by harvest) : combined grain year 1 and 2 plots E:C
 
 # Grain anovas 
-
-```{r}
-#adding year 1 mn grain to the G column because they were actually dehulled instead of imaged for using the equation
-NdXSInoMN<-NdXSI[NdXSI$Location != "MN",]
-NdXSIMN<-NdXSI[NdXSI$Location == "MN",]
-NdXSIMN$G<-NdXSIMN$X2023MNGrainDeHulledKgHa
-NdXSIG<-rbind(NdXSInoMN, NdXSIMN)
-```
 
 #Grain year 1 (all locations)
 ```{r}
@@ -1067,6 +1067,7 @@ ggsave("figures/grain/GEC.jpg", plot = GEC, width =12, height = 6, dpi = 350)
 
 ## Grain PLER  
 
+
 # GPLER year 1 math 
 ```{r}
 #0 
@@ -1632,6 +1633,67 @@ print(GPLERcomboplot)
 # ggsave("figures/grain/GPLERcomboplot.jpg", plot = GPLERcomboplot, width = 8, height = 6, dpi = 300)
 ```
 
+# PLER anovas Tables 
+
+```{r}
+library(flextable)
+
+aov.tableX <- anova(modGPLERX1)
+tablePLERX = flextable(data = aov.tableX %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+# save figures/grain/gt_GPLERX 
+
+aov.tableY <- anova(modGPLERY1)
+tablePLERY = flextable(data = aov.tableY %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+# save figures/grain/gt_GPLERY
+
+aov.tableZ <- anova(modGPLERZ1)
+tablePLERZ = flextable(data = aov.tableZ %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+# save figures/grain/gt_GPLERZ
+
+my_modelsGPLER <- c(modGPLERX1, modGPLERY1, modGPLERZ1)
+anovasGPLER <- purrr::map(my_modelsGPLER, ~anova(.))
+names(anovasGPLER) <- c("Year 1", "Year 2",  "Year 3")
+
+# Function to format p-values as stars
+format_p_value <- function(p_val) {
+  stars <- ifelse(p_val < 0.001, "***", ifelse(p_val < 0.01, "**", ifelse(p_val < 0.05, "*", "")))
+  return(stars)
+}
+
+# Apply the function to your ANOVA results
+GPLER_stars_tibble <- map(anovasGPLER, as_tibble, rownames="term") %>%
+  bind_rows(.id = "model") %>%
+  mutate(stars = map_chr(`Pr(>F)`, format_p_value))
+
+GPLER_stars_tibble <- GPLER_stars_tibble %>%
+  mutate(term = ifelse(term == "P", "E", term)) %>%
+  mutate(term = ifelse(term == "N:P", "N:E", term))%>%
+  mutate(term = ifelse(term == "P:C", "E:C", term))%>%
+  mutate(term = ifelse(term == "N:P:C", "N:E:C", term))
+
+# Print the tibble
+print(GPLER_stars_tibble)
+
+NG_stars <-GPLER_stars_tibble |> 
+  select(model, term, stars) |>
+  pivot_wider(names_from = term, values_from = stars)
+
+gt_NG <- gt(NG_stars)
+
+# gt_NG |> gtsave("figures/grain/gt_GPLER.png", expand = 10)
+```
 
 
 ## Nrate Relative Yield 
@@ -2106,4 +2168,64 @@ GRYcomboplot <- ggplot(combined_data, aes(x = N, y = GRelativeYield, fill = Year
 print(GRYcomboplot)
 
 # ggsave("figures/grain/GRYcomboplot.jpg", plot = GRYcomboplot , width = 8, height = 6, dpi = 300)
+```
+
+# RY anovas Tables 
+
+```{r}
+aov.tableRYX <- anova(modGRYX1)
+tableRYX = flextable(data = aov.tableRYX %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+# save figures/grain/gt_GRYX 
+
+aov.tableRYY <- anova(modGRYY1)
+tableRYY = flextable(data = aov.tableRYY %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+# save figures/grain/gt_GRYY
+
+aov.tableRYZ <- anova(modGRYZ1)
+tableRYZ = flextable(data = aov.tableRYZ %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+# save figures/grain/gt_GRYZ
+
+my_modelsGRY <- c(modGRYX1, modGRYY1, modGRYZ1)
+anovasGRY <- purrr::map(my_modelsGRY, ~anova(.))
+names(anovasGRY) <- c("Year 1", "Year 2",  "Year 3")
+
+# Function to format p-values as stars
+format_p_value <- function(p_val) {
+  stars <- ifelse(p_val < 0.001, "***", ifelse(p_val < 0.01, "**", ifelse(p_val < 0.05, "*", "")))
+  return(stars)
+}
+
+# Apply the function to your ANOVA results
+GRY_stars_tibble <- map(anovasGRY, as_tibble, rownames="term") %>%
+  bind_rows(.id = "model") %>%
+  mutate(stars = map_chr(`Pr(>F)`, format_p_value))
+
+GRY_stars_tibble <- GRY_stars_tibble %>%
+  mutate(term = ifelse(term == "P", "E", term)) %>%
+  mutate(term = ifelse(term == "N:P", "N:E", term))%>%
+  mutate(term = ifelse(term == "P:C", "E:C", term))%>%
+  mutate(term = ifelse(term == "N:P:C", "N:E:C", term))
+
+# Print the tibble
+print(GRY_stars_tibble)
+
+NG_stars <-GRY_stars_tibble |> 
+  select(model, term, stars) |>
+  pivot_wider(names_from = term, values_from = stars)
+
+gt_NG <- gt(NG_stars)
+
+# gt_NG |> gtsave("figures/grain/gt_GRY.png", expand = 10)
 ```
