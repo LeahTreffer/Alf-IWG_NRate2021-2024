@@ -43,6 +43,7 @@ library(kableExtra)
 library(MuMIn)
 library(ggpmisc)
 library(bestNormalize)
+library(flextable)
 ```
 
 # making emmeans functions 
@@ -278,6 +279,12 @@ where LA is the partial land equivalent ratio (PLER) for an individual crops and
 
 
 TLER, PLER, and PrLER were calculated using plots of the same N rate to allow for comparison in the performance of the intercropped system at different N rates (Oyejola & Mead, 1982). TLER and PrLER could not be calculated for grain yields, as IWG only represented one grain-bearing crop in the intercrop, but PLER was calculated for grain yield to allow for comparison between N rates
+
+Grain Partial LER : the ratio of grain yield in intercrop to the grain yield in IWG monoculture at a given N rate
+
+### Relative Yield (RY)
+
+Grain Relative Yield : the proportion of the grain yield in intercrop at 0 kg N ha-1 to the grain yield in monoculture at a non-zero N rate
 
 ### Effects and interactions of N rate (N), cropping system (CROP), and environment (E)
 
@@ -1222,6 +1229,15 @@ cld_dataNGPLERX1N  |>
 
 # No difference in LER by Nrate, but NY was different than other locations (lower PLER)
 
+mean(GLERX$LER, na.rm = TRUE)
+
+test <- GLERX %>%
+group_by(P) %>%
+summarise(
+avg_value = mean(LER, na.rm = TRUE)
+)
+flextable(data = test)
+
 ```
 
 # GPLER E plot (X)
@@ -1396,6 +1412,21 @@ cld_dataNGPLERY1N  |>
   column_spec(1, bold = T)
 
 # no difference between sites or Nrate in pairwise comparison. Although ANOVA summary shows that WI location is significantly different (higher LER) and the Nrate MN location interaction was approaching significance (higher LER)
+
+mean(GLERY$LER, na.rm = TRUE)
+
+testY <- GLERY %>%
+group_by(P) %>%
+summarise(
+avg_value = mean(LER, na.rm = TRUE)
+)
+flextable(data = testY)
+testY <- GLERY %>%
+group_by(P, NRATE) %>%
+summarise(
+avg_value = mean(LER, na.rm = TRUE)
+)%>% arrange(P, as.numeric(NRATE))
+flextable(data = testY)
 ```
 
 # GPLER E plot (Y)
@@ -1570,6 +1601,21 @@ cld_dataNGPLERZ1N  |>
 # no difference in NRate
 
 # Difference in Sites for not Nrate. Although ANOVA shows that Nrate and location are signifcant covarients (Pr(>F) = 0.01719 and 0.3089e-5 respectivly). ANOVA summary shows that MN location is significantly different (lower LER) than other locations. 
+
+mean(GLERZ$LER, na.rm = TRUE)
+
+testZ <- GLERZ %>%
+group_by(P) %>%
+summarise(
+avg_value = mean(LER, na.rm = TRUE)
+)
+flextable(data = testZ)
+testZ <- GLERZ %>%
+group_by(NRATE) %>%
+summarise(
+avg_value = mean(LER, na.rm = TRUE)
+)%>% arrange(as.numeric(NRATE))
+flextable(data = testZ)
 ```
 
 # GPLER E plot (Z)
@@ -1855,6 +1901,22 @@ GRYXcomboplot2<-ggplot(NGRY_long, aes(x = N, y = GRelativeYield)) +
 # ggsave("figures/grain/GRYXcomboplot2.jpg", plot = GRYXcomboplot2, width = 8, height = 6, dpi = 300)
 rm(cld_df,merged_df,emmsNP)
 
+
+mean(NGRY_long$LER, na.rm = TRUE)
+
+testX <- NGRY_long %>%
+group_by(P) %>%
+summarise(
+avg_value = mean(GRelativeYield, na.rm = TRUE)
+)
+flextable(data = testX)
+testX <- NGRY_long %>%
+group_by(N) %>%
+summarise(
+avg_value = mean(GRelativeYield, na.rm = TRUE)
+)%>% arrange(as.numeric(N))
+flextable(data = testX)
+
 ```
 
 #Grain year 2 relative yields
@@ -1997,6 +2059,20 @@ GRYYcomboplot2
 # ggsave("figures/grain/GRYYcomboplot2.jpg", plot = GRYYcomboplot2, width = 8, height = 6, dpi = 300)
 
 rm(cld_df,merged_df,emmsNP)
+
+mean(NGRY_longY$GRelativeYield, na.rm = TRUE)
+
+testY <- NGRY_longY %>%
+group_by(N) %>%
+summarise(
+avg_value = mean(GRelativeYield, na.rm = TRUE)
+)%>% arrange(as.numeric(N))
+flextable(data = testY)
+testY <- NGRY_longY %>%
+group_by(P, N) %>%
+summarise(avg_value = mean(GRelativeYield, na.rm = TRUE)
+)%>% arrange(P, as.numeric(N))
+flextable(data = testY)
 ```
 
 #Grain year 3 relative yields
@@ -2137,6 +2213,13 @@ GRYZcomboplot2<-ggplot(NGRY_longZ, aes(x = N, y = GRelativeYield)) +
 # ggsave("figures/grain/GRYZcomboplot2.jpg", plot = GRYZcomboplot2, width = 8, height = 6, dpi = 300)
 rm(cld_df,merged_df,emmsNP)
 
+
+mean(NGRY_longZ$GRelativeYield, na.rm = TRUE)
+
+testZ <- NGRY_longZ %>%
+group_by(P) %>%
+summarise(avg_value = mean(GRelativeYield, na.rm = TRUE))
+flextable(data = testZ)
 ```
 
 #combo GRY boxplot 
