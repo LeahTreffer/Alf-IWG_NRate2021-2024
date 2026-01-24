@@ -597,6 +597,8 @@ scale_color_discrete(name = "Cropping System")+  #legend for colors
 stat_poly_eq(use_label(c("eq", "R2"))) #add equation and R2 to plot
 # save figures/grain/grain_Nrate_r2_yr1.jpeg
 
+
+
 ```
 
 #Grain year 2 (all locations)
@@ -1197,9 +1199,9 @@ GPLERX1emm <- compute_emmeansNXS2("modGPLERX1")
 #Pairwise comparison P 
 emmsNGPLERP <- emmeans(modGPLERX1, specs= ~ P,  type= "response")
 cld_dataNGPLERX1P <- cld(emmsNGPLERP, Letters=custom_letters)
-cld_dataNGPLERX1P $response <- format(cld_dataNGPLERX1P $response, digits = 2)
-cld_dataNGPLERX1P $lower.CL <- format(cld_dataNGPLERX1P $lower.CL, digits = 2)
-cld_dataNGPLERX1P $upper.CL <- format(cld_dataNGPLERX1P $upper.CL, digits = 3)
+cld_dataNGPLERX1P$response <- format(cld_dataNGPLERX1P$response, digits = 2)
+cld_dataNGPLERX1P$lower.CL <- format(cld_dataNGPLERX1P$lower.CL, digits = 2) # lower confidence interval
+cld_dataNGPLERX1P$upper.CL <- format(cld_dataNGPLERX1P$upper.CL, digits = 3) # upper confidence interval 
 rownames(cld_dataNGPLERX1P ) <- NULL
 cld_dataNGPLERX1P<- cld_dataNGPLERX1P  %>%
   select( P, response,lower.CL, upper.CL, .group)
@@ -1741,8 +1743,41 @@ gt_NG <- gt(NG_stars)
 # gt_NG |> gtsave("figures/grain/gt_GPLER.png", expand = 10)
 ```
 
+# PLER CI Tables
 
-## Nrate Relative Yield 
+```{r}
+# Table of pairwise comparions of GLPLER by site with confidence intervals.
+
+cld_dataNGPLERX1P <- arrange(cld_dataNGPLERX1P, Site)
+cld_dataNGPLERYP <- arrange(cld_dataNGPLERYP, Site)
+cld_dataNGPLERZP <- arrange(cld_dataNGPLERZP, Site)
+
+GLPLER_table_merge <- cbind(cld_dataNGPLERX1P, cld_dataNGPLERYP, cld_dataNGPLERZP)
+colnames(GLPLER_table_merge) <- make.unique(colnames(GLPLER_table_merge))
+GLPLER_table_merge2 <- GLPLER_table_merge[,c('Site', 'GPLER', 'l', 'h','GPLER.1', 'l.1', 'h.1','GPLER.2', 'l.2', 'h.2')]
+
+GLPLER_table_merge2 <- as.data.frame(GLPLER_table_merge2)
+colnames(GLPLER_table_merge2) <- c( "Site", "GPLER","CI 25","CI 95", "GPLER","CI 25","CI 95", "GPLER","CI 25","CI 95")
+
+GLPLER_table_merge2 |> 
+  kbl(align = "c") |> 
+  add_header_above(c(
+    " " = 1,
+    "Year 1" = 3,
+    "Year 2" = 3,
+    "Year 3" = 3
+  )) |> 
+  kable_paper(full_width = FALSE) |> 
+  column_spec(1, bold = TRUE)
+
+# save as figures/grain/GPLER_CI_table
+```
+
+
+
+
+
+## Nrate Relative Yield (RY)
 
 #Grain year 1 relative yields
 ```{r}
@@ -1998,6 +2033,24 @@ GRYYcomboplot<-ggplot(NGRY_longY, aes(x = N, y = GRelativeYield)) +
 # ggsave("figures/grain/GRYYcomboplot.jpg", plot = GRYYcomboplot, width = 8, height = 6, dpi = 300)
 
 #Pairwise comparisons
+#Pairwise P
+N_levels <- c(0, 40, 80, 120, 160)
+emmsP <- emmeans(modGRYY1, specs = ~ P, type = "response")
+cld_dataGRYYP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+cld_dataGRYYP  $response <- format(cld_dataGRYYP  $response, digits = 3)
+cld_dataGRYYP $lower.CL <- format(cld_dataGRYYP $lower.CL, digits = 3)
+cld_dataGRYYP $upper.CL <- format(cld_dataGRYYP $upper.CL, digits = 3)
+rownames(cld_dataGRYYP  ) <- NULL
+cld_dataGRYYP  <- cld_dataGRYYP   %>%
+  select( P, response, lower.CL, upper.CL, .group)
+colnames(cld_dataGRYYP  ) <- c( "Site", "RY","l","h", "Group")
+cld_dataGRYYP    |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+
 #Pairwise N
 N_levels <- c(0, 40, 80, 120, 160)
 emmsN <- emmeans(modGRYY1, specs = ~ N, at = list(N = N_levels), type = "response")
@@ -2154,6 +2207,22 @@ GRYZcomboplot<-ggplot(NGRY_longZ, aes(x = N, y = GRelativeYield)) +
 # ggsave("figures/grain/GRYZcomboplot.jpg", plot = GRYZcomboplot, width = 8, height = 6, dpi = 300)
 
 #Pairwise comparisons
+#Pairwise P
+emmsP <- emmeans(modGRYZ1, specs = ~ P, type = "response")
+cld_dataGRYZP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+cld_dataGRYZP$response <- format(cld_dataGRYZP$response, digits = 3)
+cld_dataGRYZP$lower.CL <- format(cld_dataGRYZP$lower.CL, digits = 3)
+cld_dataGRYZP$upper.CL <- format(cld_dataGRYZP$upper.CL, digits = 3)
+rownames(cld_dataGRYZP) <- NULL
+cld_dataGRYZP  <- cld_dataGRYZP%>%
+  select(P, response, lower.CL, upper.CL, .group)
+colnames(cld_dataGRYZP) <- c( "Site", "RY","l","h", "Group")
+cld_dataGRYZP    |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
 #Pairwise N
 N_levels <- c(0, 40, 80, 120, 160)
 emmsN <- emmeans(modGRYZ1, specs = ~ N, at = list(N = N_levels), type = "response")
@@ -2311,4 +2380,34 @@ NG_stars <-GRY_stars_tibble |>
 gt_NG <- gt(NG_stars)
 
 # gt_NG |> gtsave("figures/grain/gt_GRY.png", expand = 10)
+```
+
+# RY CI Tables
+
+```{r}
+# Table of pairwise comparions of GLPLER by site with confidence intervals.
+
+cld_dataGRYXP <- arrange(cld_dataGRYXP, Site)
+cld_dataGRYYP <- arrange(cld_dataGRYYP, Site)
+cld_dataGRYZP <- arrange(cld_dataGRYZP, Site)
+
+GRY_table_merge <- cbind(cld_dataGRYXP, cld_dataGRYYP, cld_dataGRYZP)
+colnames(GRY_table_merge) <- make.unique(colnames(GRY_table_merge))
+GRY_table_merge2 <- GRY_table_merge[,c('Site', 'GRY', 'l', 'h','RY', 'l.1', 'h.1','RY.1', 'l.2', 'h.2')]
+
+GRY_table_merge2 <- as.data.frame(GRY_table_merge2)
+colnames(GRY_table_merge2) <- c( "Site", "GRY","CI 25","CI 95", "GRY","CI 25","CI 95", "GRY","CI 25","CI 95")
+
+GRY_table_merge2 |> 
+  kbl(align = "c") |> 
+  add_header_above(c(
+    " " = 1,
+    "Year 1" = 3,
+    "Year 2" = 3,
+    "Year 3" = 3
+  )) |> 
+  kable_paper(full_width = FALSE) |> 
+  column_spec(1, bold = TRUE)
+
+# save as figures/grain/GRY_CI_table
 ```
