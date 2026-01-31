@@ -569,6 +569,51 @@ emtrends(modNXG1,~ CROP, var= "N", infer=TRUE)
 summary(modNXG1)
 
 
+# percent change in grain yield per unit increase in nitrogen
+emtrends_result<-emtrends(modNXG1,~ P, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNXG1, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P)
+view(sorted_df)
+#write.csv(sorted_df, "data/Final_Data/Nrate_esteff_grain_yr1.csv")
+
+# percent change in grain yield per unit increase in nitrogen broken out by location and CROP
+emtrends_result<-emtrends(modNXG1,~ P*CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNXG1, ~P*CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "CROP")) %>%
+  select(P, CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P)
+view(sorted_df)
+#write.csv(sorted_df, "data/Final_Data/Nrate_esteff_grain_yr1_PC.csv")
+
+
+
+
 #try to get R2 for the model (not helpful for individual interactions..?)
 r2 <- r.squaredGLMM(modNXG1)
 r2_interaction <- r.squaredGLMM(modNXG1, which = "conditional", type = "marginal", subset = "interaction")
@@ -733,7 +778,28 @@ new_df <- merged_df %>%
 sorted_df <- new_df %>%
   arrange(P)
 view(sorted_df)
-#write.csv(sorted_df, "data/Nrate_esteff_grain_yr2.csv")
+#write.csv(sorted_df, "data/Final_Data/Nrate_esteff_grain_yr2.csv")
+
+# percent change in grain yield per unit increase in nitrogen broken out by location and CROP
+emtrends_result<-emtrends(modNYGadj1,~ P*CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNYGadj1, ~P*CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "CROP")) %>%
+  select(P, CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P)
+view(sorted_df)
+#write.csv(sorted_df, "data/Final_Data/Nrate_esteff_grain_yr2_PC.csv")
 ```
 
 #Grain year 3 (all locations)
@@ -848,7 +914,28 @@ new_df <- merged_df %>%
 sorted_df <- new_df %>%
   arrange(P)
 #view(sorted_df)
-#write.csv(sorted_df, "data/Nrate_esteff_grain_yr3.csv")
+#write.csv(sorted_df, "data/Final_Data/Nrate_esteff_grain_yr3.csv")
+
+# percent change in grain yield per unit increase in nitrogen broken out by location and CROP
+emtrends_result<-emtrends(modNZG1,~ P*CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNZG1, ~P*CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "CROP")) %>%
+  select(P, CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P)
+view(sorted_df)
+#write.csv(sorted_df, "data/Final_Data/Nrate_esteff_grain_yr3_PC.csv")
 ```
 
 # Grain anovas Table 
