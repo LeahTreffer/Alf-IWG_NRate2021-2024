@@ -645,8 +645,6 @@ stat_poly_eq(use_label(c("eq", "R2"))) #add equation and R2 to plot
 
 ### redoing figure for paper 
 #N:E
-colors <- c("Year 1 Summer Harvest" = "red")
-legend_order2 <- c("Year 1 Summer Harvest")
 # Define the desired order of 'P'
 desired_order <- c("MN", "NY", "KS", "WI")
 NdXSIG$P <- factor(NdXSIG$P, levels = desired_order)
@@ -674,17 +672,16 @@ sortedX <- X_df %>%
 sortedX
 #plot
 GraincomboplotNEX <- ggplot(data=NdXSIG) +
-  geom_point(data = NdXSIG, aes(x = N, y = G, color = "Year 1 Summer Harvest", shape = C)) +
+  geom_point(data = NdXSIG, aes(x = N, y = G, shape = C)) +
   labs(x = "N-Rate (Kg ha-1)", y = "Grain Yield", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
   ylim(0, 1550) +
   facet_wrap(~P, scales = "free_y", ncol = 2) +
   scale_shape_manual(values = c(4, 25),labels = c("Intercropped","Monoculture IWG"))+
-    scale_color_manual(values = colors, limits = legend_order2)+
-  geom_function(data=subset(NdXSIG, P== "MN"), fun=~179.38*exp(0.0021*.x),color='red')+
-  geom_function(data=subset(NdXSIG, P== "NY"), fun=~408.24*exp(0.0047*.x),color='red')+
-  geom_function(data=subset(NdXSIG, P== "KS"), fun=~407.18*exp(-0.0002*.x),color='red')+
-  geom_function(data=subset(NdXSIG, P== "WI"), fun=~736.77*exp(-0.0001*.x),color='red')+
+  geom_function(data=subset(NdXSIG, P== "MN"), fun=~179.38*exp(0.0021*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSIG, P== "NY"), fun=~408.24*exp(0.0047*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSIG, P== "KS"), fun=~407.18*exp(-0.0002*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSIG, P== "WI"), fun=~736.77*exp(-0.0001*.x),color='darkgrey')+
   geom_text(data = sortedX, mapping = aes(x = -Inf, y = -Inf, label = equation), hjust   = -0.1, vjust   = -38,  size=2)+ # add equation to figure
   geom_text(data = sortedX, mapping = aes(x = -Inf, y = -Inf, label = plvl), hjust   = -2, vjust   = -20) # add stars to figure
 print(GraincomboplotNEX)
@@ -846,6 +843,50 @@ sorted_df <- new_df %>%
   arrange(P)
 view(sorted_df)
 #write.csv(sorted_df, "data/Final_Data/Nrate_esteff_grain_yr2_PC.csv")
+
+### redoing figure for paper 
+#N:E
+# Define the desired order of 'P'
+desired_order <- c("MN", "NY", "KS", "WI")
+NdYSI$P <- factor(NdYSI$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultY<-emtrends(modNYGadj1,~ P, var= "N", infer=TRUE)
+  emtrends_dfY <- as.data.frame(emtrends_resultY)
+  emtrends_dfY$plvl <-
+    ifelse(emtrends_dfY$p.value == 0.05, ".",
+    ifelse(emtrends_dfY$p.value < 0.05  & emtrends_dfY$p.value >= 0.01, "*",
+    ifelse(emtrends_dfY$p.value < 0.01  & emtrends_dfY$p.value >= 0.001, "**",
+    ifelse(emtrends_dfY$p.value < 0.001, "***", ""))))  
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_dfY$P <- factor(emtrends_dfY$P, levels = desired_order_P)
+emmeans_resultsY<-emmeans(modNYGadj1, ~P, at=list(N=0))
+emmeans_dfY <- as.data.frame(emmeans_resultsY)
+mergedY <- emtrends_dfY %>%
+  inner_join(emmeans_dfY, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x, plvl)
+mergedY$P <- factor(mergedY$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+Y_df <- mergedY %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedY <- Y_df %>%
+  arrange(P)
+sortedY  
+#plot
+GraincomboplotNEY <- ggplot(data=NdYSI) +
+  geom_point(data = NdYSI, aes(x = N, y = G, shape = C)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "Grain Yield", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 1550) +
+  facet_wrap(~P, scales = "free_y", ncol = 2) +
+  scale_shape_manual(values = c(4, 25),labels = c("Intercropped","Monoculture IWG"))+
+  geom_function(data=subset(NdYSI, P== "MN"), fun=~56.23*exp(0.0021*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "NY"), fun=~241.90*exp(0.0010*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "KS"), fun=~113.83*exp(-0.0005*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "WI"), fun=~307.25*exp(0.0065*.x),color='darkgrey')+
+  geom_text(data = sortedX, mapping = aes(x = -Inf, y = -Inf, label = equation), hjust   = -0.1, vjust   = -38,  size=2)+ # add equation to figure
+  geom_text(data = sortedY, mapping = aes(x = -Inf, y = -Inf, label = plvl), hjust   = -2, vjust   = -20) # add stars to figure
+print(GraincomboplotNEY)
+# ggsave("figures/grain/GrainplotNEY.jpg", plot = GraincomboplotNEY, width = 8, height = 6, dpi = 300)
 ```
 
 #Grain year 3 (all locations)
@@ -982,6 +1023,79 @@ sorted_df <- new_df %>%
   arrange(P)
 view(sorted_df)
 #write.csv(sorted_df, "data/Final_Data/Nrate_esteff_grain_yr3_PC.csv")
+
+### redoing figure for paper 
+#N:E
+# Define the desired order of 'P'
+desired_order <- c("MN", "NY", "KS", "WI")
+NdXSIG$P <- factor(NdXSIG$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultZ<-emtrends(modNZG1,~ P*CROP, var= "N", infer=TRUE)
+  emtrends_dfZ <- as.data.frame(emtrends_resultZ)
+  emtrends_dfZ$plvl <-
+    ifelse(emtrends_dfZ$p.value == 0.05, ".",
+    ifelse(emtrends_dfZ$p.value < 0.05  & emtrends_dfZ$p.value >= 0.01, "*",
+    ifelse(emtrends_dfZ$p.value < 0.01  & emtrends_dfZ$p.value >= 0.001, "**",
+    ifelse(emtrends_dfZ$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_dfZ$PC <- paste0(emtrends_dfZ$P,emtrends_dfZ$CROP)
+  emtrends_dfZ$P <- factor(emtrends_dfZ$P, levels = desired_order_P)
+emmeans_resultsZ<-emmeans(modNZG1, ~P*CROP, at=list(N=0))
+  emmeans_dfZ <- as.data.frame(emmeans_resultsZ)
+  emmeans_dfZ$PC <- paste0(emmeans_dfZ$P,emmeans_dfZ$CROP)
+mergedZ <- emtrends_dfZ %>%
+  inner_join(emmeans_dfZ, by = c("PC")) %>%
+  dplyr::select(PC, P.x, CROP.x, emmean, N.trend, SE.x, plvl)
+  colnames(mergedZ)[2] <- "P"
+  colnames(mergedZ)[3] <- "CROP"
+mergedZ$P <- factor(mergedZ$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+Z_df <- mergedZ %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedZ <- Z_df %>%
+  arrange(P)
+sortedZ
+sortedZ_I <- subset(sortedZ, CROP== "inter")
+sortedZ_M <- subset(sortedZ, CROP== "monoI")
+
+sym_I <- sortedZ_I %>%
+  distinct(P) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 1500
+  )
+sym_M <- sortedZ_M %>%
+  distinct(P) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 1400
+  )
+
+#plot
+GraincomboplotNEZ <- ggplot(data=NdZSI) +
+  geom_point(data = NdZSI, aes(x = N, y = G, shape = C)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "Grain Yield", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 1550) +
+  facet_wrap(~P, scales = "free_y", ncol = 2) +
+  scale_shape_manual(values = c(4, 25),labels = c("Intercropped","Monoculture IWG"))+
+  # functions come from equation in sorted
+  geom_function(data=subset(NdZSI, P== "MN" & CROP == "inter"), fun=~5.78*exp(0.0228*.x),color='darkgrey')+
+  geom_function(data=subset(NdZSI, P== "MN" & CROP == "monoI"), fun=~368.48*exp(0.0010*.x),color='darkgrey')+
+  geom_function(data=subset(NdZSI, P== "NY" & CROP == "inter"), fun=~25.39*exp(0.0002*.x),color='darkgrey')+
+  geom_function(data=subset(NdZSI, P== "NY" & CROP == "monoI"), fun=~42.64*exp(-0.0007*.x),color='darkgrey')+
+  geom_function(data=subset(NdZSI, P== "KS" & CROP == "inter"), fun=~63.89*exp(-0.0006*.x),color='darkgrey')+
+  geom_function(data=subset(NdZSI, P== "KS" & CROP == "monoI"), fun=~30.16*exp(-0.0021*.x),color='darkgrey')+
+  geom_function(data=subset(NdZSI, P== "WI" & CROP == "inter"), fun=~36.46*exp(0.0079*.x),color='darkgrey')+
+  geom_function(data=subset(NdZSI, P== "WI" & CROP == "monoI"), fun=~66.34*exp(0.0002*.x),color='darkgrey')+
+  geom_text(data = sortedZ_I, mapping = aes(x = 30, y = 1500, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1, inherit.aes = FALSE)+
+  geom_text(data = sortedZ_M, mapping = aes(x = 30, y = 1400, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_M, aes(x = x_sym, y = y_sym), shape = 25, size = 1, fill = "lightgrey", stroke = 0.6, inherit.aes = FALSE)+
+  geom_text(data = sortedZ, mapping = aes(x = 60, y = 1500, label = plvl)) # add stars to figure
+print(GraincomboplotNEZ)
+# ggsave("figures/grain/GrainplotNEZ.jpg", plot = GraincomboplotNEZ, width = 8, height = 6, dpi = 300)
+
 ```
 
 # Grain anovas Table 
