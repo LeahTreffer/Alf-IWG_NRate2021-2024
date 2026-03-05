@@ -1966,7 +1966,7 @@ format_p_value <- function(p_val) {
   return(stars)
 }
 
-# Apply the function to your ANOVA results
+# Apply the function to ANOVA results
 GPLER_stars_tibble <- map(anovasGPLER, as_tibble, rownames="term") %>%
   bind_rows(.id = "model") %>%
   mutate(stars = map_chr(`Pr(>F)`, format_p_value))
