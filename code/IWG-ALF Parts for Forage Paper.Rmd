@@ -1761,6 +1761,45 @@ sorted_df <- new_df %>%
 #view(sorted_df)
 #write.csv(sorted_df, "data/Final_Data/Nrate_esteff_IWGforage_yr1S.csv")
 
+#equations table (N equations across cropping system)
+emtrends_result<-emtrends(modNXSI1,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+emmeans_results<-emmeans(modNXSI1, ~ CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df2 <- new_df %>%
+  arrange(CROP)
+#view(sorted_df2)
+#write.csv(sorted_df, "data/Final_Data/Nrate_esteff_IWGforage_yr1S_2.csv")
+emtrends_result<-emtrends(modNXSI1,~ P, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+desired_order_P <- c("MN", "NY", "KS", "WI")
+emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNXSI1, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+inner_join(emmeans_df, by = c("P")) %>%
+select(P, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+select(-emmean, -N.trend)
+sorted_df3 <- new_df %>%
+arrange(P)
+#view(sorted_df3)
+#write.csv(sorted_df3, "data/Final_Data/Nrate_esteff_IWGforage_yr1S_3.csv")
+
+
 # IWG forage figure E:C (XS)
 XSIemmsPC <- emmeans(modNXSI1, ~ P*CROP, type = "response") # Obtain estimated marginal means
 emms_df <- as.data.frame(XSIemmsPC)
@@ -1872,7 +1911,7 @@ summary(modNXFI)
 NXFI_resid<-resid(modNXFI)
 qqnorm(NXFI_resid)
 qqline(NXFI_resid)
-plot(modNXFI)
+#plot(modNXFI)
 #log transform
 modNXFI1<-lmer(log(PlotIWGDryKgHa)~N*P*CROP + (1|Rep), data=NdXFI)
 # boundary (singular) fit: see help('isSingular')
@@ -1881,7 +1920,7 @@ anova(modNXFI1)
 NXFI1_resid<-resid(modNXFI1)
 qqnorm(NXFI1_resid)
 qqline(NXFI1_resid)
-plot(modNXFI1)
+#plot(modNXFI1)
 
 modNXFI1_summary <- summary(modNXFI1)
 modNXFI1_coeff <- as.data.frame(modNXFI1_summary$coefficients)%>%
@@ -1979,6 +2018,44 @@ sorted_df <- new_df %>%
   arrange(P, CROP)
 #view(sorted_df)
 #write.csv(sorted_df, "data/Final_Data/Nrate_esteff_IWGforage_yr1F.csv")
+
+#equations table (N equations across cropping system)
+emtrends_result<-emtrends(modNXFI1,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+emmeans_results<-emmeans(modNXFI1, ~ CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df2 <- new_df %>%
+  arrange(CROP)
+#view(sorted_df2)
+#write.csv(sorted_df2, "data/Final_Data/Nrate_esteff_IWGforage_yr1F_2.csv")
+emtrends_result<-emtrends(modNXFI1,~ P, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+desired_order_P <- c("MN", "NY", "KS", "WI")
+emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNXFI1, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+inner_join(emmeans_df, by = c("P")) %>%
+select(P, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+select(-emmean, -N.trend)
+sorted_df3 <- new_df %>%
+arrange(P)
+#view(sorted_df3)
+#write.csv(sorted_df3, "data/Final_Data/Nrate_esteff_IWGforage_yr1F_3.csv")
 
 #IWG forage figure E:C (XF)
 XFIemmsPC <- emmeans(modNXFI1, ~ P*CROP, type = "response") # Obtain estimated marginal means
@@ -2193,6 +2270,44 @@ sorted_df <- new_df %>%
   arrange(P, CROP)
 #view(sorted_df)
 #write.csv(sorted_df, "data/Final_Data/Nrate_esteff_IWGforage_yr2S.csv")
+
+#equations table (N equations across cropping system)
+emtrends_result<-emtrends(modNYSI1,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+emmeans_results<-emmeans(modNYSI1, ~ CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df2 <- new_df %>%
+  arrange(CROP)
+#view(sorted_df2)
+#write.csv(sorted_df2, "data/Final_Data/Nrate_esteff_IWGforage_yr2S_2.csv")
+emtrends_result<-emtrends(modNYSI1,~ P, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+desired_order_P <- c("MN", "NY", "KS", "WI")
+emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNYSI1, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+inner_join(emmeans_df, by = c("P")) %>%
+select(P, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+select(-emmean, -N.trend)
+sorted_df3 <- new_df %>%
+arrange(P)
+#view(sorted_df3)
+#write.csv(sorted_df3, "data/Final_Data/Nrate_esteff_IWGforage_yr2S_3.csv")
 
 #IWG forage figure E:C (YS)
 YSIemmsPC <- emmeans(modNYSI1, ~ P*CROP, type = "response") # Obtain estimated marginal means
@@ -2410,6 +2525,46 @@ sorted_df <- new_df %>%
   arrange(P, CROP)
 #view(sorted_df)
 #write.csv(sorted_df, "data/Final_Data/Nrate_esteff_IWGforage_yr2F.csv")
+
+
+#equations table (N equations across cropping system)
+emtrends_result<-emtrends(modNYFI1,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+emmeans_results<-emmeans(modNYFI1, ~ CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df2 <- new_df %>%
+  arrange(CROP)
+#view(sorted_df2)
+#write.csv(sorted_df2, "data/Final_Data/Nrate_esteff_IWGforage_yr2F_2.csv")
+emtrends_result<-emtrends(modNYFI1,~ P, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+desired_order_P <- c("MN", "NY", "KS", "WI")
+emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNYFI1, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+inner_join(emmeans_df, by = c("P")) %>%
+select(P, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+select(-emmean, -N.trend)
+sorted_df3 <- new_df %>%
+arrange(P)
+#view(sorted_df3)
+#write.csv(sorted_df3, "data/Final_Data/Nrate_esteff_IWGforage_yr2F_3.csv")
+
 
 #IWG forage figure E:C (YF)
 YFIemmsPC <- emmeans(modNYFI1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
@@ -2954,11 +3109,9 @@ IEC2
 
 
 
-# START HERE : look at sig summary anova table and decide which figure to create
+# START HERE : look at sig summary anova table and decide which figures to create
 
 ### Action items from Megan: 
-# IWG forage (1S, 1F, 2S) : N equations across cropping system
-# IWG forage (2F) : N equations across C and E
 # values and proportions of each species in total forage yeild for intercropped plots (not PrLER)
 #   look at code for proportional partical and adjust to fit what she wants
 
