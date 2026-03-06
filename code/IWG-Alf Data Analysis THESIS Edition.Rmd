@@ -2347,7 +2347,6 @@ IXSPC<-ggplot(NdXSI, aes(x = P, y = exp(predicted), color = C)) +
   theme(plot.title = element_text(hjust = 0.5))+
    guides(color = "none")+
   scale_y_continuous(breaks = c(2000,4000,6000,8000,10000,12000, 14000), limits = c(0, 14000))
-
 print(IXSPC)
 ```
 
