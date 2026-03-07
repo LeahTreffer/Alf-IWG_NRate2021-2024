@@ -2781,8 +2781,27 @@ sorted_df <- new_df %>%
   arrange(P, CROP)
 #view(sorted_df)
 #write.csv(sorted_df, "data/Final_Data/Nrate_esteff_IWGforage_yr3S.csv")
+# first go down to 'IWG forage figure C (ZF)' and run code for model without KS
+emtrends_result<-emtrends(modNZSI2,~ P, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNZSI2, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df3 <- new_df %>%
+  arrange(P)
+#view(sorted_df3)
 
-#IWG forage figure P (YF)
+#IWG forage figure P (ZF)
 ZSIemmsP <- emmeans(modNZSI1, ~ P, type = "response") # Obtain estimated marginal means (excluding N)
 emms_df <- as.data.frame(ZSIemmsP)
 cld_dataZSIP <- cld(ZSIemmsP, Letters=custom_letters)
@@ -2806,12 +2825,13 @@ IZSP<-ggplot(NdZSI, aes(x = P, y = exp(predicted), color = CROP)) +
 print(IZSP)
 #ggsave("figures/forage/IZSP.jpg", plot = IZSP, width = 10, height = 8, dpi = 300)
 
-#IWG forage figure C (YF)
+#IWG forage figure C (ZF)
 # this harvest timepoint is an unbalanced design (one level of P (KS) only appears with one level of CROP (mono), while other P levels have both mono and inter)
 # estimate CROP differences using valid locations:
 NdZSI_2 <- subset(NdZSI, P !="KS")
 modNZSI2 <- lmer(log(PlotIWGDryKgHa) ~ N*P*CROP + (1|Rep), data = NdZSI_2)
 anova(modNZSI2)
+NdZSI_2$predicted <- predict(modNZSI2, newdata = NdZSI_2, re.form = NA)
 
 ZSIemmsC <- emmeans(modNZSI2, ~ CROP, type = "response") # Obtain estimated marginal means (excluding N)
 emms_df <- as.data.frame(ZSIemmsC)
@@ -2822,7 +2842,7 @@ custom_labels <- c("Intercrop", "Monoculture IWG")
 custom_colors <- c("darkmagenta", "cyan") 
 IZSC<-ggplot(NdZSI_2, aes(x = CROP, y = exp(predicted), color = CROP)) +
   geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
-  labs(x = "Environment", y = "IWG Forage Yield") +
+  labs(x = "Cropping System", y = "IWG Forage Yield") +
   geom_point(data = emms_df, aes(x = CROP, y = response), 
              size = 4, shape = 18, color = "black")+ 
   geom_errorbar(data = emms_df, aes(x = CROP, ymin = lower.CL, ymax = upper.CL), 
@@ -2831,8 +2851,7 @@ IZSC<-ggplot(NdZSI_2, aes(x = CROP, y = exp(predicted), color = CROP)) +
             color = "black", vjust = 0, hjust = 2)+
   scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)+
      ggtitle("Year 3 Summer")+
-  theme(plot.title = element_text(hjust = 0.5))#+
-#  scale_y_continuous(breaks = c(250, 500, 750, 1000, 1250, 1500), limits = c(0, 1500))
+  theme(plot.title = element_text(hjust = 0.5))
 print(IZSC)
 #ggsave("figures/forage/IZSC.jpg", plot = IZSC, width = 6, height = 8, dpi = 300)
 ```
@@ -2863,7 +2882,7 @@ modNZFI1_coeff <- as.data.frame(modNZFI1_summary$coefficients)%>%
 # Create custom table using kable and kableExtra
 save_kable(
   knitr::kable(modNZFI1_coeff, 
-               caption = "Y3 Fall Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+               caption = "Y3 Fall Mixed-Effects Model: log(PlotIWGDryKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
     kable_styling(full_width = TRUE, 
                   position = "center", 
                   bootstrap_options = c("striped", "hover", "condensed")),
@@ -2881,7 +2900,7 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
 #  ylim(0, 1600) +
   facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
   scale_color_discrete(name = "Cropping System")  #legend for colors
-# save figres/forage/IWGforage_Nrate_yr3F.jpeg  775x630
+# save figures/forage/IWGforage_Nrate_yr3F.jpeg  775x630
 
 #Threeway means
 N_levels <- c(0, 40, 80, 120, 160)
@@ -2955,6 +2974,24 @@ sorted_df <- new_df %>%
   arrange(P, CROP)
 #view(sorted_df)
 #write.csv(sorted_df, "data/Final_Data/Nrate_esteff_IWGforage_yr3F.csv")
+emtrends_result<-emtrends(modNZFI1,~ P, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modNZFI1, ~P, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P")) %>%
+  select(P, emmean, N.trend, SE.x)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df3 <- new_df %>%
+  arrange(P)
+#view(sorted_df3)
+
 
 #IWG forage figure E:C (ZF)
 ZFIemmsPC <- emmeans(modNZFI1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
@@ -3106,16 +3143,6 @@ IEC2
 #save figures/forage/IEC2.jpg   2000x1800
 ```
 
-
-
-
-# START HERE : look at sig summary anova table and decide which figures to create
-
-### Action items from Megan: 
-# values and proportions of each species in total forage yeild for intercropped plots (not PrLER)
-#   look at code for proportional partical and adjust to fit what she wants
-
-
 #IWG forage combo plot N:E
 ```{r}
 # Layer all the plots together!
@@ -3129,112 +3156,953 @@ legend_order <- c("Year 1 Summer Harvest", "Year 1 Fall Harvest",
                   "Year 2 Summer Harvest", "Year 2 Fall Harvest",
                   "Year 3 Summer Harvest", "Year 3 Fall Harvest")
 NdXSI$P <- factor(NdXSI$P, levels = desired_order)
-
-max(NdXSI$PlotIWGDryKgHa)
-max(NdYSI$PlotIWGDryKgHa)
+# equations come from sorted_data3 from each harvest year chunk. This is the emmeans of P
 IFcomboplot <- ggplot() +
   geom_point(data = NdXSI, aes(x = N, y = PlotIWGDryKgHa, color = "Year 1 Summer Harvest", shape= CROP)) +
   geom_point(data = NdXFI, aes(x = N, y = PlotIWGDryKgHa, color = "Year 1 Fall Harvest", shape= CROP)) +
   geom_point(data = NdYSI, aes(x = N, y = PlotIWGDryKgHa, color = "Year 2 Summer Harvest", shape= CROP)) +
+  geom_point(data = NdYFI, aes(x = N, y = PlotIWGDryKgHa, color = "Year 2 Fall Harvest", shape= CROP)) +
+  geom_point(data = NdZSI, aes(x = N, y = PlotIWGDryKgHa, color = "Year 3 Summer Harvest", shape= CROP)) +
+  geom_point(data = NdZFI, aes(x = N, y = PlotIWGDryKgHa, color = "Year 3 Fall Harvest", shape= CROP)) +  
   labs(x = "N-Rate (kg ha-1)", y = "IWG Forage Yield",
     color = "Harvest", shape = "Cropping System") +
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
-  ylim(0, 14800) +
+#  ylim(0, 14800) +
   facet_wrap(~P, scales = "free", ncol = 2) +
   scale_color_manual(values = colors, limits = legend_order)+
   scale_shape_manual(values = c(4, 25), labels = c("Intercropped", "Monoculture IWG"))+
-  geom_function(data=subset(NdXSI, P== "MN"), fun=~1758.86*exp(0.0026*.x),color='red')+
-  geom_function(data=subset(NdXSI, P== "NY"), fun=~2695.58*exp(0.0050*.x),color='red')+
-  geom_function(data=subset(NdXSI, P== "KS"), fun=~7357.97*exp(0.0007*.x),color='red')+
+  geom_function(data=subset(NdXSI, P== "MN"), fun=~1737.51*exp(0.0027*.x),color='red')+
+  geom_function(data=subset(NdXSI, P== "NY"), fun=~2695.81*exp(0.0050*.x),color='red')+
+  geom_function(data=subset(NdXSI, P== "KS"), fun=~7357.19*exp(0.0007*.x),color='red')+
   geom_function(data=subset(NdXSI, P== "WI"), fun=~6843.18*exp(0.0009*.x),color='red')+
   geom_function(data=subset(NdXFI, P== "MN"), fun=~651.94*exp(0.0020*.x),color='pink')+
   geom_function(data=subset(NdXFI, P== "NY"), fun=~263.84*exp(0.0044*.x),color='pink')+
   geom_function(data=subset(NdXFI, P== "WI"), fun=~283.04*exp(-0.0010*.x),color='pink')+
-  geom_function(data=subset(NdXFI, P== "KS"), fun=~283.04*exp(-0.0010*.x),color='pink')+
+  geom_function(data=subset(NdYSI, P== "MN"), fun=~3922.15*exp(0.0018*.x),color='blue')+
   geom_function(data=subset(NdYSI, P== "NY"), fun=~2688.03*exp(0.0049*.x),color='blue')+
   geom_function(data=subset(NdYSI, P== "KS"), fun=~2145.60*exp(0.0008*.x),color='blue')+
   geom_function(data=subset(NdYSI, P== "WI"), fun=~3315.20*exp(0.0042*.x),color='blue')+
-  geom_function(data=subset(NdYSI, P== "MN"), fun=~3315.20*exp(0.0042*.x),color='blue')+
-  geom_function(data=subset(NdYFI, P== "NY"), fun=~3315.20*exp(0.0042*.x),color='lightblue')+
-  geom_function(data=subset(NdYFI, P== "KS"), fun=~2145.60*exp(0.0008*.x),color='lightblue')+
-  geom_function(data=subset(NdYFI, P== "WI"), fun=~3315.20*exp(0.0042*.x),color='lightblue')+
-  geom_function(data=subset(NdYFI, P== "MN"), fun=~3315.20*exp(0.0042*.x),color='lightblue')+
-  geom_function(data=subset(NdZSI, P== "NY"), fun=~2688.03*exp(0.0049*.x),color='darkgreen')+
-  geom_function(data=subset(NdZSI, P== "KS"), fun=~2145.60*exp(0.0008*.x),color='darkgreen')+
-  geom_function(data=subset(NdZSI, P== "WI"), fun=~3315.20*exp(0.0042*.x),color='darkgreen')+
-  geom_function(data=subset(NdZSI, P== "MN"), fun=~3315.20*exp(0.0042*.x),color='darkgreen')+
-  geom_function(data=subset(NdZFI, P== "NY"), fun=~3315.20*exp(0.0042*.x),color='green')+
-  geom_function(data=subset(NdZFI, P== "KS"), fun=~2145.60*exp(0.0008*.x),color='green')+
-  geom_function(data=subset(NdZFI, P== "WI"), fun=~3315.20*exp(0.0042*.x),color='green')+
-  geom_function(data=subset(NdZFI, P== "MN"), fun=~3315.20*exp(0.0042*.x),color='green')
-
+  geom_function(data=subset(NdYFI, P== "MN"), fun=~832.34*exp(0.0026*.x),color='lightblue')+
+  geom_function(data=subset(NdYFI, P== "NY"), fun=~550.29*exp(0.0016*.x),color='lightblue')+
+  geom_function(data=subset(NdYFI, P== "WI"), fun=~392.53*exp(0.0030*.x),color='lightblue')+
+  geom_function(data=subset(NdZSI, P== "MN"), fun=~2073.88*exp(0.0028*.x),color='darkgreen')+
+  geom_function(data=subset(NdZSI, P== "NY"), fun=~306.88*exp(0.0026*.x),color='darkgreen')+
+  geom_function(data=subset(NdZSI, P== "WI"), fun=~6845.80*exp(0.0023*.x),color='darkgreen')+
+  geom_function(data=subset(NdZFI, P== "MN"), fun=~407.87*exp(0.0019*.x),color='green')+
+  geom_function(data=subset(NdZFI, P== "NY"), fun=~1104.52*exp(0.0007*.x),color='green')+
+  geom_function(data=subset(NdZFI, P== "WI"), fun=~758.02*exp(0.0008*.x),color='green')
 print(IFcomboplot)
-
-#ggsave("IFcomboplot.jpg", plot = IFcomboplot, width = 8, height = 6, dpi = 300)
+#ggsave("figures/forage/IFcomboplot.jpg", plot = IFcomboplot, width = 12, height = 10, dpi = 300)
 ```
 
-#IWG forage plot N:C
+
+
+## Alfalfa Forage Yield 
+
+#Alf forage year 1 summer
+```{r}
+#LINEAR 
+modNXSA<-lmer(PlotAlfDryKgHa~N*P*CROP + (1|P:Rep), data=NdXSA)
+anova(modNXSA)
+#Check assumptions
+NXSA_resid<-resid(modNXSA)
+qqnorm(NXSA_resid)
+qqline(NXSA_resid)
+plot(modNXSA)
+#log transform
+modNXSA1<-lmer(log(PlotAlfDryKgHa)~N*P*CROP + (1|P:Rep), data=NdXSA)
+anova(modNXSA1)
+#Check assumptions
+NXSA_resid1<-resid(modNXSA1)
+qqnorm(NXSA_resid1)
+qqline(NXSA_resid1)
+plot(modNXSA1)
+# could use either, normal is slightly better and includes significance for N:E and N:C
+
+emtrends(modNXSA1, ~P*CROP, var= "N")
+emtrends(modNXSA1, ~1, var= "N", infer= TRUE) #(averages 8 slopes across interactions)
+emmip(modNXSA1, P~N|CROP, at=list(N=c(40, 80, 120)))
+
+modNXSA1_summary <- summary(modNXSA1)
+modNXSA1_coeff <- as.data.frame(modNXSA1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+# Create custom table using kable and kableExtra
+save_kable(
+  knitr::kable(modNXSA1_coeff, 
+               caption = "Y1 Summer Mixed-Effects Model: log(PlotAlfDryKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+    kable_styling(full_width = TRUE, 
+                  position = "center", 
+                  bootstrap_options = c("striped", "hover", "condensed")),
+  file = "figures/forage/ALF_table_significant_coeff_yr1S.html")
+# ALF_table_significant_coeff_yr1S    
+
+#(old)
+#rec
+modNXSA1N<-lmer(log(PlotAlfDryKgHa)~N+P*CROP + (1|P:Rep), data=NdXSA)
+emtrends(modNXSA1N, ~1, var= "N", infer= TRUE)
+emmip(modNXSA1N, P~N|CROP, at=list(N=c(0, 80, 160)))
+
+max(NdXSA$PlotAlfDryKgHa)
+#linear plots
+NdXSA$predicted <- predict(modNXSA1, newdata = NdXSA, re.form = NA)
+ggplot(NdXSA, aes(x = N, y = PlotAlfDryKgHa, color = C, group= C)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Alf Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 1 S Relationship between Alf Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+#  ylim(0, 11000) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+# save figures/forage/ALFforage_Nrate_yr1S.jpeg  775x630
+
+#Threeway means
+NXSA1emm <- compute_emmeansNXS("modNXSA1")
+#write.csv(NXSA1emm, 'data/Final_Data/NXSA1emm.csv')
+
+#Alf forage figure E:C (XS)
+max(NdXSA$predicted)
+exp(9.08082)
+XSAemmsPC <- emmeans(modNXSA1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(XSAemmsPC)
+cld_dataXSAPC <- cld(XSAemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataXSAPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+custom_labels <- c("Intercrop", "Monoculture Alfalfa")
+custom_colors <- c("darkmagenta", "coral1") 
+AXSPC<-ggplot(NdXSA, aes(x = P, y = exp(predicted), color = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Alfalfa Forage Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2)+
+  scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)+
+     ggtitle("Year 1 Summer")+
+  theme(plot.title = element_text(hjust = 0.5))+
+   guides(color = "none")+
+  scale_y_continuous(breaks = c(1000, 3000, 5000, 7000,9000), limits = c(0, 9500))
+print(AXSPC)
+#ggsave("figures/forage/AXSPC.jpg", plot = AXSPC, width = 10, height = 8, dpi = 300)
+
+
+#alf forage plot N (XS)
+#EQUATION tables JUST N 
+emtrends_result<-emtrends(modNXSA1,~ 1, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNXSA1, ~1, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+emtrends_df <- emtrends_df %>% mutate(key = 1)
+emmeans_df <- emmeans_df %>% mutate(key = 1)
+merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
+  select(emmean, N.trend, SE.x)
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+new_df
+AFplotN <- ggplot() +
+  geom_point(data = NdXSA, aes(x = N, y = PlotAlfDryKgHa, shape= CROP), color= "red") +
+  labs(x = "N-Rate (kg ha-1)", y = "Alfalfa Forage Yield") +
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  scale_shape_manual(values = c("intercrop" = 4, "monoculture" = 20), labels = c("Intercropped", "Monoculture Alfalfa")) +
+  geom_function(data=NdXSA, fun=~4141.15*exp(-0.0009*.x),color='red')+
+  guides(
+    shape = guide_legend(title = "Cropping System"))
+print(AFplotN)
+
+
+
+
+
+#Pairwise P
+emmsP <- emmeans(modNXSA, ~ P, type = "response") # Obtain estimated marginal means
+cld_dataNXSAP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+#Pairwise C
+emmsC <- emmeans(modNXSA, ~ CROP, type = "response") # Obtain estimated marginal means 
+cld_dataNXSAC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
+#Pairwise N
+N_levels <- c(0, 40, 80, 120, 160)
+emmsN <- emmeans(modNXSA, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataNXSAN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataNXSAN$response <- format(cld_dataNXSAN$response, digits = 5)
+cld_dataNXSAN<- cld_dataNXSAN %>%
+  select(N, response, .group)
+colnames(cld_dataNXSAN) <- c("N","IWG Forage (kg ha-1)", "Group")
+cld_dataNXSAN  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise P:C
+emmsPC <- emmeans(modNXSA, ~ P*CROP, type= "response") # Obtain estimated marginal means
+cld_dataNXSAPC <- cld(emmsPC, Letters=custom_letters) # Create compact letter display
+cld_dataNXSAPC$response <- format(cld_dataNXSAPC$response, digits = 5)
+rownames(cld_dataNXSAPC) <- NULL
+cld_dataNXSAPC<- cld_dataNXSAPC %>%
+  select(P,CROP, response, .group)
+colnames(cld_dataNXSAPC) <- c("Site","Cropping System","Alfalfa Forage (kg ha-1)", "Group")
+cld_dataNXSAPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#This gives us the slope for each interactions as well as a P value indicating significance level for that slope
+emtrends(modNXSA,~ P*CROP, var= "N", infer=TRUE)
+emtrends(modNXSA,~ P, var= "N", infer=TRUE)
+emtrends(modNXSA,~ CROP, var= "N", infer=TRUE)
+emtrends(modNXSA,~N, var= "N", infer=TRUE)
+summary(modNXSA)
+emtrends(modNXSA,~ P, var= "N", infer=TRUE)
+summary(modNXSA)
+```
+
+#Alf forage year 1 fall
+```{r}
+#LINEAR
+modNXFA<-lmer(PlotAlfDryKgHa~N*P*CROP + (1|Rep), data=NdXFA)
+anova(modNXFA)
+#Check assumptions
+NXFA_resid<-resid(modNXFA)
+qqnorm(NXFA_resid)
+qqline(NXFA_resid)
+plot(modNXFA)
+#log transform
+modNXFA1<-lmer(log(PlotAlfDryKgHa)~N*P*CROP + (1|Rep), data=NdXFA)
+anova(modNXFA1)
+#Check assumptions
+NXFA1_resid<-resid(modNXFA1)
+qqnorm(NXFA1_resid)
+qqline(NXFA1_resid)
+plot(modNXFA1)
+
+modNXFA1_summary <- summary(modNXFA1)
+modNXFA1_coeff <- as.data.frame(modNXFA1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+# Create custom table using kable and kableExtra
+save_kable(
+  knitr::kable(modNXFA1_coeff, 
+               caption = "Y1 Fall Mixed-Effects Model: log(PlotAlfDryKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+    kable_styling(full_width = TRUE, 
+                  position = "center", 
+                  bootstrap_options = c("striped", "hover", "condensed")),
+  file = "figures/forage/ALF_table_significant_coeff_yr1F.html")
+# ALF_table_significant_coeff_yr1F
+
+max(NdXFA$PlotAlfDryKgHa)
+#linear plots
+NdXFA$predicted <- predict(modNXFA1, newdata = NdXFA, re.form = NA)
+ggplot(NdXFA, aes(x = N, y = PlotAlfDryKgHa, color = C, group= C)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Alf Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 1 F Relationship between Alf Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+#  ylim(0, 3300) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+# save figures/forage/ALFforage_Nrate_yr1F.jpeg  775x630
+
+#Threeway means
+NXFA1emm <- compute_emmeansNXF("modNXFA1")
+#write.csv(NXFA1emm, 'data/Final_Data/NXFA1emm.csv')
+
+#Alf forage figure E:C (XF)
+XFAemmsPC <- emmeans(modNXFA1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(XFAemmsPC)
+cld_dataXFAPC <- cld(XFAemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataXFAPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+custom_labels <- c("Intercrop", "Monoculture Alfalfa")
+custom_colors <- c("darkmagenta", "coral1") 
+AXFPC<-ggplot(NdXFA, aes(x = P, y = exp(predicted), color = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Alfalfa Forage Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2)+
+  scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)+
+     ggtitle("Year 1 Fall")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  scale_y_continuous(breaks = c(1000, 3000, 5000, 7000,9000), limits = c(0, 3500))
+print(AXFPC)
+#ggsave("figures/forage/AXFPC.jpg", plot = AXFPC, width = 10, height = 8, dpi = 300)
+
+
+
+
+
+#Pairwise P
+emmsP <- emmeans(modNXFA1, ~ P, type = "response") # Obtain estimated marginal means
+cld_dataNXFAP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+#Pairwise P:C
+emmsPC <- emmeans(modNXFA1, ~ P*CROP, type= "response") # Obtain estimated marginal means
+cld_dataNXFAPC <- cld(emmsPC, Letters=custom_letters) # Create compact letter display
+cld_dataNXFAPC$response <- format(cld_dataNXFAPC$response, digits = 5)
+rownames(cld_dataNXFAPC) <- NULL
+cld_dataNXFAPC<- cld_dataNXFAPC %>%
+  select(P,CROP, response, .group)
+colnames(cld_dataNXFAPC) <- c("Site","Cropping System","IWG Forage (kg ha-1)", "Group")
+cld_dataNXFAPC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+emtrends_result<-emtrends(modNXFA1,~ 1, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNXFA1, ~1, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+emtrends_df <- emtrends_df %>% mutate(key = 1)
+emmeans_df <- emmeans_df %>% mutate(key = 1)
+merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
+  select(emmean, N.trend, SE.x)
+view(merged_df)
+```
+
+#Alf forage year 2 summer
+```{r}
+# remove MN plot 1222, it only has 0 for values
+NdYSA <- NdYSA %>%
+  filter(Plot != 1222)
+
+#LINEAR 
+modNYSA<-lmer(PlotAlfDryKgHa~N*P*CROP + (1|Rep), data=NdYSA)
+anova(modNYSA)
+#Check assumptions
+NYSA_resid<-resid(modNYSA)
+qqnorm(NYSA_resid)
+qqline(NYSA_resid)
+plot(modNYSA)
+#Logtransform
+modNYSA1<-lmer(log(PlotAlfDryKgHa)~N*P*CROP + (1|Rep), data=NdYSA)
+anova(modNYSA1)
+#check assumptions logtransform
+NYSA_resid1<-resid(modNYSA1)
+qqnorm(NYSA_resid1)
+qqline(NYSA_resid1)
+plot(modNYSA1)
+# normal is slightly better and has additional significance for N:E and N:C
+
+modNYSA1_summary <- summary(modNYSA1)
+modNYSA1_coeff <- as.data.frame(modNYSA1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+# Create custom table using kable and kableExtra
+save_kable(
+  knitr::kable(modNYSA1_coeff, 
+               caption = "Y2 Summer Mixed-Effects Model: log(PlotAlfDryKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+    kable_styling(full_width = TRUE, 
+                  position = "center", 
+                  bootstrap_options = c("striped", "hover", "condensed")),
+  file = "figures/forage/ALF_table_significant_coeff_yr2S.html")
+# ALF_table_significant_coeff_yr2S
+
+max(NdYSA$PlotAlfDryKgHa)
+#LINEAR plots
+NdYSA$predicted <- predict(modNYSA1, newdata = NdYSA, re.form = NA)
+ggplot(NdYSA, aes(x = N, y = PlotAlfDryKgHa, color = CROP, group= CROP)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Alf Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 2 S Relationship between Alf Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+# save figures/forage/ALFforage_Nrate_yr2S.jpeg  775x630
+
+#Threeway means
+NYSA1emm <- compute_emmeansNYS("modNYSA1")
+#write.csv(NYSA1emm, 'data/Final_Data/NYSA1emm.csv')
+
+#Alf forage E plot (YS)
+NYSAemmsP <- emmeans(modNYSA1, ~ P, type = "response") 
+emms_df <- as.data.frame(NYSAemmsP)
+cld_dataNYSAP <- cld(NYSAemmsP, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNYSAP)
+merged_df <- merge(emms_df, cld_df,by = c("P"))
+AYSE<-ggplot(NdYSA, aes(x = P, y = exp(predicted))) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7, color="darkgreen") +
+  labs(x = "Environment", y = "Alfalfa Forage Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 1.8)
+print(AYSE)
+#ggsave("figures/forage/AYSE.jpg", plot = AYSE, width = 8, height = 6, dpi = 300)
+
+
+
+
+
+#Pairwise P
+emmsP <- emmeans(modNYSA, ~ P, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYSAP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+cld_dataNYSAP$response <- format(cld_dataNYSAP$response, digits = 5)
+rownames(cld_dataNYSAP) <- NULL
+cld_dataNYSAP<- cld_dataNYSAP %>%
+  select(P, response, .group)
+colnames(cld_dataNYSAP) <- c("Site","IWG Forage (kg ha-1)", "Group")
+cld_dataNYSAP  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+#Pairwise C
+emmsC <- emmeans(modNYSA, ~ CROP, type = "response") # Obtain estimated marginal means (excluding N)
+cld_dataNYSAC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
+#Pairwise N:C
+emmsNC <- emmeans(modNYSA, ~ N*CROP,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNYSANC <- cld(emmsNC, Letters=custom_letters) # Create compact letter display
+cld_dataNYSANC$response <- format(cld_dataNYSANC$response, digits = 5)
+rownames(cld_dataNYSANC) <- NULL
+cld_dataNYSANC<- cld_dataNYSANC %>%
+  select(N,CROP, response, .group)
+colnames(cld_dataNYSANC) <- c("N","Cropping System","Alfalfa Forage (kg ha-1)", "Group")
+cld_dataNYSANC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#slope stuff
+emtrends_result<-emtrends(modNYSA,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_C <- c("intercrop", "monoculture")
+  emtrends_df$C <- factor(emtrends_df$C, levels = desired_order_C)
+  #view(emtrends_df)
+  
+#equations table
+emtrends_result<-emtrends(modNYSA,~ CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNYSA, ~CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c( "CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$CROP <- factor(merged_df$C, levels = c("intercrop", "monoculture"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange( CROP)
+#view(sorted_df)
+```
+
+#Alf forage year 2 fall
+```{r}
+#LINEAR
+modNYFA<-lmer(PlotAlfDryKgHa~N*P*CROP + (1|Rep), data=NdYFA)
+anova(modNYFA)
+#Check assumptions
+NYFA_resid<-resid(modNYFA)
+qqnorm(NYFA_resid)
+qqline(NYFA_resid)
+plot(modNYFA)
+#log transform 
+modNYFA1<-lmer(log(PlotAlfDryKgHa)~N*P*CROP + (1|Rep), data=NdYFA)
+anova(modNYFA1)
+#Check assumptions
+NYFA1_resid<-resid(modNYFA1)
+qqnorm(NYFA1_resid)
+qqline(NYFA1_resid)
+plot(modNYFA1)
+
+modNYFA1_summary <- summary(modNYFA1)
+modNYFA1_coeff <- as.data.frame(modNYFA1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+# Create custom table using kable and kableExtra
+save_kable(
+  knitr::kable(modNYFA1_coeff, 
+               caption = "Y2 Fall Mixed-Effects Model: log(PlotAlfDryKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+    kable_styling(full_width = TRUE, 
+                  position = "center", 
+                  bootstrap_options = c("striped", "hover", "condensed")),
+  file = "figures/forage/ALF_table_significant_coeff_yr2F.html")
+# ALF_table_significant_coeff_yr2F
+
+max(NdYFA$PlotAlfDryKgHa)
+#LINEAR plots
+NdYFA$predicted <- predict(modNYFA1, newdata = NdYFA, re.form = NA)
+ggplot(NdYFA, aes(x = N, y = PlotAlfDryKgHa, color = CROP, group= CROP)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Alf Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 2 F Relationship between Alf Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+# save figures/forage/ALFforage_Nrate_yr2F.jpeg  775x630
+
+#Threeway means
+NYFA1emm <- compute_emmeansNYF("modNYFA1")
+#write.csv(NYFA1emm, 'data/Final_Data/NYFA1emm.csv')
+
+#Alf forage E plot (YF)
+NYFAemmsP <- emmeans(modNYFA1, ~ P, type = "response") 
+emms_df <- as.data.frame(NYFAemmsP)
+cld_dataNYFAP <- cld(NYFAemmsP, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNYFAP)
+merged_df <- merge(emms_df, cld_df,by = c("P"))
+AYFE<-ggplot(NdYFA, aes(x = P, y = exp(predicted))) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7, color="darkgreen") +
+  labs(x = "Environment", y = "Alfalfa Forage Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 1.8)
+print(AYFE)
+#ggsave("figures/forage/AYFE.jpg", plot = AYFE, width = 8, height = 6, dpi = 300)
+
+
+
+
+
+
+
+#Pairwise N
+emmsN <- emmeans(modNYFA1, ~ N,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNYFAN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+#Pairwise N:C
+emmsNC <- emmeans(modNYFA1, ~ N*CROP,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNYFANC <- cld(emmsNC, Letters=custom_letters) # Create compact letter display
+cld_dataNYFANC$response <- format(cld_dataNYFANC$response, digits = 5)
+rownames(cld_dataNYFANC) <- NULL
+cld_dataNYFANC<- cld_dataNYFANC %>%
+  select(N,CROP, response, .group)
+colnames(cld_dataNYFANC) <- c("N","Cropping System","IWG Forage (kg ha-1)", "Group")
+cld_dataNYFANC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#slope stuff
+emtrends_result<-emtrends(modNYFA1,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_C <- c("intercrop", "monoculture")
+  emtrends_df$C <- factor(emtrends_df$C, levels = desired_order_C)
+  #view(emtrends_df)
+  
+  #equations table
+emtrends_result<-emtrends(modNYFA1,~ CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNYFA1, ~CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c( "CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$C <- factor(merged_df$C, levels = c("intercrop", "monoculture"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange( C)
+#view(sorted_df)
+```
+
+#Alf forage year 3 summer
+```{r}
+#LINEAR
+modNZSA<-lmer(PlotAlfDryKgHa~N*P*CROP + (1|Rep), data=NdZSA)
+anova(modNZSA)
+#Check assumptions
+NZSA_resid<-resid(modNZSA)
+qqnorm(NZSA_resid)
+qqline(NZSA_resid)
+plot(NZSA_resid)
+#log transform 
+modNZSA1<-lmer(log(PlotAlfDryKgHa)~N*P*CROP + (1|Rep), data=NdZSA)
+anova(modNZSA1)
+#Check assumptions
+NZSA1_resid<-resid(modNZSA1)
+qqnorm(NZSA1_resid)
+qqline(NZSA1_resid)
+plot(modNZSA1)
+# normal is better, no difference in what is significant 
+
+modNZSA1_summary <- summary(modNZSA1)
+modNZSA1_coeff <- as.data.frame(modNZSA1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+# Create custom table using kable and kableExtra
+save_kable(
+  knitr::kable(modNZSA1_coeff, 
+               caption = "Y3 Summer Mixed-Effects Model: log(PlotAlfDryKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+    kable_styling(full_width = TRUE, 
+                  position = "center", 
+                  bootstrap_options = c("striped", "hover", "condensed")),
+  file = "figures/forage/ALF_table_significant_coeff_yr3S.html")
+# ALF_table_significant_coeff_yr3S
+
+max(NdZSA$PlotAlfDryKgHa)
+#LINEAR plots
+NdZSA$predicted <- predict(modNZSA1, newdata = NdZSA, re.form = NA)
+ggplot(NdZSA, aes(x = N, y = PlotAlfDryKgHa, color = C, group= C)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Alf Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 3 S Relationship between Alf Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+# save figures/forage/ALFforage_Nrate_yr3S.jpeg  775x630
+
+#Threeway means
+NZSA1emm <- compute_emmeansNZS("modNZSA1")
+#write.csv(NZSA1emm, 'data/Final_Data/NZSA1emm.csv')
+
+#Alf forage E plot (ZS)
+NZSAemmsP <- emmeans(modNZSA1, ~ P, type = "response") 
+emms_df <- as.data.frame(NZSAemmsP)
+cld_dataNZSAP <- cld(NZSAemmsP, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataNZSAP)
+merged_df <- merge(emms_df, cld_df,by = c("P"))
+AZSE<-ggplot(NdZSA, aes(x = P, y = exp(predicted))) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7, color="darkgreen") +
+  labs(x = "Environment", y = "Alfalfa Forage Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 1.8)
+print(AZSE)
+#ggsave("figures/forage/AZSE.jpg", plot = AZSE, width = 8, height = 6, dpi = 300)
+
+
+
+
+
+
+
+#Pairwise N
+emmsN <- emmeans(modNYFA1, ~ N,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNYFAN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+#Pairwise N:C
+emmsNC <- emmeans(modNYFA1, ~ N*CROP,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNYFANC <- cld(emmsNC, Letters=custom_letters) # Create compact letter display
+cld_dataNYFANC$response <- format(cld_dataNYFANC$response, digits = 5)
+rownames(cld_dataNYFANC) <- NULL
+cld_dataNYFANC<- cld_dataNYFANC %>%
+  select(N,CROP, response, .group)
+colnames(cld_dataNYFANC) <- c("N","Cropping System","IWG Forage (kg ha-1)", "Group")
+cld_dataNYFANC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#slope stuff
+emtrends_result<-emtrends(modNYFA1,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_C <- c("intercrop", "monoculture")
+  emtrends_df$CROP <- factor(emtrends_df$CROP, levels = desired_order_C)
+  #view(emtrends_df)
+  
+  #equations table
+emtrends_result<-emtrends(modNYFA1,~ CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNYFA1, ~CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c( "CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("intercrop", "monoculture"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange( CROP)
+#view(sorted_df)
+```
+
+#Alf forage year 3 fall
+```{r}
+#LINEAR
+modNZFA<-lmer(PlotAlfDryKgHa~N*P*CROP + (1|Rep), data=NdZFA)
+anova(modNZFA)
+#Check assumptions
+NZFA_resid<-resid(modNZFA)
+qqnorm(NZFA_resid)
+qqline(NZFA_resid)
+plot(NZFA_resid)
+#log transform 
+modNZFA1<-lmer(log(PlotAlfDryKgHa+0.0001)~N*P*CROP + (1|Rep), data=NdZFA)
+anova(modNZFA1)
+#Check assumptions
+NZFA1_resid<-resid(modNZFA1)
+qqnorm(NZFA1_resid)
+qqline(NZFA1_resid)
+plot(modNZFA1)
+# normal is much better, but does not have E:C as significant which log does
+
+modNZFA1_summary <- summary(modNZFA1)
+modNZFA1_coeff <- as.data.frame(modNZFA1_summary$coefficients)%>%
+  filter(`Pr(>|t|)` < 0.05)
+# Create custom table using kable and kableExtra
+save_kable(
+  knitr::kable(modNZFA1_coeff, 
+               caption = "Y3 Fall Mixed-Effects Model: log(PlotAlfDryKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+    kable_styling(full_width = TRUE, 
+                  position = "center", 
+                  bootstrap_options = c("striped", "hover", "condensed")),
+  file = "figures/forage/ALF_table_significant_coeff_yr3F.html")
+# ALF_table_significant_coeff_yr3F
+
+max(NdZFA$PlotAlfDryKgHa)
+#LINEAR plots
+NdZFA$predicted <- predict(modNZFA1, newdata = NdZFA, re.form = NA)
+ggplot(NdZFA, aes(x = N, y = PlotAlfDryKgHa, color = CROP, group= CROP)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Alf Forage Yield (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 3 F Relationship between Alf Forage Yield and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")  #legend for colors
+# save figures/forage/ALFforage_Nrate_yr3F.jpeg  775x630
+
+#Threeway means
+NZFA1emm <- compute_emmeansNZF("modNZFA1")
+#write.csv(NZFA1emm, 'data/Final_Data/NZFA1emm.csv')
+
+#Alf forage figure E:C (ZF)
+ZFAemmsPC <- emmeans(modNZFA1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(ZFAemmsPC)
+cld_dataZFAPC <- cld(ZFAemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataZFAPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+custom_labels <- c("Intercrop", "Monoculture Alfalfa")
+custom_colors <- c("darkmagenta", "coral1") 
+AZFPC<-ggplot(NdZFA, aes(x = P, y = exp(predicted), color = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Alfalfa Forage Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2)+
+  scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)+
+     ggtitle("Year 3 Fall")+
+  theme(plot.title = element_text(hjust = 0.5))#+
+#  scale_y_continuous(breaks = c(1000, 3000, 5000, 7000,9000), limits = c(0, 4000))
+print(AZFPC)
+#ggsave("figures/forage/AZFPC.jpg", plot = AZFPC, width = 10, height = 8, dpi = 300)
+
+
+
+
+
+#Pairwise N
+emmsN <- emmeans(modNZFA1, ~ N,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNZFAN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+#Pairwise N:C
+emmsNC <- emmeans(modNZFA1, ~ N*CROP,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
+cld_dataNZFANC <- cld(emmsNC, Letters=custom_letters) # Create compact letter display
+cld_dataNZFANC$response <- format(cld_dataNZFANC$response, digits = 5)
+rownames(cld_dataNZFANC) <- NULL
+cld_dataNZFANC<- cld_dataNZFANC %>%
+  select(N,CROP, response, .group)
+colnames(cld_dataNZFANC) <- c("N","Cropping System","IWG Forage (kg ha-1)", "Group")
+cld_dataNZFANC  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+#slope stuff
+emtrends_result<-emtrends(modNZFA1,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_C <- c("intercrop", "monoculture")
+  emtrends_df$CROP <- factor(emtrends_df$CROP, levels = desired_order_C)
+  #view(emtrends_df)
+  
+  #equations table
+emtrends_result<-emtrends(modNZFA1,~ CROP, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNZFA1, ~CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c( "CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+#view(merged_df)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("intercrop", "monoculture"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange( CROP)
+#view(sorted_df)
+```
+
+
+# Alf Forage anovas Table 
+```{r}
+aov.tableXS <- anova(modNXSA1)
+tableAFXS = flextable(data = aov.tableXS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableAFXS)
+# save figures/forage/gt_AFXS 
+
+aov.tableXF <- anova(modNXFA1)
+tableAFXF = flextable(data = aov.tableXF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableAFXF)
+# save figures/forage/gt_AFXF
+
+aov.tableYS <- anova(modNYSA1) 
+tableAFYS = flextable(data = aov.tableYS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableAFYS)
+# save figures/forage/gt_AFYS 
+
+aov.tableYF <- anova(modNYFA1)
+tableAFYF = flextable(data = aov.tableYF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableAFYF)
+# save figures/forage/gt_AFYF
+
+aov.tableZS <- anova(modNZSA1)
+tableAFZS = flextable(data = aov.tableZS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableAFZS)
+# save figures/forage/gt_AFZS 
+
+aov.tableZF <- anova(modNZFA1)
+tableAFZF = flextable(data = aov.tableZF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableAFZF)
+# save figures/forage/gt_AFZF
+
+
+my_modelsNG <- list(modNXSA1, modNXFA1, modNYSA1, modNYFA1, modNZSA1, modNZFA1)
+anovasNG <- purrr::map(my_modelsNG, ~anova(.))
+names(anovasNG) <- c("Year 1 S", "Year 1 F", "Year 2 S", "Year 2 F", "Year 3 S", "Year 3 F")
+
+# Function to format p-values as stars
+format_p_value <- function(p_val) {
+  stars <- ifelse(p_val < 0.001, "***", ifelse(p_val < 0.01, "**", ifelse(p_val < 0.05, "*", "")))
+  return(stars)
+}
+
+# Apply the function to your ANOVA results
+NG_stars_tibble <- map(anovasNG, as_tibble, rownames="term") %>%
+  bind_rows(.id = "model") %>%
+  mutate(stars = map_chr(`Pr(>F)`, format_p_value))
+
+NG_stars_tibble <- NG_stars_tibble %>%
+  mutate(term = ifelse(term == "P", "E", term)) %>%
+  mutate(term = ifelse(term == "N:P", "N:E", term))%>%
+  mutate(term = ifelse(term == "P:CROP", "E:CROP", term))%>%
+  mutate(term = ifelse(term == "N:P:CROP", "N:E:CROP", term))%>%
+  filter(term != "Residuals")
+
+# Print the tibble
+print(NG_stars_tibble)
+
+NG_stars <-NG_stars_tibble |> 
+  select(model, term, stars) |>
+  pivot_wider(names_from = term, values_from = stars)
+
+gt_NG <- gt(NG_stars)
+
+gt_NG |> gtsave("figures/forage/gt_AF.png", expand = 10)
+```
+
+
+
+
+#Alf forage plots N:C 
+#HERE
 ```{r}
 # Layer all the plots together!
 colors <- c("Year 1 Summer Harvest" = "red", 
             "Year 1 Fall Harvest" = "green", 
             "Year 2 Summer Harvest" = "blue", 
-            "Year 2 Fall Harvest" = "purple")
-legend_order <- c( "Year 2 Fall Harvest")
-NdYFI$P <- factor(NdYFI$P, levels = desired_order)
+            "Year 2 Fall Harvest" = "purple", 
+            "Year 3 Summer Harvest" = "orange")
+legend_order <- c("Year 1 Summer Harvest", "Year 1 Fall Harvest",
+                  "Year 2 Summer Harvest", "Year 2 Fall Harvest",
+                  "Year 3 Summer Harvest")
+NdXSA$P <- factor(NdXSA$P, levels = desired_order)
+NdYSA$P <- factor(NdYSA$P, levels = desired_order)
+NdZSA$P <- factor(NdZSA$P, levels = desired_order)
 
-max(NdYFI$PlotIWGDryKgHa)
-IFcomboplotNC <- ggplot() +
-  geom_point(data = NdYFI, aes(x = N, y = PlotIWGDryKgHa, color = "Year 2 Fall Harvest", shape= CROP)) +
-  labs(x = "N-Rate (kg ha-1)", y = "IWG Forage Yield",
-    color = "Harvest", shape = "Cropping System",linetype = "Cropping System") +
+max(NdXSA$PlotAlfDryKgHa)
+max(NdXFA$PlotAlfDryKgHa)
+max(NdYSA$PlotAlfDryKgHa)
+max(NdYFA$PlotAlfDryKgHa)
+max(NdZSA$PlotAlfDryKgHa)
+
+AFcomboplot <- ggplot() +
+  geom_line(data = NdXSA, aes(N, exp(predicted), color = "Year 1 Summer Harvest", linetype= CROP)) +
+  geom_point(data = NdXSA, aes(x = N, y = PlotAlfDryKgHa, color = "Year 1 Summer Harvest", shape= CROP)) +
+  geom_line(data = NdXFA, aes(N, exp(predicted), color = "Year 1 Fall Harvest", linetype= CROP)) +
+  geom_point(data = NdXFA, aes(x = N, y = PlotAlfDryKgHa, color = "Year 1 Fall Harvest", shape= CROP)) +
+  geom_line(data = NdYSA, aes(N, exp(predicted), color = "Year 2 Summer Harvest", linetype= CROP)) +
+  geom_point(data = NdYSA, aes(x = N, y = PlotAlfDryKgHa, color = "Year 2 Summer Harvest", shape= CROP)) +
+  geom_line(data = NdYFA, aes(N, exp(predicted), color = "Year 2 Fall Harvest", linetype= CROP)) +
+  geom_point(data = NdYFA, aes(x = N, y = PlotAlfDryKgHa, color = "Year 2 Fall Harvest", shape= CROP)) +
+  geom_line(data = NdZSA, aes(N, exp(predicted), color = "Year 3 Summer Harvest", linetype= CROP)) +
+  geom_point(data = NdZSA, aes(x = N, y = PlotAlfDryKgHa, color = "Year 3 Summer Harvest", shape= CROP)) +
+  geom_line(data = NdZFA, aes(N, exp(predicted), color = "Year 3 Fall Harvest", linetype= CROP)) +
+  geom_point(data = NdZFA, aes(x = N, y = PlotAlfDryKgHa, color = "Year 3 Fall Harvest", shape= CROP)) +
+  labs(x = "N-Rate (kg ha-1)", y = "Total Forage Yield",
+       color = "Harvest", 
+       linetype = "Cropping System", shape = "Cropping System") +
+  ggtitle("Relationship Between Alfalfa Forage Yield and N-rate") +
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
-  ylim(0, 1600) +
+  ylim(0, 10000) +
+  facet_wrap(~P, scales = "free", ncol = 2) +
   scale_color_manual(values = colors, limits = legend_order)+
-  scale_shape_manual(values = c(4, 25), labels = c("Intercropped", "Monoculture IWG"))+
-    geom_function(data=subset(NdYFI, CROP== "intercrop"), fun=~534.31*exp(0.0034*.x),color='purple', linetype = "solid")+
-   geom_function(data=subset(NdYFI, CROP== "monoculture"), fun=~404.27*exp(0.0012*.x),color='purple', linetype = "dashed")+
-  geom_line(aes(x = c(0, 0), y = c(0, 0), linetype = "Intercropped"), color = 'purple') +
-  geom_line(aes(x = c(0, 0), y = c(0, 0), linetype = "Monoculture IWG"), color = 'purple') +
-  scale_linetype_manual(name = "Cropping System", values = c("solid", "dashed"), labels = c("Intercropped", "Monoculture IWG")) +
-  guides(linetype = guide_legend(override.aes = list(color = 'purple'), title = "Line Type"))
+  scale_shape_manual(values = c(4, 20, 25),labels = c("Intercropped", "Monoculture Alfalfa") )+
+  scale_linetype_manual(values = c("inter" = "solid", "monoA" = "dotted"),labels = c("Intercropped", "Monoculture Alfalfa"))
 
 
-print(IFcomboplotNC)
+print(AFcomboplot)
 
-#ggsave("IFcomboplotNC.jpg", plot = IFcomboplotNC, width = 8, height = 6, dpi = 300)
+
+ggsave("AFcomboplotNC.jpg", plot = AFcomboplotNC, width = 8, height = 6, dpi = 300)
 ```
 
 
+
+
+
+#Alf forage combo plot E:C
 ```{r}
-
-
-
-
-
-
-
+AEC<-grid.arrange(AXSPC, AXFPC, ncol = 2)
+ggsave("AEC.jpg", plot = AEC, width =12, height = 6, dpi = 350)
 ```
 
-```{r}
-#IWG forage C plot (YS)
-custom_labels <- c("Intercrop", "Monoculture IWG")
-custom_colors <- c("darkmagenta", "cyan") 
-NYSIemmsC <- emmeans(modNYSI1, ~ C, type = "response") 
-emms_df <- as.data.frame(NYSIemmsC)
-cld_dataNYSIC <- cld(NYSIemmsC, Letters=custom_letters)
-cld_df <-as.data.frame(cld_dataNYSIC)
-merged_df <- merge(emms_df, cld_df,by = c("C"))
-IYSC<-ggplot(NdYSI, aes(x = C, y = exp(predicted), color= C)) +
-  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
-  labs(x = "Cropping System", y = "IWG Forage Yield") +
-  ggtitle("Year 2 Summer")+
-  geom_point(data = emms_df, aes(x = C, y = response), 
-             size = 4, shape = 18, color = "black")+ 
-  geom_errorbar(data = emms_df, aes(x = C, ymin = lower.CL, ymax = upper.CL), 
-                width = 0.2, color = "black", inherit.aes = FALSE) +
-  geom_text(data = merged_df, aes(x = C, y = response.x, label = .group), 
-            color = "black", vjust = 0, hjust = 1.8)+
-  scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)
-print(IYSC)
-```
+### Action items from Megan: 
+# values and proportions of each species in total forage yield for intercropped plots (not PrLER)
+#   look at code for proportional partical and adjust to fit what she wants
