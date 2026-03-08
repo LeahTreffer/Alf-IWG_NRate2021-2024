@@ -1066,7 +1066,7 @@ merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Prefer
 merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI","monoA"))  # Preferred order for CROP
 # Create a new data frame with the calculated column
 new_df <- merged_df %>%
-  mutate(equation = sprintf("=%.2f*e(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", ((N.trend) - 1) * 100))%>%
+  mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
   select(-emmean, -N.trend)
 sorted_df <- new_df %>%
   arrange(P, CROP)
@@ -1872,8 +1872,8 @@ sym_M <- sortedX_M %>%
 
 #plot
 IcomboplotNEXS <- ggplot(data=NdXSI) +
-  geom_point(data = NdXSI, aes(x = N, y = PlotTotForageKgHa, shape = CROP)) +
-  labs(x = "N-Rate (Kg ha-1)", y = "Total Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
+  geom_point(data = NdXSI, aes(x = N, y = PlotIWGDryKgHa, shape = CROP)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "IWG Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
  # ylim(0, 1000) +
   facet_wrap(~P, scales = "free_y", ncol = 2) +
@@ -2129,8 +2129,8 @@ sym_M <- sortedX_M %>%
 
 #plot
 IcomboplotNEXF <- ggplot(data=NdXFI) +
-  geom_point(data = NdXFI, aes(x = N, y = PlotTotForageKgHa, shape = CROP)) +
-  labs(x = "N-Rate (Kg ha-1)", y = "Total Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
+  geom_point(data = NdXFI, aes(x = N, y = PlotIWGDryKgHa, shape = CROP)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "IWG Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
  # ylim(0, 1000) +
   facet_wrap(~P, scales = "free_y", ncol = 2) +
@@ -2382,8 +2382,8 @@ sym_M <- sortedY_M %>%
 
 #plot
 IcomboplotNEYS <- ggplot(data=NdYSI) +
-  geom_point(data = NdYSI, aes(x = N, y = PlotTotForageKgHa, shape = CROP)) +
-  labs(x = "N-Rate (Kg ha-1)", y = "Total Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
+  geom_point(data = NdYSI, aes(x = N, y = PlotIWGDryKgHa, shape = CROP)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "IWG Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
  # ylim(0, 1000) +
   facet_wrap(~P, scales = "free_y", ncol = 2) +
@@ -2637,8 +2637,8 @@ sym_M <- sortedYF_M %>%
 
 #plot
 IcomboplotNEYF <- ggplot(data=NdYFI) +
-  geom_point(data = NdYFI, aes(x = N, y = PlotTotForageKgHa, shape = CROP)) +
-  labs(x = "N-Rate (Kg ha-1)", y = "Total Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
+  geom_point(data = NdYFI, aes(x = N, y = PlotIWGDryKgHa, shape = CROP)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "IWG Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
  # ylim(0, 1000) +
   facet_wrap(~P, scales = "free_y", ncol = 2) +
@@ -2689,7 +2689,7 @@ modNZSI1_coeff <- as.data.frame(modNZSI1_summary$coefficients)%>%
 # Create custom table using kable and kableExtra
 save_kable(
   knitr::kable(modNZSI1_coeff, 
-               caption = "Y3 Summer Mixed-Effects Model: log(PlotTotForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
+               caption = "Y3 Summer Mixed-Effects Model: log(PlotIWGForageKgHa) ~ Nrate * Location * CROPsystem + (1 | Rep)") %>%
     kable_styling(full_width = TRUE, 
                   position = "center", 
                   bootstrap_options = c("striped", "hover", "condensed")),
@@ -3328,7 +3328,7 @@ cld_dataNXSAN <- cld(emmsN, Letters=custom_letters) # Create compact letter disp
 cld_dataNXSAN$response <- format(cld_dataNXSAN$response, digits = 5)
 cld_dataNXSAN<- cld_dataNXSAN %>%
   select(N, response, .group)
-colnames(cld_dataNXSAN) <- c("N","IWG Forage (kg ha-1)", "Group")
+colnames(cld_dataNXSAN) <- c("N","ALF Forage (kg ha-1)", "Group")
 cld_dataNXSAN  |> 
   data.frame() |> 
   kbl(align = "c") |> 
@@ -3445,7 +3445,7 @@ cld_dataNXFAPC$response <- format(cld_dataNXFAPC$response, digits = 5)
 rownames(cld_dataNXFAPC) <- NULL
 cld_dataNXFAPC<- cld_dataNXFAPC %>%
   select(P,CROP, response, .group)
-colnames(cld_dataNXFAPC) <- c("Site","Cropping System","IWG Forage (kg ha-1)", "Group")
+colnames(cld_dataNXFAPC) <- c("Site","Cropping System","ALF Forage (kg ha-1)", "Group")
 cld_dataNXFAPC  |> 
   data.frame() |> 
   kbl(align = "c") |> 
@@ -3534,6 +3534,30 @@ AYSE<-ggplot(NdYSA, aes(x = P, y = exp(predicted))) +
 print(AYSE)
 #ggsave("figures/forage/AYSE.jpg", plot = AYSE, width = 8, height = 6, dpi = 300)
 
+#Alfalfa forage figure C (YS)
+YSAemmsC <- emmeans(modNYSA1, ~ CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(YSAemmsC)
+cld_dataYSAC <- cld(YSAemmsC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataYSAC)
+merged_df <- merge(emms_df, cld_df,by = c("CROP"))
+custom_labels <- c("Intercrop", "Monoculture Alfalfa")
+custom_colors <- c("darkmagenta", "cyan") 
+AYSC<-ggplot(NdYSA, aes(x = CROP, y = exp(predicted), color = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Cropping System", y = "Alfalfa Forage Yield") +
+  geom_point(data = emms_df, aes(x = CROP, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = CROP, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x =CROP, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2)+
+  scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)+
+     ggtitle("Year 2 Summer")+
+  theme(plot.title = element_text(hjust = 0.5))
+print(AYSC)
+#ggsave("figures/forage/AYSC.jpg", plot = AYSC, width = 6, height = 8, dpi = 300)
+
+
 
 
 
@@ -3545,7 +3569,7 @@ cld_dataNYSAP$response <- format(cld_dataNYSAP$response, digits = 5)
 rownames(cld_dataNYSAP) <- NULL
 cld_dataNYSAP<- cld_dataNYSAP %>%
   select(P, response, .group)
-colnames(cld_dataNYSAP) <- c("Site","IWG Forage (kg ha-1)", "Group")
+colnames(cld_dataNYSAP) <- c("Site","ALF Forage (kg ha-1)", "Group")
 cld_dataNYSAP  |> 
   data.frame() |> 
   kbl(align = "c") |> 
@@ -3660,6 +3684,94 @@ AYFE<-ggplot(NdYFA, aes(x = P, y = exp(predicted))) +
 print(AYFE)
 #ggsave("figures/forage/AYFE.jpg", plot = AYFE, width = 8, height = 6, dpi = 300)
 
+#equations table (N equations across cropping system)
+emtrends_result<-emtrends(modNYFA1,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+emmeans_results<-emmeans(modNYFA1, ~ CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoA"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df2 <- new_df %>%
+  arrange(CROP)
+#view(sorted_df2)
+#write.csv(sorted_df2, "data/Final_Data/Nrate_esteff_ALFforage_yr2F_2.csv")
+
+#N:E
+# Define the desired order of 'P'
+desired_order <- c("MN", "NY", "KS", "WI")
+NdYFA$P <- factor(NdYFA$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultYF<-emtrends(modNYFA1,~ N*P*CROP, var= "N", infer=TRUE)
+  emtrends_dfYF <- as.data.frame(emtrends_resultYF)
+  emtrends_dfYF$plvl <-
+    ifelse(emtrends_dfYF$p.value == 0.05, ".",
+    ifelse(emtrends_dfYF$p.value < 0.05  & emtrends_dfYF$p.value >= 0.01, "*",
+    ifelse(emtrends_dfYF$p.value < 0.01  & emtrends_dfYF$p.value >= 0.001, "**",
+    ifelse(emtrends_dfYF$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_dfYF$PC <- paste0(emtrends_dfYF$P,emtrends_dfYF$CROP)
+  emtrends_dfYF$P <- factor(emtrends_dfYF$P, levels = desired_order_P)
+emmeans_resultsYF<-emmeans(modNYFA1, ~N*P*CROP, at=list(N=0))
+  emmeans_dfYF <- as.data.frame(emmeans_resultsYF)
+  emmeans_dfYF$PC <- paste0(emmeans_dfYF$P,emmeans_dfYF$CROP)
+mergedYF <- emtrends_dfYF %>%
+  inner_join(emmeans_dfYF, by = c("PC")) %>%
+  dplyr::select(PC, P.x, CROP.x, emmean, N.trend, SE.x, plvl)
+  colnames(mergedYF)[2] <- "P"
+  colnames(mergedYF)[3] <- "CROP"
+mergedYF$P <- factor(mergedYF$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+YF_df <- mergedYF %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedYF <- YF_df %>%
+  arrange(P)
+sortedYF_I <- subset(sortedYF, CROP== "inter")
+sortedYF_M <- subset(sortedYF, CROP== "monoA")
+
+sym_I <- sortedYF_I %>%
+  distinct(P) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 5000
+  )
+sym_M <- sortedYF_M %>%
+  distinct(P) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 4750
+  )
+
+#plot
+AcomboplotNEYF <- ggplot(data=NdYFA) +
+  geom_point(data = NdYFA, aes(x = N, y = PlotAlfDryKgHa, shape = CROP)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "Alfalfa Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  facet_wrap(~P, scales = "free_y", ncol = 2) +
+  scale_shape_manual(values = c(4, 1),labels = c("Intercropped", "Monoculture Alfalfa"))+
+  # functions come from equation in sorted
+  geom_function(data=subset(NdYFA, P== "MN" & CROP == "inter"), fun=~2215.30*exp(-0.0019*.x),color='darkgrey')+
+  geom_function(data=subset(NdYFA, P== "MN" & CROP == "monoA"), fun=~2243.71*exp(-0.0008*.x),color='darkgrey')+
+  geom_function(data=subset(NdYFA, P== "NY" & CROP == "inter"), fun=~1598.31*exp(-0.0034*.x),color='darkgrey')+
+  geom_function(data=subset(NdYFA, P== "NY" & CROP == "monoA"), fun=~1523.22*exp(0.0001*.x),color='darkgrey')+
+  geom_function(data=subset(NdYFA, P== "WI" & CROP == "inter"), fun=~1949.28*exp(-0.0030*.x),color='darkgrey')+
+  geom_function(data=subset(NdYFA, P== "WI" & CROP == "monoA"), fun=~1495.54*exp(-0.0006*.x),color='darkgrey')+
+  geom_text(data = sortedYF_I, mapping = aes(x = 30, y = 5000, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1, inherit.aes = FALSE)+
+  geom_text(data = sortedYF_M, mapping = aes(x = 30, y = 4750, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_M, aes(x = x_sym, y = y_sym), shape = 1, size = 2, inherit.aes = FALSE)+
+  geom_text(data = sortedYF_I, mapping = aes(x = 60, y = 5000, label = plvl))+
+  geom_text(data = sortedYF_M, mapping = aes(x = 60, y = 4750, label = plvl)) # add stars to figure
+# add stars to figure
+print(AcomboplotNEYF)
+# ggsave("figures/forage/AcomboplotNEYF.jpg", plot = AcomboplotNEYF, width = 10, height = 8, dpi = 300)
+
 
 
 
@@ -3676,7 +3788,7 @@ cld_dataNYFANC$response <- format(cld_dataNYFANC$response, digits = 5)
 rownames(cld_dataNYFANC) <- NULL
 cld_dataNYFANC<- cld_dataNYFANC %>%
   select(N,CROP, response, .group)
-colnames(cld_dataNYFANC) <- c("N","Cropping System","IWG Forage (kg ha-1)", "Group")
+colnames(cld_dataNYFANC) <- c("N","Cropping System","ALF Forage (kg ha-1)", "Group")
 cld_dataNYFANC  |> 
   data.frame() |> 
   kbl(align = "c") |> 
@@ -3792,7 +3904,7 @@ cld_dataNYFANC$response <- format(cld_dataNYFANC$response, digits = 5)
 rownames(cld_dataNYFANC) <- NULL
 cld_dataNYFANC<- cld_dataNYFANC %>%
   select(N,CROP, response, .group)
-colnames(cld_dataNYFANC) <- c("N","Cropping System","IWG Forage (kg ha-1)", "Group")
+colnames(cld_dataNYFANC) <- c("N","Cropping System","ALF Forage (kg ha-1)", "Group")
 cld_dataNYFANC  |> 
   data.frame() |> 
   kbl(align = "c") |> 
@@ -3912,7 +4024,7 @@ cld_dataNZFANC$response <- format(cld_dataNZFANC$response, digits = 5)
 rownames(cld_dataNZFANC) <- NULL
 cld_dataNZFANC<- cld_dataNZFANC %>%
   select(N,CROP, response, .group)
-colnames(cld_dataNZFANC) <- c("N","Cropping System","IWG Forage (kg ha-1)", "Group")
+colnames(cld_dataNZFANC) <- c("N","Cropping System","ALF Forage (kg ha-1)", "Group")
 cld_dataNZFANC  |> 
   data.frame() |> 
   kbl(align = "c") |> 
@@ -4037,11 +4149,7 @@ gt_NG <- gt(NG_stars)
 gt_NG |> gtsave("figures/forage/gt_AF.png", expand = 10)
 ```
 
-
-
-
 #Alf forage plots N:C 
-#HERE
 ```{r}
 # Layer all the plots together!
 colors <- c("Year 1 Summer Harvest" = "red", 
@@ -4052,6 +4160,7 @@ colors <- c("Year 1 Summer Harvest" = "red",
 legend_order <- c("Year 1 Summer Harvest", "Year 1 Fall Harvest",
                   "Year 2 Summer Harvest", "Year 2 Fall Harvest",
                   "Year 3 Summer Harvest")
+desired_order <- c("MN", "NY", "KS", "WI")
 NdXSA$P <- factor(NdXSA$P, levels = desired_order)
 NdYSA$P <- factor(NdYSA$P, levels = desired_order)
 NdZSA$P <- factor(NdZSA$P, levels = desired_order)
@@ -4062,7 +4171,7 @@ max(NdYSA$PlotAlfDryKgHa)
 max(NdYFA$PlotAlfDryKgHa)
 max(NdZSA$PlotAlfDryKgHa)
 
-AFcomboplot <- ggplot() +
+AFcomboplotNC <- ggplot() +
   geom_line(data = NdXSA, aes(N, exp(predicted), color = "Year 1 Summer Harvest", linetype= CROP)) +
   geom_point(data = NdXSA, aes(x = N, y = PlotAlfDryKgHa, color = "Year 1 Summer Harvest", shape= CROP)) +
   geom_line(data = NdXFA, aes(N, exp(predicted), color = "Year 1 Fall Harvest", linetype= CROP)) +
@@ -4075,7 +4184,7 @@ AFcomboplot <- ggplot() +
   geom_point(data = NdZSA, aes(x = N, y = PlotAlfDryKgHa, color = "Year 3 Summer Harvest", shape= CROP)) +
   geom_line(data = NdZFA, aes(N, exp(predicted), color = "Year 3 Fall Harvest", linetype= CROP)) +
   geom_point(data = NdZFA, aes(x = N, y = PlotAlfDryKgHa, color = "Year 3 Fall Harvest", shape= CROP)) +
-  labs(x = "N-Rate (kg ha-1)", y = "Total Forage Yield",
+  labs(x = "N-Rate (kg ha-1)", y = "Alfalfa Forage Yield",
        color = "Harvest", 
        linetype = "Cropping System", shape = "Cropping System") +
   ggtitle("Relationship Between Alfalfa Forage Yield and N-rate") +
@@ -4085,23 +4194,15 @@ AFcomboplot <- ggplot() +
   scale_color_manual(values = colors, limits = legend_order)+
   scale_shape_manual(values = c(4, 20, 25),labels = c("Intercropped", "Monoculture Alfalfa") )+
   scale_linetype_manual(values = c("inter" = "solid", "monoA" = "dotted"),labels = c("Intercropped", "Monoculture Alfalfa"))
-
-
-print(AFcomboplot)
-
-
-ggsave("AFcomboplotNC.jpg", plot = AFcomboplotNC, width = 8, height = 6, dpi = 300)
+print(AFcomboplotNC)
+#ggsave("figures/forage/AFcomboplotNC.jpg", plot = AFcomboplotNC, width = 8, height = 6, dpi = 300)
 ```
 
 
 
 
 
-#Alf forage combo plot E:C
-```{r}
-AEC<-grid.arrange(AXSPC, AXFPC, ncol = 2)
-ggsave("AEC.jpg", plot = AEC, width =12, height = 6, dpi = 350)
-```
+
 
 ### Action items from Megan: 
 # values and proportions of each species in total forage yield for intercropped plots (not PrLER)
