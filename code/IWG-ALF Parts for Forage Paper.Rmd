@@ -4199,11 +4199,241 @@ print(AFcomboplotNC)
 ```
 
 
+## Proportion of species in Total Forage Yield
+From Megan: values and analysis of proportion of each species in total forage yield for intercropped plots. Not proportional partial LER, but just proportion of normal yields in the total. The code for PrPLER should be helpful to run that analysis though! You’ll just want to make sure there isn’t a C factor since we’re only looking at one cropping system and that you’re only pulling intercropped plot yields.
+
+# LER calculations 
+```{r}
+# Nd SW 0 
+#IWG partial LER 
+NdSW0IWGLER <- NdZ %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERIWGSW0 = (PlotIWGDryKgHa[Treatment == 10]) / (PlotIWGDryKgHa[Treatment == 5])
+  )
+#Alf partial LER 
+NdSW0ALFLER <- NdZ %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERAlfSW0 = (PlotAlfDryKgHa[Treatment == 10]) / (PlotAlfDryKgHa[Treatment == 15])
+  )
+#Total LER 
+NdSW0TotalLER <- NdZ %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    TotalLERSW0 = (PlotIWGDryKgHa[Treatment == 10]) / (PlotIWGDryKgHa[Treatment == 5]) + (PlotAlfDryKgHa[Treatment == 10]) / (PlotAlfDryKgHa[Treatment == 15])
+  ) 
+#Join together first two tables
+LERresults1<-left_join(NdSW0IWGLER, NdSW0ALFLER, by = c("Rep", "P", "YearCode", "Harvest"))
+#join together new joined table and third table 
+LERresultsNdSW0<-left_join(LERresults1, NdSW0TotalLER, by = c("Rep", "P", "YearCode", "Harvest"))
+
+# Nd SW 40 
+#IWG partial LER 
+NdSW40IWGLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERIWGSW40 = (PlotIWGDryKgHa[Treatment == 11]) / (PlotIWGDryKgHa[Treatment == 6])
+  )
+#Alf partial LER 
+NdSW40ALFLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERAlfSW40 = (PlotAlfDryKgHa[Treatment == 11]) / (PlotAlfDryKgHa[Treatment == 16])
+  )
+#Total LER 
+NdSW40TotalLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    TotalLERSW40 = (PlotIWGDryKgHa[Treatment == 11]) / (PlotIWGDryKgHa[Treatment == 6]) + (PlotAlfDryKgHa[Treatment == 11]) / (PlotAlfDryKgHa[Treatment == 16])
+  ) 
+#Join together first two tables
+LERresults2<-left_join(NdSW40IWGLER, NdSW40ALFLER, by = c("Rep", "P", "YearCode", "Harvest"))
+#join together new joined table and third table 
+LERresultsNdSW40<-left_join(LERresults2, NdSW40TotalLER, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#Nd SW 80
+#IWG partial LER 
+NdSW80IWGLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERIWGSW80 = (PlotIWGDryKgHa[Treatment == 12]) / (PlotIWGDryKgHa[Treatment == 7])
+  )
+#Alf partial LER 
+NdSW80ALFLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERAlfSW80 = (PlotAlfDryKgHa[Treatment == 12]) / (PlotAlfDryKgHa[Treatment == 17])
+  )
+#Total LER 
+NdSW80TotalLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    TotalLERSW80 = (PlotIWGDryKgHa[Treatment == 12]) / (PlotIWGDryKgHa[Treatment == 7]) + (PlotAlfDryKgHa[Treatment == 12]) / (PlotAlfDryKgHa[Treatment == 17])
+  ) 
+#Join together first two tables
+LERresults3<-left_join(NdSW80IWGLER, NdSW80ALFLER, by = c("Rep", "P", "YearCode", "Harvest"))
+#join together new joined table and third table 
+LERresultsNdSW80<-left_join(LERresults3, NdSW80TotalLER, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#Nd SW 120
+#IWG partial LER 
+NdSW120IWGLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERIWGSW120 = (PlotIWGDryKgHa[Treatment == 13]) / (PlotIWGDryKgHa[Treatment == 8])
+  )
+#Alf partial LER 
+NdSW120ALFLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERAlfSW120 = (PlotAlfDryKgHa[Treatment == 13]) / (PlotAlfDryKgHa[Treatment == 18])
+  )
+#Total LER 
+NdSW120TotalLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    TotalLERSW120 = (PlotIWGDryKgHa[Treatment == 13]) / (PlotIWGDryKgHa[Treatment == 8]) + (PlotAlfDryKgHa[Treatment == 13]) / (PlotAlfDryKgHa[Treatment == 18])
+  ) 
+#Join together first two tables
+LERresults4<-left_join(NdSW120IWGLER, NdSW120ALFLER, by = c("Rep", "P", "YearCode", "Harvest"))
+#join together new joined table and third table 
+LERresultsNdSW120<-left_join(LERresults4, NdSW120TotalLER, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#Nd SW 160
+#IWG partial LER 
+NdSW160IWGLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERIWGSW160= (PlotIWGDryKgHa[Treatment == 14]) / (PlotIWGDryKgHa[Treatment == 9])
+  )
+#Alf partial LER 
+NdSW160ALFLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERAlfSW160 = (PlotAlfDryKgHa[Treatment == 14]) / (PlotAlfDryKgHa[Treatment == 19])
+  )
+#Total LER 
+NdSW160TotalLER <- Nd %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    TotalLERSW160 = (PlotIWGDryKgHa[Treatment == 14]) / (PlotIWGDryKgHa[Treatment == 9]) + (PlotAlfDryKgHa[Treatment == 14]) / (PlotAlfDryKgHa[Treatment == 19])
+  ) 
+#Join together first two tables
+LERresults5<-left_join(NdSW160IWGLER, NdSW160ALFLER, by = c("Rep", "P", "YearCode", "Harvest"))
+#join together new joined table and third table 
+LERresultsNdSW160<-left_join(LERresults5, NdSW160TotalLER, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#merge all LER results into one data frame
+LERresults6<-left_join(LERresultsNdSW0, LERresultsNdSW40, by = c("Rep", "P", "YearCode", "Harvest"))
+LERresults7<-left_join(LERresults6, LERresultsNdSW80, by = c("Rep", "P", "YearCode", "Harvest"))
+LERresults8<-left_join(LERresults7, LERresultsNdSW120, by = c("Rep", "P", "YearCode", "Harvest"))
+LERresultsNdSWALL<-left_join(LERresults8, LERresultsNdSW160, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#Rearrange dataframe
+LERresultsNdSWALL_long <- LERresultsNdSWALL %>%
+  pivot_longer(cols = starts_with("PartialLER") | starts_with("TotalLER"),
+               names_to = "Nrate",
+               values_to = "LER")
+
+# Display the result
+print(LERresultsNdSWALL_long)
+print(LERresultsNdSWALL)
+
+#try to make the dataframe more usable
+
+#cut off total and partial 
+LERresultsNdSWALL_long$Type <- sub("^(Partial|Total)", "", LERresultsNdSWALL_long$Nrate)
+LERresultsNdSWALL_long$tot_or_part <- sub("^(Partial|Total).*", "\\1", LERresultsNdSWALL_long$Nrate)
+print(LERresultsNdSWALL_long)
+
+#cut off LERIWGSW and LERAlfSW and LERSW
+LERresultsNdSWALL_long$NRATE <- sub("^(LERIWGSW|LERAlfSW|LERSW)", "", LERresultsNdSWALL_long$Type)
+LERresultsNdSWALL_long$PlotType <- sub("^(LERIWGSW|LERAlfSW|LERSW).*", "\\1", LERresultsNdSWALL_long$Type)
+print(LERresultsNdSWALL_long)
+
+#get rid of pesky NA results (caused by missing plots inherent in year 1 KS summer data)
+LERresultsNdSWALL_longNONA<- na.omit(LERresultsNdSWALL_long)
+print(LERresultsNdSWALL_longNONA)
+
+LERresultsNdSWALL_longNONA$NRATE<-as.numeric(LERresultsNdSWALL_longNONA$NRATE)
+
+#includes total and partial until it doesn't...used for some pairwise comparison thingy. 
+LERResultsAllX<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$YearCode == 'X',]
+LERResultsAllY<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$YearCode == 'Y',]
+LERResultsAllXS<-LERResultsAllX[LERResultsAllX$Harvest == 'Summer',]
+  LERResultsTotXS<-LERResultsAllXS[LERResultsAllXS$tot_or_part == 'Total',]
+  LERResultsPartIWGXS<-LERResultsAllXS[LERResultsAllXS$tot_or_part == 'Partial' & LERResultsAllXS$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfXS<-LERResultsAllXS[LERResultsAllXS$tot_or_part == 'Partial' & LERResultsAllXS$PlotType == 'LERAlfSW' ,]
+LERResultsAllXF<-LERResultsAllX[LERResultsAllX$Harvest == 'Fall',]
+  LERResultsTotXF<-LERResultsAllXF[LERResultsAllXF$tot_or_part == 'Total',]
+  LERResultsPartIWGXF<-LERResultsAllXF[LERResultsAllXF$tot_or_part == 'Partial' & LERResultsAllXF$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfXF<-LERResultsAllXF[LERResultsAllXF$tot_or_part == 'Partial' & LERResultsAllXF$PlotType == 'LERAlfSW' ,]
+LERResultsAllYS<-LERResultsAllY[LERResultsAllY$Harvest == 'Summer',]
+  LERResultsTotYS<-LERResultsAllYS[LERResultsAllYS$tot_or_part == 'Total',]
+  LERResultsPartIWGYS<-LERResultsAllYS[LERResultsAllYS$tot_or_part == 'Partial' & LERResultsAllYS$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfYS<-LERResultsAllYS[LERResultsAllYS$tot_or_part == 'Partial' & LERResultsAllYS$PlotType == 'LERAlfSW' ,]
+LERResultsAllYF<-LERResultsAllY[LERResultsAllY$Harvest == 'Fall',]
+  LERResultsTotYF<-LERResultsAllYF[LERResultsAllYF$tot_or_part == 'Total',]
+  LERResultsPartIWGYF<-LERResultsAllYF[LERResultsAllYF$tot_or_part == 'Partial' & LERResultsAllYF$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfYF<-LERResultsAllYF[LERResultsAllYF$tot_or_part == 'Partial' & LERResultsAllYF$PlotType == 'LERAlfSW' ,]
+
+#okay now I should be able to split by total and partial
+TotalLERresults<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$tot_or_part == 'Total',]
+print(TotalLERresults)
+  TotLERX<-TotalLERresults[TotalLERresults$YearCode == 'X',]
+  TotLERY<-TotalLERresults[TotalLERresults$YearCode == 'Y',]
+  TotLERXS<-TotLERX[TotLERX$Harvest == 'Summer',]
+  TotLERXF<-TotLERX[TotLERX$Harvest == 'Fall',]
+  TotLERYS<-TotLERY[TotLERY$Harvest == 'Summer',]
+  TotLERYF<-TotLERY[TotLERY$Harvest == 'Fall',]
+IWGPartialLERresults<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$PlotType == 'LERIWGSW',]
+IWGPartialLERresults$NRATE<- as.numeric(IWGPartialLERresults$NRATE)
+  IWGPLERX<-IWGPartialLERresults[IWGPartialLERresults$YearCode == 'X',]
+  IWGPLERY<-IWGPartialLERresults[IWGPartialLERresults$YearCode == 'Y',]
+  IWGPLERXS<-IWGPLERX[IWGPLERX$Harvest == 'Summer',]
+  IWGPLERXF<-IWGPLERX[IWGPLERX$Harvest == 'Fall',]
+  IWGPLERYS<-IWGPLERY[IWGPLERY$Harvest == 'Summer',]
+  IWGPLERYF<-IWGPLERY[IWGPLERY$Harvest == 'Fall',]
+AlfPartialLERresults<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$PlotType == 'LERAlfSW',]
+AlfPartialLERresults$NRATE<- as.numeric(AlfPartialLERresults$NRATE)
+  AlfPLERX<-AlfPartialLERresults[AlfPartialLERresults$YearCode == 'X',]
+  AlfPLERY<-AlfPartialLERresults[AlfPartialLERresults$YearCode == 'Y',]
+  AlfPLERXS<-AlfPLERX[AlfPLERX$Harvest == 'Summer',]
+  AlfPLERXF<-AlfPLERX[AlfPLERX$Harvest == 'Fall',]
+  AlfPLERYS<-AlfPLERY[AlfPLERY$Harvest == 'Summer',]
+  AlfPLERYF<-AlfPLERY[AlfPLERY$Harvest == 'Fall',]
+  
+#Check for outliers
+identify_outliers(TotalLERresults[, 6]) #19 outliers 
+identify_outliers(IWGPartialLERresults[, 6]) #26 outliers
+identify_outliers(AlfPartialLERresults[, 6]) #4 outliers 
+
+#rename variables in dataframes to make life easier 
+# Function to add new columns to a dataframe
+add_new_columns <- function(df) {
+  df$N <- df$NRATE
+  return(df)
+}
+# List of dataframes (replace these with your actual dataframes)
+df_list <- list(TotLERXS, TotLERYS, TotLERXF, TotLERYF, IWGPLERXS, IWGPLERXF,IWGPLERYS,IWGPLERYF,  AlfPLERXS, AlfPLERXF,AlfPLERYS,AlfPLERYF)
+# Apply the function to each dataframe in the list
+df_list <- lapply(df_list, add_new_columns)
+# Access the modified dataframes in df_list
+TotLERXS <- df_list[[1]]
+TotLERYS <- df_list[[2]]
+TotLERXF <- df_list[[3]]
+TotLERYF<- df_list[[4]]
+IWGPLERXS<- df_list[[5]]
+IWGPLERXF<- df_list[[6]]
+IWGPLERYS<- df_list[[7]]
+IWGPLERYF<- df_list[[8]]
+AlfPLERXS<- df_list[[9]]
+AlfPLERXF<- df_list[[10]]
+AlfPLERYS<- df_list[[11]]
+AlfPLERYF<- df_list[[12]]
+```
 
 
 
 
-
-### Action items from Megan: 
-# values and proportions of each species in total forage yield for intercropped plots (not PrLER)
-#   look at code for proportional partical and adjust to fit what she wants
