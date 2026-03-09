@@ -4202,23 +4202,613 @@ print(AFcomboplotNC)
 ## Proportion of species in Total Forage Yield
 From Megan: values and analysis of proportion of each species in total forage yield for intercropped plots. Not proportional partial LER, but just proportion of normal yields in the total. The code for PrPLER should be helpful to run that analysis though! You’ll just want to make sure there isn’t a C factor since we’re only looking at one cropping system and that you’re only pulling intercropped plot yields.
 
+# proportion of species in Total Forage Yield of intercropped plots calculations
+```{r}
+# Year 1 S - proportion of species in total forage intercropped plots
+NdXSPrIA <- NdXS %>%
+  filter(Intercropped == "y")%>%
+  group_by(N, P, Plot, Rep) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+# Year 1 F - proportion of species in total forage intercropped plots
+NdXFPrIA <- NdXF %>%
+  filter(Intercropped == "y")%>%
+  group_by(N, P, Plot, Rep) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+# Year 2 S - proportion of species in total forage intercropped plots
+NdYSPrIA <- NdYS %>%
+  filter(Intercropped == "y")%>%
+  group_by(N, P, Plot, Rep) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+# Year 2 F - proportion of species in total forage intercropped plots
+NdYFPrIA <- NdYF %>%
+  filter(Intercropped == "y")%>%
+  group_by(N, P, Plot, Rep) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+# Year 3 S - proportion of species in total forage intercropped plots
+NdZSPrIA <- NdZS %>%
+  filter(Intercropped == "y")%>%
+  group_by(N, P, Plot, Rep) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+# Year 3 F - proportion of species in total forage intercropped plots
+NdZFPrIA <- NdZF %>%
+  filter(Intercropped == "y")%>%
+  filter(!is.na(PlotIWGDryKgHa), !is.na(PlotAlfDryKgHa)) %>%   # drop rows where either forage amount is NA
+  group_by(N, P, Plot, Rep) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+```
+
+# Species Proportions Year 1 S
+```{r}
+# Proportion IWG in total forage XS
+#model by nrate XS
+modIPrIAXS<-lmer(PropIWG~N*P + (1|Rep), data = NdXSPrIA )
+anova(modIPrIAXS)
+#check assumptions 
+IPrIAXS_resid<-resid(modIPrIAXS)
+qqnorm(IPrIAXS_resid)
+qqline(IPrIAXS_resid)
+plot(modIPrIAXS)
+#Logtransform
+modIPrIAXS1<-lmer(log(PropIWG)~N*P + (1|Rep), data = NdXSPrIA )
+anova(modIPrIAXS1)
+#check assumptions 
+IPrIAXS_resid1<-resid(modIPrIAXS1)
+qqnorm(IPrIAXS_resid1)
+qqline(IPrIAXS_resid1)
+plot(modIPrIAXS1)
+# normal looks better, but log has added sig of N:P
+
+# Proportion Alf in total forage XS
+#model by nrate XS
+modAPrIAXS<-lmer(PropALF~N*P + (1|Rep), data = NdXSPrIA )
+anova(modAPrIAXS)
+#check assumptions 
+APrIAXS_resid<-resid(modAPrIAXS)
+qqnorm(APrIAXS_resid)
+qqline(APrIAXS_resid)
+plot(modAPrIAXS)
+#Logtransform
+modAPrIAXS1<-lmer(log(PropALF)~N*P + (1|Rep), data = NdXSPrIA )
+anova(modAPrIAXS1)
+#check assumptions 
+APrIAXS_resid1<-resid(modAPrIAXS1)
+qqnorm(APrIAXS_resid1)
+qqline(APrIAXS_resid1)
+plot(modAPrIAXS1)
+# normal looks better, but same significances
+
+# manipulate into long format
+NdXSPrIA_long <- NdXSPrIA %>%
+  pivot_longer(cols = starts_with("Prop"),
+               names_to = "Species",
+               values_to = "Prop")
+# get mean proportion of each species at a given N within a P
+NdXSPrIA_long2 <- NdXSPrIA_long %>%
+  dplyr::group_by(P, N, Species) %>%
+  dplyr::summarise(meanProp = mean(Prop),
+                   Tot = first(Tot),
+                   .groups = "drop")%>%
+  mutate(N = factor(N))%>%
+  mutate(Species = factor(Species, levels = c("PropIWG", "PropALF")))
+
+PrIAXSplot <- ggplot(NdXSPrIA_long2, aes(x = N, y = meanProp, fill = Species)) +
+  geom_bar(stat = "identity", position = "stack")+
+  facet_wrap(~P, ncol = 2) +
+  labs(y = "Proportion Species", x = "N Rate") +
+  scale_fill_discrete(name = "Species",
+  labels = c(PropALF = "Alfalfa", PropIWG = "IWG"))+
+  ggtitle("Average Proportion of IWG and Alfalfa from Intercrop Plots, Year 1 Summer")
+# save figures/forage/PrIAXSplot    1022x884
+```
+
+# Species Proportions Year 1 F
+```{r}
+# Proportion IWG in total forage XF
+#model by nrate XF
+modIPrIAXF<-lmer(PropIWG~N*P + (1|Rep), data = NdXFPrIA )
+anova(modIPrIAXF)
+#check assumptions 
+IPrIAXF_resid<-resid(modIPrIAXF)
+qqnorm(IPrIAXF_resid)
+qqline(IPrIAXF_resid)
+plot(modIPrIAXF)
+#Logtransform
+modIPrIAXF1<-lmer(log(PropIWG)~N*P + (1|Rep), data = NdXFPrIA )
+anova(modIPrIAXF1)
+#check assumptions 
+IPrIAXF_resid1<-resid(modIPrIAXF1)
+qqnorm(IPrIAXF_resid1)
+qqline(IPrIAXF_resid1)
+plot(modIPrIAXF1)
+# normal looks better, but log has added sig of N
+
+# Proportion Alf in total forage XF
+#model by nrate XF
+modAPrIAXF<-lmer(PropALF~N*P + (1|Rep), data = NdXFPrIA )
+anova(modAPrIAXF)
+#check assumptions 
+APrIAXF_resid<-resid(modAPrIAXF)
+qqnorm(APrIAXF_resid)
+qqline(APrIAXF_resid)
+plot(modAPrIAXF)
+#Logtransform
+modAPrIAXF1<-lmer(log(PropALF)~N*P + (1|Rep), data = NdXFPrIA )
+anova(modAPrIAXF1)
+#check assumptions 
+APrIAXF_resid1<-resid(modAPrIAXF1)
+qqnorm(APrIAXF_resid1)
+qqline(APrIAXF_resid1)
+plot(modAPrIAXF1)
+
+# manipulate into long format
+NdXFPrIA_long <- NdXFPrIA %>%
+  pivot_longer(cols = starts_with("Prop"),
+               names_to = "Species",
+               values_to = "Prop")
+# get mean proportion of each species at a given N within a P
+NdXFPrIA_long2 <- NdXFPrIA_long %>%
+  dplyr::group_by(P, N, Species) %>%
+  dplyr::summarise(meanProp = mean(Prop),
+                   Tot = first(Tot),
+                   .groups = "drop")%>%
+  mutate(N = factor(N))%>%
+  mutate(Species = factor(Species, levels = c("PropIWG", "PropALF")))
+
+PrIAXFplot <- ggplot(NdXFPrIA_long2, aes(x = N, y = meanProp, fill = Species)) +
+  geom_bar(stat = "identity", position = "stack")+
+  facet_wrap(~P, ncol = 2) +
+  labs(y = "Proportion Species", x = "N Rate") +
+  scale_fill_discrete(name = "Species",
+  labels = c(PropALF = "Alfalfa", PropIWG = "IWG"))+
+  ggtitle("Average Proportion of IWG and Alfalfa from Intercrop Plots, Year 1 Fall")
+# save figures/forage/PrIAXFplot    1022x884
+```
+
+# Species Proportions Year 2 S
+```{r}
+# Proportion IWG in total forage YS
+#model by nrate YS
+modIPrIAYS<-lmer(PropIWG~N*P + (1|Rep), data = NdYSPrIA )
+anova(modIPrIAYS)
+#check assumptions 
+IPrIAYS_resid<-resid(modIPrIAYS)
+qqnorm(IPrIAYS_resid)
+qqline(IPrIAYS_resid)
+plot(modIPrIAYS)
+#Logtransform
+modIPrIAYS1<-lmer(log(PropIWG)~N*P + (1|Rep), data = NdYSPrIA )
+anova(modIPrIAYS1)
+#check assumptions 
+IPrIAYS_resid1<-resid(modIPrIAYS1)
+qqnorm(IPrIAYS_resid1)
+qqline(IPrIAYS_resid1)
+plot(modIPrIAYS1)
+
+# Proportion Alf in total forage YS
+#model by nrate YS
+modAPrIAYS<-lmer(PropALF~N*P + (1|Rep), data = NdYSPrIA )
+anova(modAPrIAYS)
+#check assumptions 
+APrIAYS_resid<-resid(modAPrIAYS)
+qqnorm(APrIAYS_resid)
+qqline(APrIAYS_resid)
+plot(modAPrIAYS)
+#Logtransform
+modAPrIAYS1<-lmer(log(PropALF)~N*P + (1|Rep), data = NdYSPrIA )
+anova(modAPrIAYS1)
+#check assumptions 
+APrIAYS_resid1<-resid(modAPrIAYS1)
+qqnorm(APrIAYS_resid1)
+qqline(APrIAYS_resid1)
+plot(modAPrIAYS1)
+#normal looks better, same significances
+
+# manipulate into long format
+NdYSPrIA_long <- NdYSPrIA %>%
+  pivot_longer(cols = starts_with("Prop"),
+               names_to = "Species",
+               values_to = "Prop")
+# get mean proportion of each species at a given N within a P
+NdYSPrIA_long2 <- NdYSPrIA_long %>%
+  dplyr::group_by(P, N, Species) %>%
+  dplyr::summarise(meanProp = mean(Prop),
+                   Tot = first(Tot),
+                   .groups = "drop")%>%
+  mutate(N = factor(N))%>%
+  mutate(Species = factor(Species, levels = c("PropIWG", "PropALF")))
+
+PrIAYSplot <- ggplot(NdYSPrIA_long2, aes(x = N, y = meanProp, fill = Species)) +
+  geom_bar(stat = "identity", position = "stack")+
+  facet_wrap(~P, ncol = 2) +
+  labs(y = "Proportion Species", x = "N Rate") +
+  scale_fill_discrete(name = "Species",
+  labels = c(PropALF = "Alfalfa", PropIWG = "IWG"))+
+  ggtitle("Average Proportion of IWG and Alfalfa from Intercrop Plots, Year 2 Summer")
+# save figures/forage/PrIAYSplot    1022x884
+```
+
+# Species Proportions Year 2 F
+```{r}
+# Proportion IWG in total forage YF
+#model by nrate YF
+modIPrIAYF<-lmer(PropIWG~N*P + (1|Rep), data = NdYFPrIA )
+anova(modIPrIAYF)
+#check assumptions 
+IPrIAYF_resid<-resid(modIPrIAYF)
+qqnorm(IPrIAYF_resid)
+qqline(IPrIAYF_resid)
+plot(modIPrIAYF)
+#Logtransform
+modIPrIAYF1<-lmer(log(PropIWG)~N*P + (1|Rep), data = NdYFPrIA )
+anova(modIPrIAYF1)
+#check assumptions 
+IPrIAYF_resid1<-resid(modIPrIAYF1)
+qqnorm(IPrIAYF_resid1)
+qqline(IPrIAYF_resid1)
+plot(modIPrIAYF1)
+
+# Proportion Alf in total forage YF
+#model by nrate YF
+modAPrIAYF<-lmer(PropALF~N*P + (1|Rep), data = NdYFPrIA )
+anova(modAPrIAYF)
+#check assumptions 
+APrIAYF_resid<-resid(modAPrIAYF)
+qqnorm(APrIAYF_resid)
+qqline(APrIAYF_resid)
+plot(modAPrIAYF)
+#Logtransform
+modAPrIAYF1<-lmer(log(PropALF)~N*P + (1|Rep), data = NdYFPrIA )
+anova(modAPrIAYF1)
+#check assumptions 
+APrIAYF_resid1<-resid(modAPrIAYF1)
+qqnorm(APrIAYF_resid1)
+qqline(APrIAYF_resid1)
+plot(modAPrIAYF1)
+
+# manipulate into long format
+NdYFPrIA_long <- NdYFPrIA %>%
+  pivot_longer(cols = starts_with("Prop"),
+               names_to = "Species",
+               values_to = "Prop")
+# get mean proportion of each species at a given N within a P
+NdYFPrIA_long2 <- NdYFPrIA_long %>%
+  dplyr::group_by(P, N, Species) %>%
+  dplyr::summarise(meanProp = mean(Prop),
+                   Tot = first(Tot),
+                   .groups = "drop")%>%
+  mutate(N = factor(N))%>%
+  mutate(Species = factor(Species, levels = c("PropIWG", "PropALF")))
+
+PrIAYFplot <- ggplot(NdYFPrIA_long2, aes(x = N, y = meanProp, fill = Species)) +
+  geom_bar(stat = "identity", position = "stack")+
+  facet_wrap(~P, ncol = 2) +
+  labs(y = "Proportion Species", x = "N Rate") +
+  scale_fill_discrete(name = "Species",
+  labels = c(PropALF = "Alfalfa", PropIWG = "IWG"))+
+  ggtitle("Average Proportion of IWG and Alfalfa from Intercrop Plots, Year 2 Fall")
+# save figures/forage/PrIAYFplot    1022x884
+```
+
+# Species Proportions Year 3 S
+```{r}
+# Proportion IWG in total forage ZS
+#model by nrate ZS
+modIPrIAZS<-lmer(PropIWG~N*P + (1|Rep), data = NdZSPrIA )
+anova(modIPrIAZS)
+#check assumptions 
+IPrIAZS_resid<-resid(modIPrIAZS)
+qqnorm(IPrIAZS_resid)
+qqline(IPrIAZS_resid)
+plot(modIPrIAZS)
+#Logtransform
+modIPrIAZS1<-lmer(log(PropIWG)~N*P + (1|Rep), data = NdZSPrIA )
+anova(modIPrIAZS1)
+#check assumptions 
+IPrIAZS_resid1<-resid(modIPrIAZS1)
+qqnorm(IPrIAZS_resid1)
+qqline(IPrIAZS_resid1)
+plot(modIPrIAZS1)
+# normal looks better, normal shows N as significant while log shoes P as significant 
+
+# Proportion Alf in total forage ZS
+#model by nrate ZS
+modAPrIAZS<-lmer(PropALF~N*P + (1|Rep), data = NdZSPrIA )
+anova(modAPrIAZS)
+#check assumptions 
+APrIAZS_resid<-resid(modAPrIAZS)
+qqnorm(APrIAZS_resid)
+qqline(APrIAZS_resid)
+plot(modAPrIAZS)
+#Logtransform
+modAPrIAZS1<-lmer(log(PropALF)~N*P + (1|Rep), data = NdZSPrIA )
+anova(modAPrIAZS1)
+#check assumptions 
+APrIAZS_resid1<-resid(modAPrIAZS1)
+qqnorm(APrIAZS_resid1)
+qqline(APrIAZS_resid1)
+plot(modAPrIAZS1)
+
+# manipulate into long format
+NdZSPrIA_long <- NdZSPrIA %>%
+  pivot_longer(cols = starts_with("Prop"),
+               names_to = "Species",
+               values_to = "Prop")
+# get mean proportion of each species at a given N within a P
+NdZSPrIA_long2 <- NdZSPrIA_long %>%
+  dplyr::group_by(P, N, Species) %>%
+  dplyr::summarise(meanProp = mean(Prop),
+                   Tot = first(Tot),
+                   .groups = "drop")%>%
+  mutate(N = factor(N))%>%
+  mutate(Species = factor(Species, levels = c("PropIWG", "PropALF")))
+
+PrIAZSplot <- ggplot(NdZSPrIA_long2, aes(x = N, y = meanProp, fill = Species)) +
+  geom_bar(stat = "identity", position = "stack")+
+  facet_wrap(~P, ncol = 2) +
+  labs(y = "Proportion Species", x = "N Rate") +
+  scale_fill_discrete(name = "Species",
+  labels = c(PropALF = "Alfalfa", PropIWG = "IWG"))+
+  ggtitle("Average Proportion of IWG and Alfalfa from Intercrop Plots, Year 3 Summer")
+# save figures/forage/PrIAZSplot    1022x884
+```
+
+# Species Proportions Year 3 F
+```{r}
+# Proportion IWG in total forage ZF
+#model by nrate ZF
+modIPrIAZF<-lmer(PropIWG~N*P + (1|Rep), data = NdZFPrIA )
+anova(modIPrIAZF)
+#check assumptions 
+IPrIAZF_resid<-resid(modIPrIAZF)
+qqnorm(IPrIAZF_resid)
+qqline(IPrIAZF_resid)
+plot(modIPrIAZF)
+#Logtransform
+modIPrIAZF1<-lmer(log(PropIWG)~N*P + (1|Rep), data = NdZFPrIA )
+anova(modIPrIAZF1)
+#check assumptions 
+IPrIAZF_resid1<-resid(modIPrIAZF1)
+qqnorm(IPrIAZF_resid1)
+qqline(IPrIAZF_resid1)
+plot(modIPrIAZF1)
+
+# Proportion Alf in total forage ZF
+#model by nrate ZF
+modAPrIAZF<-lmer(PropALF~N*P + (1|Rep), data = NdZFPrIA )
+anova(modAPrIAZF)
+#check assumptions 
+APrIAZF_resid<-resid(modAPrIAZF)
+qqnorm(APrIAZF_resid)
+qqline(APrIAZF_resid)
+plot(modAPrIAZF)
+#Logtransform
+modAPrIAZF1<-lmer(log(PropALF)~N*P + (1|Rep), data = NdZFPrIA )
+anova(modAPrIAZF1)
+#check assumptions 
+APrIAZF_resid1<-resid(modAPrIAZF1)
+qqnorm(APrIAZF_resid1)
+qqline(APrIAZF_resid1)
+plot(modAPrIAZF1)
+# normal looks better, same significances 
+
+# manipulate into long format
+NdZFPrIA_long <- NdZFPrIA %>%
+  pivot_longer(cols = starts_with("Prop"),
+               names_to = "Species",
+               values_to = "Prop")
+# get mean proportion of each species at a given N within a P
+NdZFPrIA_long2 <- NdZFPrIA_long %>%
+  dplyr::group_by(P, N, Species) %>%
+  dplyr::summarise(meanProp = mean(Prop),
+                   Tot = first(Tot),
+                   .groups = "drop")%>%
+  mutate(N = factor(N))%>%
+  mutate(Species = factor(Species, levels = c("PropIWG", "PropALF")))
+
+PrIAZFplot <- ggplot(NdZFPrIA_long2, aes(x = N, y = meanProp, fill = Species)) +
+  geom_bar(stat = "identity", position = "stack")+
+  facet_wrap(~P, ncol = 2) +
+  labs(y = "Proportion Species", x = "N Rate") +
+  scale_fill_discrete(name = "Species",
+  labels = c(PropALF = "Alfalfa", PropIWG = "IWG"))+
+  ggtitle("Average Proportion of IWG and Alfalfa from Intercrop Plots, Year 3 Fall")
+# save figures/forage/PrIAZFplot    1022x884
+```
+
+
+# Species Proportions anovas Table 
+```{r}
+aov.tableIXS <- anova(modIPrIAXS1)
+tablePrIXS = flextable(data = aov.tableIXS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrIXS)
+# save figures/forage/gt_PrIXS 
+
+aov.tableAXS <- anova(modAPrIAXS1)
+tablePrAXS = flextable(data = aov.tableAXS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrAXS)
+# save figures/forage/gt_PrAXS 
+
+aov.tableIXF <- anova(modIPrIAXF1)
+tablePrIXF = flextable(data = aov.tableIXF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrIXF)
+# save figures/forage/gt_PrIXF 
+
+aov.tableAXF <- anova(modAPrIAXF1)
+tablePrAXF = flextable(data = aov.tableAXF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrAXF)
+# save figures/forage/gt_PrAXF 
+
+aov.tableIYS <- anova(modIPrIAYS1)
+tablePrIYS = flextable(data = aov.tableIYS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrIYS)
+# save figures/forage/gt_PrIYS 
+
+aov.tableAYS <- anova(modAPrIAYS1)
+tablePrAYS = flextable(data = aov.tableAYS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrAYS)
+# save figures/forage/gt_PrAYS 
+
+aov.tableIYF <- anova(modIPrIAYF1)
+tablePrIYF = flextable(data = aov.tableIYF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrIYF)
+# save figures/forage/gt_PrIYF 
+
+aov.tableAYF <- anova(modAPrIAYF1)
+tablePrAYF = flextable(data = aov.tableAYF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrAYF)
+# save figures/forage/gt_PrAYF
+
+aov.tableIZS <- anova(modIPrIAZS1)
+tablePrIZS = flextable(data = aov.tableIZS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrIZS)
+# save figures/forage/gt_PrIZS 
+
+aov.tableAZS <- anova(modAPrIAZS1)
+tablePrAZS = flextable(data = aov.tableAZS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrAZS)
+# save figures/forage/gt_PrAZS 
+
+aov.tableIZF <- anova(modIPrIAZF1)
+tablePrIZF = flextable(data = aov.tableIZF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrIZF)
+# save figures/forage/gt_PrIZF 
+
+aov.tableAZF <- anova(modAPrIAZF1)
+tablePrAZF = flextable(data = aov.tableAZF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tablePrAZF)
+# save figures/forage/gt_PrAZF
+
+my_modelsNG <- list(modIPrIAXS1, modAPrIAXS1, modIPrIAXF1, modAPrIAXF1, modIPrIAYS1, modAPrIAYS1, modIPrIAYF1, modAPrIAYF1, modIPrIAZS1, modAPrIAZS1, modIPrIAZF1, modAPrIAZF1)
+anovasNG <- purrr::map(my_modelsNG, ~anova(.))
+names(anovasNG) <- c("IWG Pr Year 1 S", "ALF Pr Year 1 S", "IWG Pr Year 1 F", "ALF Pr Year 1 F", "IWG Pr Year 2 S", "ALF Pr Year 2 S", "IWG Pr Year 2 F", "ALF Pr Year 2 F", "IWG Pr Year 3 S", "ALF Pr Year 3 S", "IWG Pr Year 3 F", "ALF Pr Year 3 F")
+
+# Function to format p-values as stars
+format_p_value <- function(p_val) {
+  stars <- ifelse(p_val < 0.001, "***", ifelse(p_val < 0.01, "**", ifelse(p_val < 0.05, "*", "")))
+  return(stars)
+}
+
+# Apply the function to your ANOVA results
+NG_stars_tibble <- map(anovasNG, as_tibble, rownames="term") %>%
+  bind_rows(.id = "model") %>%
+  mutate(stars = map_chr(`Pr(>F)`, format_p_value))
+
+NG_stars_tibble <- NG_stars_tibble %>%
+  mutate(term = ifelse(term == "P", "E", term)) %>%
+  mutate(term = ifelse(term == "N:P", "N:E", term))%>%
+  mutate(term = ifelse(term == "P:CROP", "E:CROP", term))%>%
+  mutate(term = ifelse(term == "N:P:CROP", "N:E:CROP", term))%>%
+  filter(term != "Residuals")
+
+# Print the tibble
+print(NG_stars_tibble)
+
+NG_stars <-NG_stars_tibble |> 
+  select(model, term, stars) |>
+  pivot_wider(names_from = term, values_from = stars)
+
+gt_NG <- gt(NG_stars)
+
+gt_NG |> gtsave("figures/forage/gt_PrIA.png", expand = 10)
+```
+
+
+
+
+
+
+
+## LER
+
 # LER calculations 
 ```{r}
 # Nd SW 0 
 #IWG partial LER 
-NdSW0IWGLER <- NdZ %>%
+NdSW0IWGLER <- Nd %>%
   group_by(Rep, P, YearCode, Harvest) %>%
   reframe(
     PartialLERIWGSW0 = (PlotIWGDryKgHa[Treatment == 10]) / (PlotIWGDryKgHa[Treatment == 5])
   )
 #Alf partial LER 
-NdSW0ALFLER <- NdZ %>%
+NdSW0ALFLER <- Nd %>%
   group_by(Rep, P, YearCode, Harvest) %>%
   reframe(
     PartialLERAlfSW0 = (PlotAlfDryKgHa[Treatment == 10]) / (PlotAlfDryKgHa[Treatment == 15])
   )
 #Total LER 
-NdSW0TotalLER <- NdZ %>%
+NdSW0TotalLER <- Nd %>%
   group_by(Rep, P, YearCode, Harvest) %>%
   reframe(
     TotalLERSW0 = (PlotIWGDryKgHa[Treatment == 10]) / (PlotIWGDryKgHa[Treatment == 5]) + (PlotAlfDryKgHa[Treatment == 10]) / (PlotAlfDryKgHa[Treatment == 15])
@@ -4336,25 +4926,18 @@ LERresultsNdSWALL_long <- LERresultsNdSWALL %>%
                names_to = "Nrate",
                values_to = "LER")
 
-# Display the result
-print(LERresultsNdSWALL_long)
-print(LERresultsNdSWALL)
-
 #try to make the dataframe more usable
 
 #cut off total and partial 
 LERresultsNdSWALL_long$Type <- sub("^(Partial|Total)", "", LERresultsNdSWALL_long$Nrate)
 LERresultsNdSWALL_long$tot_or_part <- sub("^(Partial|Total).*", "\\1", LERresultsNdSWALL_long$Nrate)
-print(LERresultsNdSWALL_long)
 
 #cut off LERIWGSW and LERAlfSW and LERSW
 LERresultsNdSWALL_long$NRATE <- sub("^(LERIWGSW|LERAlfSW|LERSW)", "", LERresultsNdSWALL_long$Type)
 LERresultsNdSWALL_long$PlotType <- sub("^(LERIWGSW|LERAlfSW|LERSW).*", "\\1", LERresultsNdSWALL_long$Type)
-print(LERresultsNdSWALL_long)
 
 #get rid of pesky NA results (caused by missing plots inherent in year 1 KS summer data)
 LERresultsNdSWALL_longNONA<- na.omit(LERresultsNdSWALL_long)
-print(LERresultsNdSWALL_longNONA)
 
 LERresultsNdSWALL_longNONA$NRATE<-as.numeric(LERresultsNdSWALL_longNONA$NRATE)
 
@@ -4380,29 +4963,37 @@ LERResultsAllYF<-LERResultsAllY[LERResultsAllY$Harvest == 'Fall',]
 
 #okay now I should be able to split by total and partial
 TotalLERresults<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$tot_or_part == 'Total',]
-print(TotalLERresults)
   TotLERX<-TotalLERresults[TotalLERresults$YearCode == 'X',]
   TotLERY<-TotalLERresults[TotalLERresults$YearCode == 'Y',]
+  TotLERZ<-TotalLERresults[TotalLERresults$YearCode == 'Z',]
   TotLERXS<-TotLERX[TotLERX$Harvest == 'Summer',]
   TotLERXF<-TotLERX[TotLERX$Harvest == 'Fall',]
   TotLERYS<-TotLERY[TotLERY$Harvest == 'Summer',]
   TotLERYF<-TotLERY[TotLERY$Harvest == 'Fall',]
+  TotLERZS<-TotLERZ[TotLERZ$Harvest == 'Summer',]
+  TotLERZF<-TotLERZ[TotLERZ$Harvest == 'Fall',]
 IWGPartialLERresults<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$PlotType == 'LERIWGSW',]
 IWGPartialLERresults$NRATE<- as.numeric(IWGPartialLERresults$NRATE)
   IWGPLERX<-IWGPartialLERresults[IWGPartialLERresults$YearCode == 'X',]
   IWGPLERY<-IWGPartialLERresults[IWGPartialLERresults$YearCode == 'Y',]
+  IWGPLERZ<-IWGPartialLERresults[IWGPartialLERresults$YearCode == 'Z',]
   IWGPLERXS<-IWGPLERX[IWGPLERX$Harvest == 'Summer',]
   IWGPLERXF<-IWGPLERX[IWGPLERX$Harvest == 'Fall',]
   IWGPLERYS<-IWGPLERY[IWGPLERY$Harvest == 'Summer',]
   IWGPLERYF<-IWGPLERY[IWGPLERY$Harvest == 'Fall',]
+  IWGPLERZS<-IWGPLERZ[IWGPLERZ$Harvest == 'Summer',]
+  IWGPLERZF<-IWGPLERZ[IWGPLERZ$Harvest == 'Fall',]
 AlfPartialLERresults<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$PlotType == 'LERAlfSW',]
 AlfPartialLERresults$NRATE<- as.numeric(AlfPartialLERresults$NRATE)
   AlfPLERX<-AlfPartialLERresults[AlfPartialLERresults$YearCode == 'X',]
   AlfPLERY<-AlfPartialLERresults[AlfPartialLERresults$YearCode == 'Y',]
+  AlfPLERZ<-AlfPartialLERresults[AlfPartialLERresults$YearCode == 'Z',]
   AlfPLERXS<-AlfPLERX[AlfPLERX$Harvest == 'Summer',]
   AlfPLERXF<-AlfPLERX[AlfPLERX$Harvest == 'Fall',]
   AlfPLERYS<-AlfPLERY[AlfPLERY$Harvest == 'Summer',]
   AlfPLERYF<-AlfPLERY[AlfPLERY$Harvest == 'Fall',]
+  AlfPLERZS<-AlfPLERZ[AlfPLERZ$Harvest == 'Summer',]
+  AlfPLERZF<-AlfPLERZ[AlfPLERZ$Harvest == 'Fall',]
   
 #Check for outliers
 identify_outliers(TotalLERresults[, 6]) #19 outliers 
@@ -4416,24 +5007,60 @@ add_new_columns <- function(df) {
   return(df)
 }
 # List of dataframes (replace these with your actual dataframes)
-df_list <- list(TotLERXS, TotLERYS, TotLERXF, TotLERYF, IWGPLERXS, IWGPLERXF,IWGPLERYS,IWGPLERYF,  AlfPLERXS, AlfPLERXF,AlfPLERYS,AlfPLERYF)
+df_list <- list(TotLERXS, TotLERYS, TotLERZS, 
+                TotLERXF, TotLERYF, TotLERZF, 
+                IWGPLERXS, IWGPLERYS, IWGPLERZS, 
+                IWGPLERXF, IWGPLERYF, IWGPLERZF, 
+                AlfPLERXS, AlfPLERYS, AlfPLERZS,
+                AlfPLERXF, AlfPLERYF, AlfPLERZF)
 # Apply the function to each dataframe in the list
 df_list <- lapply(df_list, add_new_columns)
 # Access the modified dataframes in df_list
 TotLERXS <- df_list[[1]]
 TotLERYS <- df_list[[2]]
-TotLERXF <- df_list[[3]]
-TotLERYF<- df_list[[4]]
-IWGPLERXS<- df_list[[5]]
-IWGPLERXF<- df_list[[6]]
-IWGPLERYS<- df_list[[7]]
-IWGPLERYF<- df_list[[8]]
-AlfPLERXS<- df_list[[9]]
-AlfPLERXF<- df_list[[10]]
-AlfPLERYS<- df_list[[11]]
-AlfPLERYF<- df_list[[12]]
+TotLERZS <- df_list[[3]]
+TotLERXF <- df_list[[4]]
+TotLERYF<- df_list[[5]]
+TotLERZF<- df_list[[6]]
+IWGPLERXS<- df_list[[7]]
+IWGPLERYS<- df_list[[8]]
+IWGPLERZS<- df_list[[9]]
+IWGPLERXF<- df_list[[10]]
+IWGPLERYF<- df_list[[11]]
+IWGPLERZF<- df_list[[12]]
+AlfPLERXS<- df_list[[13]]
+AlfPLERYS<- df_list[[14]]
+AlfPLERZS<- df_list[[15]]
+AlfPLERXF<- df_list[[16]]
+AlfPLERYF<- df_list[[17]]
+AlfPLERZF<- df_list[[18]]
 ```
 
+# Proportional PLER calculations
+```{r}
+ILERresultsNdSWALL_longNONA<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$PlotType != "LERAlfSW",]
+ALERresultsNdSWALL_longNONA<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$PlotType != "LERIWGSW",]
 
-
-
+#IWG PrPLER
+IPrPLER <- ILERresultsNdSWALL_longNONA %>%
+  group_by(Rep, P, YearCode, Harvest, NRATE) %>%
+  reframe(
+    IPrPLER= (LER[tot_or_part == "Partial"]) / (LER[tot_or_part == "Total"]))
+#Alf PrPLER 
+APrPLER <- ALERresultsNdSWALL_longNONA %>%
+  group_by(Rep, P, YearCode, Harvest, NRATE) %>%
+  reframe(
+    APrPLER= (LER[tot_or_part == "Partial"]) / (LER[tot_or_part == "Total"]))
+#put IWG and Alf PrPLERs into same frame 
+PrPLER <- merge(APrPLER, IPrPLER, by = c("Rep", "P", "YearCode", "Harvest", "NRATE"), all = TRUE)
+PrPLER$N<-PrPLER$NRATE
+PrPLERX<-PrPLER[PrPLER$YearCode == "X",]
+PrPLERY<-PrPLER[PrPLER$YearCode == "Y",]
+PrPLERZ<-PrPLER[PrPLER$YearCode == "Z",]
+PrPLERXS<-PrPLERX[PrPLERX$Harvest == "Summer",]
+PrPLERXF<-PrPLERX[PrPLERX$Harvest == "Fall",]
+PrPLERYS<-PrPLERY[PrPLERY$Harvest == "Summer",]
+PrPLERYF<-PrPLERY[PrPLERY$Harvest == "Fall",]
+PrPLERZS<-PrPLERZ[PrPLERZ$Harvest == "Summer",]
+PrPLERZF<-PrPLERZ[PrPLERZ$Harvest == "Fall",]
+```
