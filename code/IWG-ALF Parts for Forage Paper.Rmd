@@ -2663,7 +2663,7 @@ print(IcomboplotNEYF)
 
 #IWG forage year 3 summer
 ```{r}
-# KS IWG intercrop vaules don't exist 
+# KS IWG intercrop values don't exist 
 
 #LINEAR 
 modNZSI<-lmer(PlotIWGDryKgHa~N*P*CROP + (1|Rep), data=NdZSI)
@@ -3301,6 +3301,7 @@ new_df <- merged_df %>%
   mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
   select(-emmean, -N.trend)
 new_df
+#write.csv(new_df, "data/Final_Data/Nrate_esteff_ALFforage_yr1S.csv") 
 AFplotN <- ggplot() +
   geom_point(data = NdXSA, aes(x = N, y = PlotAlfDryKgHa, shape= CROP), color= "red") +
   labs(x = "N-Rate (kg ha-1)", y = "Alfalfa Forage Yield") +
@@ -3430,6 +3431,22 @@ AXFPC<-ggplot(NdXFA, aes(x = P, y = exp(predicted), color = CROP)) +
   scale_y_continuous(breaks = c(1000, 3000, 5000, 7000,9000), limits = c(0, 3500))
 print(AXFPC)
 #ggsave("figures/forage/AXFPC.jpg", plot = AXFPC, width = 10, height = 8, dpi = 300)
+
+#alf forage plot N (YS)
+#EQUATION tables JUST N 
+emtrends_result<-emtrends(modNXFA1,~ 1, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNXFA1, ~1, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+emtrends_df <- emtrends_df %>% mutate(key = 1)
+emmeans_df <- emmeans_df %>% mutate(key = 1)
+merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
+  select(emmean, N.trend, SE.x)
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+new_df
+#write.csv(new_df, "data/Final_Data/Nrate_esteff_ALFforage_yr1F.csv") 
 
 
 
