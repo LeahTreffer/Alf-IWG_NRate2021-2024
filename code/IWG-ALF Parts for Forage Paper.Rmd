@@ -1621,7 +1621,6 @@ gt_NG |> gtsave("figures/forage/gt_IF_2.png", expand = 10)
 
 # total forage combined years plots E:C
 ```{r}
-
 TFPC <- ggarrange(
 TFXSPC + ggtitle("Year 1 S"),
 TFXFPC + ggtitle("Year 1 F"),
@@ -4279,6 +4278,7 @@ print(AFcomboplotNC)
 ## Proportion of species in Total Forage Yield
 From Megan: values and analysis of proportion of each species in total forage yield for intercropped plots. Not proportional partial LER, but just proportion of normal yields in the total. The code for PrPLER should be helpful to run that analysis though! You’ll just want to make sure there isn’t a C factor since we’re only looking at one cropping system and that you’re only pulling intercropped plot yields.
 
+
 # proportion of species in Total Forage Yield of intercropped plots calculations
 ```{r}
 # Year 1 S - proportion of species in total forage intercropped plots
@@ -4400,6 +4400,35 @@ PrIAXSplot <- ggplot(NdXSPrIA_long2, aes(x = N, y = meanProp, fill = Species)) +
   labels = c(PropALF = "Alfalfa", PropIWG = "IWG"))+
   ggtitle("Average Proportion of IWG and Alfalfa from Intercrop Plots, Year 1 Summer")
 # save figures/forage/PrIAXSplot    1022x884
+
+# pairwise comparisons between N rates
+NdXSPrIA$N <- factor(NdXSPrIA$N)
+modIPrIAXS1 <- update(modIPrIAXS1)
+emmsN <- emmeans(modIPrIAXS1, pairwise ~ N|P) 
+cld_dataIPrIAXS1 <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataIPrIAXS1$response <- format(cld_dataIPrIAXS1$response, digits = 5)
+rownames(cld_dataIPrIAXS1) <- NULL
+cld_dataIPrIAXS1<- cld_dataIPrIAXS1 %>%
+  select(N, P, SE, lower.CL, upper.CL, .group)
+cld_dataIPrIAXS1  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+# save figures/forage/Pr_table_Nrate_IXS  430x245
+modAPrIAXS1 <- update(modAPrIAXS1)
+emmsN <- emmeans(modAPrIAXS1, pairwise ~ N) 
+cld_dataAPrIAXS1 <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataAPrIAXS1$response <- format(cld_dataAPrIAXS1$response, digits = 5)
+rownames(cld_dataAPrIAXS1) <- NULL
+cld_dataAPrIAXS1<- cld_dataAPrIAXS1 %>%
+  select(N, SE, lower.CL, upper.CL, .group)
+cld_dataAPrIAXS1  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+# save figures/forage/Pr_table_Nrate_AXS  430x245
 ```
 
 # Species Proportions Year 1 F
@@ -4463,6 +4492,22 @@ PrIAXFplot <- ggplot(NdXFPrIA_long2, aes(x = N, y = meanProp, fill = Species)) +
   labels = c(PropALF = "Alfalfa", PropIWG = "IWG"))+
   ggtitle("Average Proportion of IWG and Alfalfa from Intercrop Plots, Year 1 Fall")
 # save figures/forage/PrIAXFplot    1022x884
+
+# pairwise comparisons between N rates
+NdXFPrIA$N <- factor(NdXFPrIA$N)
+modIPrIAXF1 <- update(modIPrIAXF1)
+emmsN <- emmeans(modIPrIAXF1, pairwise ~ N) 
+cld_dataIPrIAXF1 <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataIPrIAXF1$response <- format(cld_dataIPrIAXF1$response, digits = 5)
+rownames(cld_dataIPrIAXF1) <- NULL
+cld_dataIPrIAXF1<- cld_dataIPrIAXF1 %>%
+  select(N, SE, lower.CL, upper.CL, .group)
+cld_dataIPrIAXF1  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+# save figures/forage/Pr_table_Nrate_IXF  430x245
 ```
 
 # Species Proportions Year 2 S
@@ -4860,6 +4905,14 @@ gt_NG <- gt(NG_stars)
 
 gt_NG |> gtsave("figures/forage/gt_PrIA.png", expand = 10)
 ```
+
+relative crowding coefficient estimate of the relative overriding of one component over the other in an intercropping (De Wit, 1960).
+
+Agressivity (1 value)
+
+competitive ratio : uses LER 
+
+
 
 
 
