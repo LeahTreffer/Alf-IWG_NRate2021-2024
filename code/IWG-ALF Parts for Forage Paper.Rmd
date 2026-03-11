@@ -5652,38 +5652,3 @@ gt_NG |> gtsave("figures/forage/gt_TLER.png", expand = 10)
 
 
 
-relative crowding coefficient estimate of the relative overriding of one component over the other in an intercropping (De Wit, 1960).
-
-Agressivity (1 value)
-
-competitive ratio : uses LER 
-
-
-# Proportional PLER calculations
-```{r}
-ILERresultsNdSWALL_longNONA<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$PlotType != "LERAlfSW",]
-ALERresultsNdSWALL_longNONA<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$PlotType != "LERIWGSW",]
-
-#IWG PrPLER
-IPrPLER <- ILERresultsNdSWALL_longNONA %>%
-  group_by(Rep, P, YearCode, Harvest, NRATE) %>%
-  reframe(
-    IPrPLER= (LER[tot_or_part == "Partial"]) / (LER[tot_or_part == "Total"]))
-#Alf PrPLER 
-APrPLER <- ALERresultsNdSWALL_longNONA %>%
-  group_by(Rep, P, YearCode, Harvest, NRATE) %>%
-  reframe(
-    APrPLER= (LER[tot_or_part == "Partial"]) / (LER[tot_or_part == "Total"]))
-#put IWG and Alf PrPLERs into same frame 
-PrPLER <- merge(APrPLER, IPrPLER, by = c("Rep", "P", "YearCode", "Harvest", "NRATE"), all = TRUE)
-PrPLER$N<-PrPLER$NRATE
-PrPLERX<-PrPLER[PrPLER$YearCode == "X",]
-PrPLERY<-PrPLER[PrPLER$YearCode == "Y",]
-PrPLERZ<-PrPLER[PrPLER$YearCode == "Z",]
-PrPLERXS<-PrPLERX[PrPLERX$Harvest == "Summer",]
-PrPLERXF<-PrPLERX[PrPLERX$Harvest == "Fall",]
-PrPLERYS<-PrPLERY[PrPLERY$Harvest == "Summer",]
-PrPLERYF<-PrPLERY[PrPLERY$Harvest == "Fall",]
-PrPLERZS<-PrPLERZ[PrPLERZ$Harvest == "Summer",]
-PrPLERZF<-PrPLERZ[PrPLERZ$Harvest == "Fall",]
-```
