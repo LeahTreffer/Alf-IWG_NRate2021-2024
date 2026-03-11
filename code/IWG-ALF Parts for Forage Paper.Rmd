@@ -4906,18 +4906,6 @@ gt_NG <- gt(NG_stars)
 gt_NG |> gtsave("figures/forage/gt_PrIA.png", expand = 10)
 ```
 
-relative crowding coefficient estimate of the relative overriding of one component over the other in an intercropping (De Wit, 1960).
-
-Agressivity (1 value)
-
-competitive ratio : uses LER 
-
-
-
-
-
-
-
 
 
 ## LER
@@ -5074,6 +5062,7 @@ LERresultsNdSWALL_longNONA$NRATE<-as.numeric(LERresultsNdSWALL_longNONA$NRATE)
 #includes total and partial until it doesn't...used for some pairwise comparison thingy. 
 LERResultsAllX<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$YearCode == 'X',]
 LERResultsAllY<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$YearCode == 'Y',]
+LERResultsAllZ<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$YearCode == 'Z',]
 LERResultsAllXS<-LERResultsAllX[LERResultsAllX$Harvest == 'Summer',]
   LERResultsTotXS<-LERResultsAllXS[LERResultsAllXS$tot_or_part == 'Total',]
   LERResultsPartIWGXS<-LERResultsAllXS[LERResultsAllXS$tot_or_part == 'Partial' & LERResultsAllXS$PlotType == 'LERIWGSW' ,]
@@ -5090,7 +5079,19 @@ LERResultsAllYF<-LERResultsAllY[LERResultsAllY$Harvest == 'Fall',]
   LERResultsTotYF<-LERResultsAllYF[LERResultsAllYF$tot_or_part == 'Total',]
   LERResultsPartIWGYF<-LERResultsAllYF[LERResultsAllYF$tot_or_part == 'Partial' & LERResultsAllYF$PlotType == 'LERIWGSW' ,]
   LERResultsPartAlfYF<-LERResultsAllYF[LERResultsAllYF$tot_or_part == 'Partial' & LERResultsAllYF$PlotType == 'LERAlfSW' ,]
-
+LERResultsAllZS<-LERResultsAllY[LERResultsAllY$Harvest == 'Summer',]
+  LERResultsTotZS<-LERResultsAllZS[LERResultsAllZS$tot_or_part == 'Total',]
+  LERResultsPartIWGZS<-LERResultsAllZS[LERResultsAllZS$tot_or_part == 'Partial' & LERResultsAllZS$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfZS<-LERResultsAllZS[LERResultsAllZS$tot_or_part == 'Partial' & LERResultsAllZS$PlotType == 'LERAlfSW' ,]
+LERResultsAllZF<-LERResultsAllY[LERResultsAllY$Harvest == 'Fall',]
+  LERResultsTotZF<-LERResultsAllZF[LERResultsAllZF$tot_or_part == 'Total',]
+  LERResultsPartIWGZF<-LERResultsAllZF[LERResultsAllZF$tot_or_part == 'Partial' & LERResultsAllZF$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfZF<-LERResultsAllZF[LERResultsAllZF$tot_or_part == 'Partial' & LERResultsAllZF$PlotType == 'LERAlfSW' ,]
+  
+# change Inf values to NA
+LERresultsNdSWALL_longNONA
+LERresultsNdSWALL_longNONA['LER'][LERresultsNdSWALL_longNONA['LER'] == 'Inf'] <- NA
+  
 #okay now I should be able to split by total and partial
 TotalLERresults<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$tot_or_part == 'Total',]
   TotLERX<-TotalLERresults[TotalLERresults$YearCode == 'X',]
@@ -5165,6 +5166,498 @@ AlfPLERXF<- df_list[[16]]
 AlfPLERYF<- df_list[[17]]
 AlfPLERZF<- df_list[[18]]
 ```
+
+#Year 1 Summer Total LERs model 
+```{r}
+TotLERXS$N<-TotLERXS$NRATE
+TotLERXS$N<- as.numeric(TotLERXS$N)
+#linear
+modTotLERXS<-lmer(LER~N*P + (1|Rep), data= TotLERXS)
+anova(modTotLERXS)
+#check assumptions 
+TotLERXS_resid<-resid(modTotLERXS)
+qqnorm(TotLERXS_resid)
+qqline(TotLERXS_resid)
+plot(modTotLERXS)
+#Logtransform
+modTotLERXS1<-lmer(log(LER)~N*P + (1|Rep), data=TotLERXS)
+anova(modTotLERXS1)
+#check assumptions logtransform (makes BETTER?)
+TotLERXS_resid1<-resid(modTotLERXS1)
+qqnorm(TotLERXS_resid1)
+qqline(TotLERXS_resid1)
+plot(modTotLERXS1)
+
+N_levels <- c(0, 40, 80, 120, 160)
+
+#Comparison plots
+# Boxplot for Total LER
+ggplot(TotLERXS, aes(x = P, y = LER, fill = as.factor(NRATE))) +
+  geom_boxplot() +
+  labs(title = "XS Total LER by Location and N Rate", x = "Location", y = "Total LER")+
+  geom_abline(intercept = 1, slope = 0, color = "red", linetype = "dashed")
+  
+
+# Boxplot for I Partial LER
+#ggplot(IWGPLERXS, aes(x = P, y = LER, fill = as.factor(NRATE))) +
+#  geom_boxplot() +
+#  labs(title = "I Partial LER by Location and N Rate", x = "Location", y = "I Partial LER")+
+#  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")
+
+# Boxplot for A Partial LER
+#ggplot(AlfPLERXS, aes(x = P, y = LER, fill = as.factor(NRATE))) +
+#  geom_boxplot() +
+#  labs(title = "A Partial LER by Location and N Rate", x = "Location", y = "A Partial LER")+
+#  geom_abline(intercept = 0.5, slope = 0, color = "red", linetype = "dashed")
+
+#linear plots by location
+TotLERXS$predicted <- predict(modTotLERXS1, newdata = TotLERXS, re.form = NA)
+ggplot(TotLERXS, aes(x = N, y = LER)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Total LER (Kg/ha)") +  # Label the axes
+  ggtitle("Relationship between Total LER and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 2) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System") +  #legend for colors
+  geom_abline(intercept = 1, slope = 0, color = "red", linetype = "dashed")
+#TWO way emmeans
+TotLERXS1emm <- compute_emmeansNXS2("modTotLERXS1")
+seeee<-emmeans(modTotLERXS1, ~P,at = list(N = N_levels), type= "response")
+#Pairwise N 
+emmsN <- emmeans(modTotLERXS1, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataNXSTLERN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataNXSTLERN $response <- format(cld_dataNXSTLERN $response, digits = 3)
+cld_dataNXSTLERN$lower.CL <- format(cld_dataNXSTLERN$lower.CL, digits = 3)
+cld_dataNXSTLERN$upper.CL <- format(cld_dataNXSTLERN$upper.CL, digits = 3)
+rownames(cld_dataNXSTLERN ) <- NULL
+cld_dataNXSTLERN <- cld_dataNXSTLERN  %>%
+  select( N, response, lower.CL, upper.CL, .group)
+colnames(cld_dataNXSTLERN ) <- c( "N", "TLER","l","h", "Group")
+cld_dataNXSTLERN  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+```
+
+#Year 1 Fall Total LERs model
+```{r}
+TotLERXF$NRATE<- as.numeric(TotLERXF$NRATE)
+modTotLERXF<-lmer(LER~N*P + (1|Rep), data= TotLERXF)
+anova(modTotLERXF)
+summary(modTotLERXF)
+#check assumptions 
+TotLERXF_resid<-resid(modTotLERXF)
+qqnorm(TotLERXF_resid)
+qqline(TotLERXF_resid)
+plot(modTotLERXF)
+#Logtransform
+modTotLERXF1<-lmer(log(LER)~N*P + (1|Rep), data=TotLERXF)
+anova(modTotLERXF1)
+#check assumptions logtransform (makes BETTER)
+TotLERXF_resid1<-resid(modTotLERXF1)
+qqnorm(TotLERXF_resid1)
+qqline(TotLERXF_resid1)
+plot(modTotLERXF1)
+
+#Comparison plots
+# Boxplot for Total LER
+ggplot(TotLERXF, aes(x = P, y = LER, fill = as.factor(NRATE))) +
+  geom_boxplot() +
+  labs(title = "XF Total LER by Location and N Rate", x = "Location", y = "Total LER")+
+  geom_abline(intercept = 1, slope = 0, color = "red", linetype = "dashed")
+# save figures/forage/TLER_boxplot_XF   775x630
+
+max(TotLERXF$LER)
+#linear plots
+TotLERXF$predicted <- predict(modTotLERXF1, newdata = TotLERXF, re.form = NA)
+ggplot(TotLERXF, aes(x = N, y = LER)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Total LER (Kg/ha)") +  # Label the axes
+  ggtitle("Year 1 F Relationship between Total LER and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 6.2) + # upper limit set by max(TotLERXF$LER)
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")+  #legend for colors
+geom_abline(intercept = 1, slope = 0, color = "red", linetype = "dashed")
+# save figures/forage/TLER_Nrate_yr1F
+
+#TWO way emmeans
+TotLERXF1emm <- compute_emmeansNXF2("modTotLERXF1")
+
+#Pairwise P
+emmsP <- emmeans(modTotLERXF1, ~ P, type = "response") # Obtain estimated marginal means
+cld_dataTLERXFP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+cld_dataTLERXFP $response <- format(cld_dataTLERXFP $response, digits = 3)
+cld_dataTLERXFP$lower.CL <- format(cld_dataTLERXFP$lower.CL, digits = 3)
+cld_dataTLERXFP$upper.CL <- format(cld_dataTLERXFP$upper.CL, digits = 3)
+rownames(cld_dataTLERXFP ) <- NULL
+cld_dataTLERXFP <- cld_dataTLERXFP  %>%
+  select( P, response, lower.CL, upper.CL, .group)
+colnames(cld_dataTLERXFP ) <- c( "Site", "TLER","CI2.5%","CI97.5%", "Group")
+cld_dataTLERXFP   |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+# save figures/forage/TLER_emmP_yr1F  250x245
+
+
+
+
+
+#Pairwise N 
+N_levels <- c(0, 40, 80, 120, 160)
+emmsN <- emmeans(modTotLERXF1, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataNXFTLERN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataNXFTLERN $response <- format(cld_dataNXFTLERN $response, digits = 3)
+cld_dataNXFTLERN$lower.CL <- format(cld_dataNXFTLERN$lower.CL, digits = 3)
+cld_dataNXFTLERN$upper.CL <- format(cld_dataNXFTLERN$upper.CL, digits = 3)
+rownames(cld_dataNXFTLERN ) <- NULL
+cld_dataNXFTLERN <- cld_dataNXFTLERN  %>%
+  select( N, response, lower.CL, upper.CL, .group)
+colnames(cld_dataNXFTLERN ) <- c( "N", "TLER","l","h", "Group")
+cld_dataNXFTLERN  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+```
+
+#Year 2 summer total LERs model
+```{r}
+# remove outlier from MN 160 ; has an LER of 15.3803089 becuase plot 1309 has a PlotTotForageKgHa value of 37.62429
+TotLERYS_2 <- TotLERYS[-c(70), ] # this is the row with the outlier 
+
+TotLERYS_2$NRATE<- as.numeric(TotLERYS_2$NRATE)
+modTotLERYS_2<-lmer(LER~N*P + (1|Rep), data= TotLERYS_2)
+anova(modTotLERYS_2)
+#check assumptions 
+TotLERYS_2_resid<-resid(modTotLERYS_2)
+qqnorm(TotLERYS_2_resid)
+qqline(TotLERYS_2_resid)
+plot(modTotLERYS_2)
+#Logtransform
+modTotLERYS_21<-lmer(log(LER)~N*P + (1|Rep), data=TotLERYS_2)
+anova(modTotLERYS_21)
+#check assumptions logtransform (makes BETTER?)
+TotLERYS_2_resid1<-resid(modTotLERYS_21)
+qqnorm(TotLERYS_2_resid1)
+qqline(TotLERYS_2_resid1)
+plot(modTotLERYS_21)
+
+#Comparison plots
+# Boxplot for Total LER
+ggplot(TotLERYS_2, aes(x = P, y = LER, fill = as.factor(NRATE))) +
+    geom_boxplot() +
+    labs(title = "YS Total LER by Location and N Rate", x = "Location", y = "Total LER")+
+    geom_abline(intercept = 1, slope = 0, color = "red", linetype = "dashed")
+# save figures/forage/TLER_boxplot_YS   775x630
+
+max(TotLERYS_2$LER, na.rm = T)
+#linear plots
+TotLERYS_2$predicted <- predict(modTotLERYS_21, newdata = TotLERYS_2, re.form = NA)
+ggplot(TotLERYS_2, aes(x = N, y = LER)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Total LER (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 2 S Relationship between Total LER and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 3.5) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")+  #legend for colors
+  geom_abline(intercept = 1, slope = 0, color = "red", linetype = "dashed")
+# save figures/forage/TLER_Nrate_yr2S
+
+#Pairwise N
+N_levels <- c(0, 40, 80, 120, 160)
+emmsN <- emmeans(modTotLERYS_21, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataTLERYSN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataTLERYSN $response <- format(cld_dataTLERYSN $response, digits = 3)
+cld_dataTLERYSN$lower.CL <- format(cld_dataTLERYSN$lower.CL, digits = 3)
+cld_dataTLERYSN$upper.CL <- format(cld_dataTLERYSN$upper.CL, digits = 3)
+rownames(cld_dataTLERYSN ) <- NULL
+cld_dataTLERYSN <- cld_dataTLERYSN  %>%
+  select( N, response, lower.CL, upper.CL, .group)
+colnames(cld_dataTLERYSN ) <- c( "N", "TLER","l","h", "Group")
+cld_dataTLERYSN   |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+# save figures/forage/TLER_emmE_yr2S
+
+#EQUATION tables JUST N 
+emtrends_result<-emtrends(modTotLERYS_21,~ 1, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modTotLERYS_21, ~1, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+emtrends_df <- emtrends_df %>% mutate(key = 1)
+emmeans_df <- emmeans_df %>% mutate(key = 1)
+merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
+  select(emmean, N.trend, SE.x)
+view(merged_df)
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+new_df
+# write.csv(new_df, 'data/Final_Data/Nrate_esteff_TLER_yr2S.csv')
+
+
+
+
+#TWO way emmeans
+TotLERYS1emm <- compute_emmeansNYS2("modTotLERYS1")
+
+#Pairwise P
+emmsP <- emmeans(modTotLERYS1, ~ P, type = "response") # Obtain estimated marginal means
+cld_dataTLERYSP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+cld_dataTLERYSP $response <- format(cld_dataTLERYSP $response, digits = 3)
+cld_dataTLERYSP$lower.CL <- format(cld_dataTLERYSP$lower.CL, digits = 3)
+cld_dataTLERYSP$upper.CL <- format(cld_dataTLERYSP$upper.CL, digits = 3)
+rownames(cld_dataTLERYSP ) <- NULL
+cld_dataTLERYSP <- cld_dataTLERYSP  %>%
+  select( P, response, lower.CL, upper.CL ,.group)
+colnames(cld_dataTLERYSP ) <- c( "Site", "TLER", "l","h","Group")
+cld_dataTLERYSP   |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+
+summary(modTotLERYS1)
+```
+
+#Year 2 fall total LERs model
+```{r}
+TotLERYF$NRATE<- as.numeric(TotLERYF$NRATE)
+modTotLERYF<-lmer(LER~N*P + (1|Rep), data= TotLERYF)
+anova(modTotLERYF)
+summary(modTotLERYF)
+#check assumptions 
+TotLERYF_resid<-resid(modTotLERYF)
+qqnorm(TotLERYF_resid)
+qqline(TotLERYF_resid)
+plot(modTotLERYF)
+#Logtransform
+modTotLERYF1<-lmer(log(LER)~N*P + (1|Rep), data=TotLERYF)
+anova(modTotLERYF1)
+#check assumptions logtransform
+TotLERYF_resid1<-resid(modTotLERYF1)
+qqnorm(TotLERYF_resid1)
+qqline(TotLERYF_resid1)
+plot(modTotLERYF1)
+
+#Comparison plots
+# Boxplot for Total LER
+ggplot(TotLERYF, aes(x = P, y = LER, fill = as.factor(NRATE))) +
+    geom_boxplot() +
+    labs(title = "YF Total LER by Location and N Rate", x = "Location", y = "Total LER")+
+    geom_abline(intercept = 1, slope = 0, color = "red", linetype = "dashed")
+# save figures/forage/TLER_boxplot_YF   775x630
+
+max(TotLERYF$LER)
+#linear plots
+TotLERYF$predicted <- predict(modTotLERYF1, newdata = TotLERYF, re.form = NA)
+ggplot(TotLERYF, aes(x = N, y = LER)) +
+    geom_point() + geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  labs(x = "N-Rate (Kg/ha)", y = "Total LER (Kg/ha)") +  # Label the axes
+  ggtitle("Yr 2 F Relationship between Total LER and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 6.9) +
+  facet_wrap(~P, scales = "free_y",ncol=2)+ #make it by location (remove to make it across locations)
+  scale_color_discrete(name = "Cropping System")+  #legend for colors
+  geom_abline(intercept = 1, slope = 0, color = "red", linetype = "dashed")
+# save figures/forage/TLER_Nrate_yr2F
+
+#TWO way emmeans
+TotLERYF1emm <- compute_emmeansNYF2("modTotLERYF1")
+
+#Pairwise P
+emmsP <- emmeans(modTotLERYF1, ~ P, type = "response") # Obtain estimated marginal means
+cld_dataTLERYFP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
+cld_dataTLERYFP $response <- format(cld_dataTLERYFP $response, digits = 3)
+cld_dataTLERYFP$lower.CL <- format(cld_dataTLERYFP$lower.CL, digits = 3)
+cld_dataTLERYFP$upper.CL <- format(cld_dataTLERYFP$upper.CL, digits = 3)
+rownames(cld_dataTLERYFP ) <- NULL
+cld_dataTLERYFP <- cld_dataTLERYFP  %>%
+  select( P, response, lower.CL, upper.CL, .group)
+colnames(cld_dataTLERYFP ) <- c( "Site", "TLER","l","h", "Group")
+cld_dataTLERYFP   |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+# save figures/forage/TLER_emmP_yr2F
+
+
+
+
+
+#Pairwise N 
+N_levels <- c(0, 40, 80, 120, 160)
+emmsN <- emmeans(modTotLERYF1, specs = ~ N, at = list(N = N_levels), type = "response")
+cld_dataNYFTLERN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataNYFTLERN $response <- format(cld_dataNYFTLERN $response, digits = 3)
+cld_dataNYFTLERN$lower.CL <- format(cld_dataNYFTLERN$lower.CL, digits = 3)
+cld_dataNYFTLERN$upper.CL <- format(cld_dataNYFTLERN$upper.CL, digits = 3)
+rownames(cld_dataNYFTLERN ) <- NULL
+cld_dataNYFTLERN <- cld_dataNYFTLERN  %>%
+  select( N, response, lower.CL, upper.CL, .group)
+colnames(cld_dataNYFTLERN ) <- c( "N", "TLER","l","h", "Group")
+cld_dataNYFTLERN  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+```
+
+#Year 3 Summer Total LERs model 
+```{r}
+TotLERZS$N<-TotLERZS$NRATE
+TotLERZS$N<- as.numeric(TotLERZS$N)
+#linear
+modTotLERZS<-lmer(LER~N*P + (1|Rep), data= TotLERZS)
+anova(modTotLERZS)
+#check assumptions 
+TotLERZS_resid<-resid(modTotLERZS)
+qqnorm(TotLERZS_resid)
+qqline(TotLERZS_resid)
+plot(modTotLERZS)
+#Logtransform
+modTotLERZS1<-lmer(log(LER)~N*P + (1|Rep), data=TotLERZS)
+anova(modTotLERZS1)
+#check assumptions logtransform (makes BETTER?)
+TotLERZS_resid1<-resid(modTotLERZS1)
+qqnorm(TotLERZS_resid1)
+qqline(TotLERZS_resid1)
+plot(modTotLERZS1)
+```
+
+#Year 3 Fall Total LERs model 
+```{r}
+TotLERZF$N<-TotLERZF$NRATE
+TotLERZF$N<- as.numeric(TotLERZF$N)
+#linear
+modTotLERZF<-lmer(LER~N*P + (1|Rep), data= TotLERZF)
+anova(modTotLERZF)
+#check assumptions 
+TotLERZF_resid<-resid(modTotLERZF)
+qqnorm(TotLERZF_resid)
+qqline(TotLERZF_resid)
+plot(modTotLERZF)
+#Logtransform
+modTotLERZF1<-lmer(log(LER)~N*P + (1|Rep), data=TotLERZF)
+anova(modTotLERZF1)
+#check assumptions logtransform (makes BETTER?)
+TotLERZF_resid1<-resid(modTotLERZF1)
+qqnorm(TotLERZF_resid1)
+qqline(TotLERZF_resid1)
+plot(modTotLERZF1)
+```
+
+
+# Total LERs anovas Table 
+```{r}
+aov.tableXS <- anova(modTotLERXS1)
+tableTLERXS = flextable(data = aov.tableXS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableTLERXS)
+# save figures/forage/gt_TLERXS 
+
+aov.tableXF <- anova(modTotLERXF1)
+tableTLERXF = flextable(data = aov.tableXF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableTLERXF)
+# save figures/forage/gt_TLERXF
+
+aov.tableYS <- anova(modTotLERYS_21) 
+tableTLERYS = flextable(data = aov.tableYS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableTLERYS)
+# save figures/forage/gt_TLERYS 
+
+aov.tableYF <- anova(modTotLERYF1)
+tableTLERYF = flextable(data = aov.tableYF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableTLERYF)
+# save figures/forage/gt_TLERYF
+
+aov.tableZS <- anova(modTotLERZS1)
+tableTLERZS = flextable(data = aov.tableZS %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableTLERZS)
+# save figures/forage/gt_TLERZS 
+
+aov.tableZF <- anova(modTotLERZF1)
+tableTLERZF = flextable(data = aov.tableZF %>%
+                    #filter(`Pr(>F)` < 0.05) %>%
+                    mutate(`Pr(>F)` = formatC(`Pr(>F)`, digits = 3)) %>% 
+                    select(`Pr(>F)`) %>%
+                    rownames_to_column(" ")) 
+print(tableTLERZF)
+# save figures/forage/gt_TLERZF
+
+
+my_modelsNG <- list(modTotLERXS1, modTotLERXF1, modTotLERYS_21, modTotLERYF1, modTotLERZS1, modTotLERZF1)
+anovasNG <- purrr::map(my_modelsNG, ~anova(.))
+names(anovasNG) <- c("Year 1 S", "Year 1 F", "Year 2 S", "Year 2 F", "Year 3 S", "Year 3 F")
+
+# Function to format p-values as stars
+format_p_value <- function(p_val) {
+  stars <- ifelse(p_val < 0.001, "***", ifelse(p_val < 0.01, "**", ifelse(p_val < 0.05, "*", "")))
+  return(stars)
+}
+
+# Apply the function to your ANOVA results
+NG_stars_tibble <- map(anovasNG, as_tibble, rownames="term") %>%
+  bind_rows(.id = "model") %>%
+  mutate(stars = map_chr(`Pr(>F)`, format_p_value))
+
+NG_stars_tibble <- NG_stars_tibble %>%
+  mutate(term = ifelse(term == "P", "E", term)) %>%
+  mutate(term = ifelse(term == "N:P", "N:E", term))%>%
+  mutate(term = ifelse(term == "P:CROP", "E:CROP", term))%>%
+  mutate(term = ifelse(term == "N:P:CROP", "N:E:CROP", term))%>%
+  filter(term != "Residuals")
+
+# Print the tibble
+print(NG_stars_tibble)
+
+NG_stars <-NG_stars_tibble |> 
+  select(model, term, stars) |>
+  pivot_wider(names_from = term, values_from = stars)
+
+gt_NG <- gt(NG_stars)
+
+gt_NG |> gtsave("figures/forage/gt_TLER.png", expand = 10)
+```
+
+
+
+
+
+relative crowding coefficient estimate of the relative overriding of one component over the other in an intercropping (De Wit, 1960).
+
+Agressivity (1 value)
+
+competitive ratio : uses LER 
+
 
 # Proportional PLER calculations
 ```{r}
