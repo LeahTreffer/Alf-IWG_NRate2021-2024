@@ -886,6 +886,109 @@ GraincomboplotNEY <- ggplot(data=NdYSI) +
   geom_text(data = sortedY, mapping = aes(x = -Inf, y = -Inf, label = plvl), hjust   = -2, vjust   = -20) # add stars to figure
 print(GraincomboplotNEY)
 # ggsave("figures/grain/GrainplotNEY.jpg", plot = GraincomboplotNEY, width = 8, height = 6, dpi = 300)
+
+#N:E:C
+desired_order <- c("KS", "MN", "NY", "WI")
+# Define the desired order of 'P'
+NdYSI$P <- factor(NdYSI$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultY<-emtrends(modNYGadj1,~ N*P*CROP, var= "N", infer=TRUE)
+  emtrends_dfY <- as.data.frame(emtrends_resultY)
+  emtrends_dfY$plvl <-
+    ifelse(emtrends_dfY$p.value == 0.05, ".",
+    ifelse(emtrends_dfY$p.value < 0.05  & emtrends_dfY$p.value >= 0.01, "*",
+    ifelse(emtrends_dfY$p.value < 0.01  & emtrends_dfY$p.value >= 0.001, "**",
+    ifelse(emtrends_dfY$p.value < 0.001, "***", ""))))  
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfY$PC <- paste0(emtrends_dfY$P,emtrends_dfY$CROP)
+  emtrends_dfY$P <- factor(emtrends_dfY$P, levels = desired_order_P)
+emmeans_resultsY<-emmeans(modNYGadj1, ~N*P*CROP, at=list(N=0))
+emmeans_dfY <- as.data.frame(emmeans_resultsY)
+emmeans_dfY$PC <- paste0(emmeans_dfY$P,emmeans_dfY$CROP)
+mergedY <- emtrends_dfY %>%
+  inner_join(emmeans_dfY, by = c("PC")) %>%
+  dplyr::select(PC, P.x, CROP.x, emmean, N.trend, SE.x, plvl)
+  colnames(mergedY)[2] <- "P"
+  colnames(mergedY)[3] <- "CROP"
+mergedY$P <- factor(mergedY$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+Y_df <- mergedY %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedY <- Y_df %>%
+  arrange(P)
+sortedY
+sortedY_I <- subset(sortedY, CROP== "inter")
+sortedY_M <- subset(sortedY, CROP== "monoI")
+
+sym_I <- sortedY_I %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 1125
+  )
+sym_M <- sortedY_M %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 1000
+  )
+
+#plot
+GraincomboplotNECY <- ggplot(data=NdYSI) +
+  geom_point(data = NdYSI, aes(x = N, y = G, shape = CROP)) +
+#  geom_point(data = subset(NdYSI, P== "MN"), aes(x = N, y = G, shape = CROP)) +
+#  geom_point(data = subset(NdYSI, P== "NY"), aes(x = N, y = G, shape = CROP)) +
+#  geom_point(data = subset(NdYSI, P== "WI"), aes(x = N, y = G, shape = CROP)) +
+#  labs(x = "N-Rate (Kg ha-1)", y = "Grain Yield (Kg ha-1)", shape = "Cropping System", color = "Cropping System", linetype = "Cropping System")+
+#  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+#  ylim(0, 1200) +
+#  facet_wrap(~P, scales = "free_y", ncol = 2, labeller = as_labeller(c(KS='Kansas',
+#                                      MN='Minnesota',
+#                                      NY='New York',
+#                                      WI='Wisconsin'))) +
+#scale_shape_manual(values = c(4, 25),labels = c("Intercropped","Monoculture IWG"))+
+  geom_function(data=subset(NdYSI, P== "KS" & CROP == "inter"), aes(linetype = CROP), fun=~93.35*exp(-0.0029*.x), color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "KS" & CROP == "monoI"), aes(linetype = CROP), fun=~142.46*exp(-0.0001*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "MN" & CROP == "inter"), aes(linetype = CROP), fun=~38.14*exp(0.0052*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "MN" & CROP == "monoI"), aes(linetype = CROP), fun=~82.90*exp(-0.0009*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "NY" & CROP == "inter"), aes(linetype = CROP), fun=~230.39*exp(0.0012*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "NY" & CROP == "monoI"), aes(linetype = CROP), fun=~253.99*exp(0.0008*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "WI" & CROP == "inter"), aes(linetype = CROP), fun=~378.01*exp(0.0042*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "WI" & CROP == "monoI"), aes(linetype = CROP), fun=~249.74*exp(0.0089*.x),color='darkgrey')+  
+  geom_text(data = sortedY_I, mapping = aes(x = 30, y = 1125, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1, inherit.aes = FALSE)+
+  geom_text(data = sortedY_M, mapping = aes(x = 30, y = 1000, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_M, aes(x = x_sym, y = y_sym), shape = 25, size = 1, fill = "lightgrey", stroke = 0.6, inherit.aes = FALSE)+
+  geom_text(data = sym_I, mapping = aes(x = 60, y = 1125, label = plvl))+ # add stars to figure
+  geom_text(data = sym_M, mapping = aes(x = 60, y = 1000, label = plvl))+ # add stars to figure
+#scale_shape_manual(values = c(4, 25),
+#                    labels = c("Intercropped", "Monoculture IWG"),
+#                     breaks = c("inter","monoI"),
+#                     name = "Cropping System") +
+#  scale_linetype_manual(values = c(inter = "dotdash", monoI = "dashed"),
+#                        labels = c(inter = "Intercropped", monoI = "Monoculture IWG"),
+#                        breaks = c("inter","monoI"),
+#                        name = "Cropping System") +
+scale_linetype_manual(name = "Cropping System",
+                      labels = c(inter = "Intercropped", inter = "Intercropped", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
+                      values = c(inter = "dotdash", inter = "dotdash", monoI = "dashed", monoI = "dashed")) +
+scale_shape_manual(name = "Cropping System",
+                     labels = c(inter = "Intercropped", inter = "Intercropped", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
+                     values = c(4, 25, 4, 25))+
+  labs(x = "N-Rate (Kg ha-1)", y = "Grain Yield (Kg ha-1)", shape = "Cropping System") +
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 1200) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin')))+
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=12), #change font size of legend text
+        legend.title=element_text(size=16), #change font size of legend title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+print(GraincomboplotNECY)
+# ggsave("figures/Paper/GrainplotNECY.jpg", plot = GraincomboplotNECY, width = 10, height = 8, dpi = 300)
 ```
 
 #Grain year 3 (all locations)
