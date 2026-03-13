@@ -523,7 +523,6 @@ ggplot(NdXS, aes(x = N, y = PlotTotForageKgHa , color = CROP, group = CROP)) +
   scale_color_discrete(name = "Cropping System")
 # save figures/forage/totalforage_Nrate_yr1S.jpeg  775x630
 
-### redoing figure for paper 
 #N:E:CROP
 # Define the desired order of 'P'
 desired_order <- c("KS", "MN", "NY", "WI")
@@ -680,6 +679,106 @@ TFXSPC<-ggplot(NdXS, aes(x = P, y = exp(predicted), color = CROP)) +
 
 print(TFXSPC)
 #ggsave("figures/forage/TFXSPC.jpg", plot = TFXSPC, width = 10, height = 8, dpi = 300)
+
+# redoing for paper
+#N:E:CROP
+# Define the desired order of 'P'
+desired_order <- c("KS", "MN", "NY", "WI")
+NdXS$P <- factor(NdXS$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultX<-emtrends(modNXST1,~ N*P*CROP, var= "N", infer=TRUE)
+  emtrends_dfX <- as.data.frame(emtrends_resultX)
+  emtrends_dfX$plvl <-
+    ifelse(emtrends_dfX$p.value == 0.05, ".",
+    ifelse(emtrends_dfX$p.value < 0.05  & emtrends_dfX$p.value >= 0.01, "*",
+    ifelse(emtrends_dfX$p.value < 0.01  & emtrends_dfX$p.value >= 0.001, "**",
+    ifelse(emtrends_dfX$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfX$PC <- paste0(emtrends_dfX$P,emtrends_dfX$CROP)
+  emtrends_dfX$P <- factor(emtrends_dfX$P, levels = desired_order_P)
+emmeans_resultsX<-emmeans(modNXST1, ~N*P*CROP, at=list(N=0))
+  emmeans_dfX <- as.data.frame(emmeans_resultsX)
+  emmeans_dfX$PC <- paste0(emmeans_dfX$P,emmeans_dfX$CROP)
+mergedX <- emtrends_dfX %>%
+  inner_join(emmeans_dfX, by = c("PC")) %>%
+  dplyr::select(PC, P.x, CROP.x, emmean, N.trend, SE.x, plvl)
+  colnames(mergedX)[2] <- "P"
+  colnames(mergedX)[3] <- "CROP"
+mergedX$P <- factor(mergedX$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+X_df <- mergedX %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedX <- X_df %>%
+  arrange(P)
+sortedX
+sortedX_I <- subset(sortedX, CROP== "inter")
+sortedX_A <- subset(sortedX, CROP== "monoA")
+sortedX_M <- subset(sortedX, CROP== "monoI")
+
+sym_I <- sortedX_I %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 15000
+  )
+sym_A <- sortedX_A %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 14500
+  )
+sym_M <- sortedX_M %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 14000
+  )
+
+
+#plot
+TFcomboplotNECXS <- ggplot(data=NdXS) +
+  geom_point(data = NdXS, aes(x = N, y = PlotTotForageKgHa, shape = CROP)) +
+  # functions come from equation in sorted
+  geom_function(data=subset(NdXS, P== "KS" & CROP == "inter"), aes(linetype = CROP), fun=~9330.66*exp(0.0005*.x),color='#000000')+
+  geom_function(data=subset(NdXS, P== "KS" & CROP == "monoA"), aes(linetype = CROP), fun=~7425.63*exp(0.0010*.x),color='#000000')+
+  geom_function(data=subset(NdXS, P== "KS" & CROP == "monoI"), aes(linetype = CROP), fun=~11257.42*exp(0.0004*.x),color='#000000')+
+  geom_function(data=subset(NdXS, P== "MN" & CROP == "inter"), aes(linetype = CROP), fun=~3721.48*exp(0.0005*.x),color='#000000')+
+  geom_function(data=subset(NdXS, P== "MN" & CROP == "monoA"), aes(linetype = CROP), fun=~3843.28*exp(-0.0014*.x),color='#000000')+
+  geom_function(data=subset(NdXS, P== "MN" & CROP == "monoI"), aes(linetype = CROP), fun=~2148.29*exp(0.0031*.x),color='#000000')+
+  geom_function(data=subset(NdXS, P== "NY" & CROP == "inter"), aes(linetype = CROP), fun=~6934.49*exp(-0.0003*.x),color='#000000')+
+  geom_function(data=subset(NdXS, P== "NY" & CROP == "monoA"), aes(linetype = CROP), fun=~6121.53*exp(-0.0007*.x),color='#000000')+
+  geom_function(data=subset(NdXS, P== "NY" & CROP == "monoI"), aes(linetype = CROP), fun=~4217.30*exp(0.0047*.x),color='#000000')+
+  geom_function(data=subset(NdXS, P== "WI" & CROP == "inter"), aes(linetype = CROP), fun=~7398.95*exp(0.0002*.x),color='#000000')+
+  geom_function(data=subset(NdXS, P== "WI" & CROP == "monoA"), aes(linetype = CROP), fun=~5647.65*exp(0.0004*.x),color='#000000')+
+  geom_function(data=subset(NdXS, P== "WI" & CROP == "monoI"), aes(linetype = CROP), fun=~8774.71*exp(0.0008*.x),color='#000000')+
+  geom_text(data = sortedX_I, mapping = aes(x = 30, y = 15000, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1, inherit.aes = FALSE)+
+  geom_text(data = sortedX_A, mapping = aes(x = 30, y = 14500, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_A, aes(x = x_sym, y = y_sym), shape = 1, size = 2, inherit.aes = FALSE)+
+  geom_text(data = sortedX_M, mapping = aes(x = 30, y = 14000, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_M, aes(x = x_sym, y = y_sym), shape = 25, size = 1, fill = "lightgrey", stroke = 0.6, inherit.aes = FALSE)+
+  geom_text(data = sym_I, mapping = aes(x = 60, y = 15000, label = plvl))+ # add stars to figure
+  geom_text(data = sym_A, mapping = aes(x = 60, y = 14500, label = plvl))+ # add stars to figure
+  geom_text(data = sym_M, mapping = aes(x = 60, y = 14000, label = plvl))+ # add stars to figure
+scale_linetype_manual(name = "Cropping System",
+                      labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
+                      values = c(inter = "dotdash", inter = "dotdash", monoA = "dotted", monoA = "dotted", monoI = "dashed", monoI = "dashed")) +
+scale_shape_manual(name = "Cropping System",
+                      labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
+                     values = c(4, 1, 25, 4, 1, 25))+
+  labs(x = "N-Rate (Kg ha-1)", y = "Total Forage (Kg ha-1)", shape = "Cropping System") +
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 15000) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin')))+
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=12), #change font size of legend text
+        legend.title=element_text(size=16), #change font size of legend title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+print(TFcomboplotNECXS)
 ```
 
 # Total forage year 1 fall 
@@ -886,6 +985,102 @@ TFXFPC<-ggplot(NdXF, aes(x = P, y = exp(predicted), color = CROP)) +
 
 print(TFXFPC)
 #ggsave("figures/forage/TFXFPC.jpg", plot = TFXFPC, width = 10, height = 8, dpi = 300)
+
+# redoing for paper
+#N:E:CROP
+desired_order <- c("MN", "NY", "WI")
+NdXF$P <- factor(NdXF$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultXF<-emtrends(modNXFT1,~ N*P*CROP, var= "N", infer=TRUE)
+  emtrends_dfXF <- as.data.frame(emtrends_resultXF)
+  emtrends_dfXF$plvl <-
+    ifelse(emtrends_dfXF$p.value == 0.05, ".",
+    ifelse(emtrends_dfXF$p.value < 0.05  & emtrends_dfXF$p.value >= 0.01, "*",
+    ifelse(emtrends_dfXF$p.value < 0.01  & emtrends_dfXF$p.value >= 0.001, "**",
+    ifelse(emtrends_dfXF$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("MN", "NY", "WI")
+  emtrends_dfXF$PC <- paste0(emtrends_dfXF$P,emtrends_dfXF$CROP)
+  emtrends_dfXF$P <- factor(emtrends_dfXF$P, levels = desired_order_P)
+emmeans_resultsXF<-emmeans(modNXFT1, ~N*P*CROP, at=list(N=0))
+  emmeans_dfXF <- as.data.frame(emmeans_resultsXF)
+  emmeans_dfXF$PC <- paste0(emmeans_dfXF$P,emmeans_dfXF$CROP)
+mergedXF <- emtrends_dfXF %>%
+  inner_join(emmeans_dfXF, by = c("PC")) %>%
+  dplyr::select(PC, P.x, CROP.x, emmean, N.trend, SE.x, plvl)
+  colnames(mergedXF)[2] <- "P"
+  colnames(mergedXF)[3] <- "CROP"
+mergedXF$P <- factor(mergedXF$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+XF_df <- mergedXF %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedXF <- XF_df %>%
+  arrange(P)
+sortedXF
+sortedXF_I <- subset(sortedXF, CROP== "inter")
+sortedXF_A <- subset(sortedXF, CROP== "monoA")
+sortedXF_M <- subset(sortedXF, CROP== "monoI")
+
+sym_I <- sortedXF_I %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 4000
+  )
+sym_A <- sortedXF_A %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 3800
+  )
+sym_M <- sortedXF_M %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 3550
+  )
+
+
+#plot
+TFcomboplotNECXF <- ggplot(data=NdXF) +
+  geom_point(data = NdXF, aes(x = N, y = PlotTotForageKgHa, shape = CROP)) +
+  # functions come from equation in sorted
+  geom_function(data=subset(NdXF, P== "MN" & CROP == "inter"), aes(linetype = CROP), fun=~1981.94*exp(-0.0009*.x),color='#2F2F2F')+
+  geom_function(data=subset(NdXF, P== "MN" & CROP == "monoA"), aes(linetype = CROP), fun=~1929.21*exp(0.0002*.x),color='#2F2F2F')+
+  geom_function(data=subset(NdXF, P== "MN" & CROP == "monoI"), aes(linetype = CROP), fun=~945.42*exp(0.0026*.x),color='#2F2F2F')+
+  geom_function(data=subset(NdXF, P== "NY" & CROP == "inter"), aes(linetype = CROP), fun=~2649.55*exp(-0.0009*.x),color='#2F2F2F')+
+  geom_function(data=subset(NdXF, P== "NY" & CROP == "monoA"), aes(linetype = CROP), fun=~2904.26*exp(-0.0007*.x),color='#2F2F2F')+
+  geom_function(data=subset(NdXF, P== "NY" & CROP == "monoI"), aes(linetype = CROP), fun=~179.98*exp(0.0059*.x),color='#2F2F2F')+
+  geom_function(data=subset(NdXF, P== "WI" & CROP == "inter"), aes(linetype = CROP), fun=~479.80*exp(-0.0005*.x),color='#2F2F2F')+
+  geom_function(data=subset(NdXF, P== "WI" & CROP == "monoA"), aes(linetype = CROP), fun=~173.11*exp(-0.0002*.x),color='#2F2F2F')+
+  geom_function(data=subset(NdXF, P== "WI" & CROP == "monoI"), aes(linetype = CROP), fun=~297.71*exp(-0.0006*.x),color='#2F2F2F')+
+  geom_text(data = sortedXF_I, mapping = aes(x = 30, y = 4000, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1, inherit.aes = FALSE)+
+  geom_text(data = sortedXF_A, mapping = aes(x = 30, y = 3800, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_A, aes(x = x_sym, y = y_sym), shape = 1, size = 2, inherit.aes = FALSE)+
+  geom_text(data = sortedXF_M, mapping = aes(x = 30, y = 3550, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_M, aes(x = x_sym, y = y_sym), shape = 25, size = 1, fill = "lightgrey", stroke = 0.6, inherit.aes = FALSE)+
+  geom_text(data = sym_I, mapping = aes(x = 60, y = 4000, label = plvl))+ # add stars to figure
+  geom_text(data = sym_A, mapping = aes(x = 60, y = 3800, label = plvl))+ # add stars to figure
+  geom_text(data = sym_M, mapping = aes(x = 60, y = 3550, label = plvl))+ # add stars to figure
+scale_linetype_manual(name = "Cropping System",
+                      labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
+                      values = c(inter = "dotdash", inter = "dotdash", monoA = "dotted", monoA = "dotted", monoI = "dashed", monoI = "dashed")) +
+scale_shape_manual(name = "Cropping System",
+                      labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
+                     values = c(4, 1, 25, 4, 1, 25))+
+  labs(x = "N-Rate (Kg ha-1)", y = "Total Forage (Kg ha-1)", shape = "Cropping System") +
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 4750) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin')))+
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=12), #change font size of legend text
+        legend.title=element_text(size=16), #change font size of legend title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+print(TFcomboplotNECXF)
 ```
 
 # Total forage year 2 summer
@@ -1103,6 +1298,103 @@ TFYSPC<-ggplot(NdYS, aes(x = P, y = (predicted), color = CROP)) +
 
 print(TFYSPC)
 #ggsave("figures/forage/TFYSPC.jpg", plot = TFYSPC, width = 10, height = 8, dpi = 300)
+
+# redo for paper
+#N:E:CROP
+# Define the desired order of 'P'
+desired_order <- c("KS", "MN", "NY", "WI")
+NdYS$P <- factor(NdYS$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultYS<-emtrends(modNYST,~ N*P*CROP, var= "N", infer=TRUE)
+  emtrends_dfYS <- as.data.frame(emtrends_resultYS)
+  emtrends_dfYS$plvl <-
+    ifelse(emtrends_dfYS$p.value == 0.05, ".",
+    ifelse(emtrends_dfYS$p.value < 0.05  & emtrends_dfYS$p.value >= 0.01, "*",
+    ifelse(emtrends_dfYS$p.value < 0.01  & emtrends_dfYS$p.value >= 0.001, "**",
+    ifelse(emtrends_dfYS$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfYS$PC <- paste0(emtrends_dfYS$P,emtrends_dfYS$CROP)
+  emtrends_dfYS$P <- factor(emtrends_dfYS$P, levels = desired_order_P)
+emtrends_resultYS<-emmeans(modNYST, ~N*P*CROP, at=list(N=0))
+  emmeans_dfYS <- as.data.frame(emtrends_resultYS)
+  emmeans_dfYS$PC <- paste0(emmeans_dfYS$P,emmeans_dfYS$CROP)
+mergedYS <- emtrends_dfYS %>%
+  inner_join(emmeans_dfYS, by = c("PC")) %>%
+  dplyr::select(PC, P.x, CROP.x, emmean, N.trend, SE.x, plvl)
+  colnames(mergedYS)[2] <- "P"
+  colnames(mergedYS)[3] <- "CROP"
+mergedYS$P <- factor(mergedYS$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+YS_df <- mergedYS %>%
+  mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+  select(-emmean, -N.trend)
+sortedYS <- YS_df %>%
+  arrange(P)
+sortedYS_I <- subset(sortedYS, CROP== "inter")
+sortedYS_A <- subset(sortedYS, CROP== "monoA")
+sortedYS_M <- subset(sortedYS, CROP== "monoI")
+
+sym_I <- sortedYS_I %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 8000
+  )
+sym_A <- sortedYS_A %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 7750
+  )
+sym_M <- sortedYS_M %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 7500
+  )
+
+TFcomboplotNECYS <- ggplot(data=NdYS) +
+  geom_point(data = NdYS, aes(x = N, y = PlotTotForageKgHa, shape = CROP)) +
+  # functions come from equation in sorted
+  geom_function(data=subset(NdYS, P== "MN" & CROP == "inter"), aes(linetype = CROP), fun=~4778.60+(1.6209*.x),color='darkgrey')+
+  geom_function(data=subset(NdYS, P== "MN" & CROP == "monoA"), aes(linetype = CROP), fun=~2246.75+(-2.8717*.x),color='darkgrey')+
+  geom_function(data=subset(NdYS, P== "MN" & CROP == "monoI"), aes(linetype = CROP), fun=~4619.59+(10.0768*.x),color='#595959')+
+  geom_function(data=subset(NdYS, P== "NY" & CROP == "inter"), aes(linetype = CROP), fun=~5426.57+(9.3543*.x),color='#595959')+
+  geom_function(data=subset(NdYS, P== "NY" & CROP == "monoA"), aes(linetype = CROP), fun=~4068.33+(-3.3676*.x),color='#595959')+
+  geom_function(data=subset(NdYS, P== "NY" & CROP == "monoI"), aes(linetype = CROP), fun=~2965.31+(20.9748*.x),color='#595959')+
+  geom_function(data=subset(NdYS, P== "KS" & CROP == "inter"), aes(linetype = CROP), fun=~2530.88+(0.2515*.x),color='#595959')+
+  geom_function(data=subset(NdYS, P== "KS" & CROP == "monoA"), aes(linetype = CROP), fun=~1469.55+(6.8384*.x),color='#595959')+
+  geom_function(data=subset(NdYS, P== "KS" & CROP == "monoI"), aes(linetype = CROP), fun=~2976.99+(1.5081*.x),color='#595959')+  
+  geom_function(data=subset(NdYS, P== "WI" & CROP == "inter"), aes(linetype = CROP), fun=~5559.87+(6.2604*.x),color='#595959')+
+  geom_function(data=subset(NdYS, P== "WI" & CROP == "monoA"), aes(linetype = CROP), fun=~4073.61+(2.7205*.x),color='#595959')+
+  geom_function(data=subset(NdYS, P== "WI" & CROP == "monoI"), aes(linetype = CROP), fun=~3826.49+(23.1963*.x),color='#595959')+
+  geom_text(data = sortedYS_I, mapping = aes(x = 30, y = 8000, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1, inherit.aes = FALSE)+
+  geom_text(data = sortedYS_A, mapping = aes(x = 30, y = 7750, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_A, aes(x = x_sym, y = y_sym), shape = 1, size = 2, inherit.aes = FALSE)+
+  geom_text(data = sortedYS_M, mapping = aes(x = 30, y = 7500, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_M, aes(x = x_sym, y = y_sym), shape = 25, size = 1, fill = "lightgrey", stroke = 0.6, inherit.aes = FALSE)+
+  geom_text(data = sym_I, mapping = aes(x = 60, y = 8000, label = plvl))+ # add stars to figure
+  geom_text(data = sym_A, mapping = aes(x = 60, y = 7750, label = plvl))+ # add stars to figure
+  geom_text(data = sym_M, mapping = aes(x = 60, y = 7500, label = plvl))+ # add stars to figure
+scale_linetype_manual(name = "Cropping System",
+                      labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
+                      values = c(inter = "dotdash", inter = "dotdash", monoA = "dotted", monoA = "dotted", monoI = "dashed", monoI = "dashed")) +
+scale_shape_manual(name = "Cropping System",
+                      labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
+                     values = c(4, 1, 25, 4, 1, 25))+
+  labs(x = "N-Rate (Kg ha-1)", y = "Total Forage (Kg ha-1)", shape = "Cropping System") +
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 8000) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin')))+
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=12), #change font size of legend text
+        legend.title=element_text(size=16), #change font size of legend title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+print(TFcomboplotNECYS)  
 ```
 
 # Total forage year 2 fall
@@ -1256,6 +1548,36 @@ TFYFPC<-ggplot(NdYF, aes(x = P, y = exp(predicted), color = CROP)) +
 
 print(TFYFPC)
 #ggsave("figures/forage/TFYFPC.jpg", plot = TFYFPC, width = 10, height = 8, dpi = 300)
+
+#figure E:C (YF)
+NdYF$predicted <- predict(modNYFT1, newdata = NdYF, re.form = NA)
+TFemmsPC <- emmeans(modNYFT1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(TFemmsPC)
+cld_dataTFPC <- cld(TFemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataTFPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture Alfalfa", "Monoculture IWG")
+xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+TFYFPC<-ggplot(NdYF, aes(x = P, y = exp(predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Total Forage (Kg Ha-1)") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 1, 25))+
+     ggtitle("Year 2 Fall \nbacktransformed for visualization")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(TFYFPC)
+#ggsave("figures/Paper/TFYFPC.jpg", plot = TFYFPC, width = 10, height = 8, dpi = 300)
 ```
 
 # Total forage year 3 summer
@@ -1378,6 +1700,28 @@ TFZSPC<-ggplot(NdZS_2, aes(x = P, y = exp(predicted), color = CROP)) +
 
 print(TFZSPC)
 #ggsave("figures/forage/TFZSPC.jpg", plot = TFZSPC, width = 10, height = 8, dpi = 300)
+
+# Boxplot for Total Forage by E
+# Custom X-axis labels 
+xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+ggplot(NdZS_2, aes(x = P, y = PlotTotForageKgHa)) +
+  geom_boxplot() +
+  labs(title = "Year 3 Summer Total Forage by Location", x = "Location", y = "Total Forage (Kg Ha-1)")+
+  geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
+# save figures/Paper/TF_boxplot_E_ZS   720x742
+
+# Boxplot for Total Forage by C
+# Custom X-axis labels 
+xlabels <- c("Intercropping", "Monoculture Alfalfa", "Monoculture IWG")
+TFCZS <- ggplot(NdZS_2, aes(x = CROP, y = PlotTotForageKgHa)) +
+  geom_boxplot() +
+  labs(title = "Year 3 Summer", x = "Cropping System", y = "Total Forage (Kg Ha-1)")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
 ```
 
 # Total forage year 3 fall
@@ -1527,9 +1871,18 @@ TFZFPC<-ggplot(NdZF_2, aes(x = P, y = exp(predicted), color = CROP)) +
             color = "black", vjust = 0, hjust = 2.5)+
   scale_color_manual(name = "Cropping System", labels = custom_labels,values = custom_colors)+
   theme(plot.title = element_text(hjust = 0.5))
-
 print(TFZFPC)
 #ggsave("figures/forage/TFZFPC.jpg", plot = TFZFPC, width = 10, height = 8, dpi = 300)
+
+# Boxplot for Total Forage by C
+# Custom X-axis labels 
+xlabels <- c("Intercropping", "Monoculture Alfalfa", "Monoculture IWG")
+TFCZF <- ggplot(NdZF_2, aes(x = CROP, y = PlotTotForageKgHa)) +
+  geom_boxplot() +
+  labs(title = "Year 3 Fall", x = "Cropping System", y = "Total Forage (Kg Ha-1)")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
 ```
 
 
@@ -1706,6 +2059,30 @@ legend = "right"
 TFPC
 #save figures/forage/TFPC.jpg   2000x1800
 ```
+
+# total forage combined harvests Y1S Y1F Y2S N:E:C
+```{r}
+#TFcomboplotNECXS
+#TFcomboplotNECXF
+#TFcomboplotNECYS
+# Add individual titles to your plots
+TFcomboplotNECXS <- TFcomboplotNECXS + ggtitle("Year 1 Summer")
+TFcomboplotNECXF <- TFcomboplotNECXF + ggtitle("Year 1 Fall")
+TFcomboplotNECYS <- TFcomboplotNECYS + ggtitle("Year 2 Summer")
+TFcomboplotNECXSXFYS <- ggarrange(TFcomboplotNECXS, TFcomboplotNECXF, TFcomboplotNECYS, ncol=2, nrow=2, common.legend = TRUE, legend="top")
+# ggsave("figures/Paper/TFcomboplotNECXSXFYS.jpg", plot = TFcomboplotNECXSXFYS, width = 20, height = 16, dpi = 300)
+```
+
+# total forage combined harvests Year 3 C
+```{r}
+# TFCZS
+# TFCZF
+TFcomboplotCZSZF <- ggarrange(TFCZS, TFCZF, ncol=2)
+#ggsave("figures/Paper/TFcomboplotCZSZF.jpg", plot = TFcomboplotCZSZF, width = 12, height = 9.6, dpi = 300)
+```
+
+
+
 
 
 ## IWG Forage Yield 
@@ -1893,7 +2270,7 @@ IXSPC<-ggplot(NdXSI, aes(x = P, y = exp(predicted), color = CROP)) +
 print(IXSPC)
 ##ggsave("figures/forage/IXSPC.jpg", plot = IXSPC, width = 10, height = 8, dpi = 300)
 
-#N:E
+#N:E:C
 # Define the desired order of 'P'
 desired_order <- c("KS", "MN", "NY", "WI")
 NdXSI$P <- factor(NdXSI$P, levels = desired_order)
@@ -1939,7 +2316,7 @@ sym_M <- sortedX_M %>%
   )
 
 #plot
-IcomboplotNEXS <- ggplot(data=NdXSI) +
+IcomboplotNECXS <- ggplot(data=NdXSI) +
   geom_point(data = NdXSI, aes(x = N, y = PlotIWGDryKgHa, shape = CROP)) +
   labs(x = "N-Rate (Kg ha-1)", y = "IWG Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
@@ -1962,8 +2339,87 @@ IcomboplotNEXS <- ggplot(data=NdXSI) +
   geom_text(data = sortedX_I, mapping = aes(x = 60, y = 15500, label = plvl))+
   geom_text(data = sortedX_M, mapping = aes(x = 60, y = 15000, label = plvl)) # add stars to figure
 # add stars to figure
+print(IcomboplotNECXS)
+# ggsave("figures/forage/IcomboplotNECXS.jpg", plot = IcomboplotNECXS, width = 10, height = 8, dpi = 300)
+
+#N:E
+# Define the desired order of 'P'
+desired_order <- c("KS", "MN", "NY", "WI")
+NdXSI$P <- factor(NdXSI$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultX<-emtrends(modNXSI1,~ N*P, var= "N", infer=TRUE)
+  emtrends_dfX <- as.data.frame(emtrends_resultX)
+  emtrends_dfX$plvl <-
+    ifelse(emtrends_dfX$p.value == 0.05, ".",
+    ifelse(emtrends_dfX$p.value < 0.05  & emtrends_dfX$p.value >= 0.01, "*",
+    ifelse(emtrends_dfX$p.value < 0.01  & emtrends_dfX$p.value >= 0.001, "**",
+    ifelse(emtrends_dfX$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfX$P <- factor(emtrends_dfX$P, levels = desired_order_P)
+emmeans_resultsX<-emmeans(modNXSI1, ~N*P, at=list(N=0))
+  emmeans_dfX <- as.data.frame(emmeans_resultsX)
+mergedX <- emtrends_dfX %>%
+  inner_join(emmeans_dfX, by = c("P")) %>%
+  dplyr::select(P, emmean, N.trend, SE.x, plvl)
+mergedX$P <- factor(mergedX$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+X_df <- mergedX %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedX <- X_df %>%
+  arrange(P)
+
+#plot
+IcomboplotNEXS <- ggplot(data=NdXSI) +
+  geom_point(data = NdXSI, aes(x = N, y = PlotIWGDryKgHa)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "IWG Forage")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 15500) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin'))) +
+  # functions come from equation in sorted
+  geom_function(data=subset(NdXSI, P== "KS"), fun=~7358.19*exp(0.0007*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSI, P== "MN"), fun=~1737.51*exp(0.0027*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSI, P== "NY"), fun=~2695.81*exp(0.0050*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSI, P== "WI"), fun=~6843.18*exp(0.0009*.x),color='darkgrey')+
+  geom_text(data = sortedX, mapping = aes(x = 30, y = 15500, label = equation),  size=3)+ # add equation to figure
+  geom_text(data = sortedX, mapping = aes(x = 60, y = 15500, label = plvl))+ # add stars to figure
+# add stars to figure
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
 print(IcomboplotNEXS)
-# ggsave("figures/forage/IcomboplotNEXS.jpg", plot = IcomboplotNEXS, width = 10, height = 8, dpi = 300)
+# ggsave("figures/Paper/IcomboplotNEXS.jpg", plot = IcomboplotNEXS, width = 10, height = 8, dpi = 300)
+
+#figure E:C (XS)
+NdXSI$predicted <- predict(modNXSI1, newdata = NdXSI, re.form = NA)
+IFemmsPC <- emmeans(modNXSI1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(IFemmsPC)
+cld_dataIFPC <- cld(IFemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataIFPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture IWG")
+xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+IXSEC<-ggplot(NdXSI, aes(x = P, y = exp(predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "IWG Forage (Kg Ha-1)") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
+     ggtitle("Year 1 Summer \nbacktransformed for visualization")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(IXSEC)
 ```
 
 # IWG forage year 1 fall
@@ -2150,7 +2606,7 @@ IXFPC<-ggplot(NdXFI, aes(x = P, y = exp(predicted), color = CROP)) +
 print(IXFPC)
 #ggsave("figures/forage/IXFPC.jpg", plot = IXFPC, width = 10, height = 8, dpi = 300)
 
-#N:E
+#N:E:C
 # Define the desired order of 'P'
 desired_order <- c("KS", "MN", "NY", "WI")
 NdXFI$P <- factor(NdXFI$P, levels = desired_order)
@@ -2196,7 +2652,7 @@ sym_M <- sortedX_M %>%
   )
 
 #plot
-IcomboplotNEXF <- ggplot(data=NdXFI) +
+IcomboplotNECXF <- ggplot(data=NdXFI) +
   geom_point(data = NdXFI, aes(x = N, y = PlotIWGDryKgHa, shape = CROP)) +
   labs(x = "N-Rate (Kg ha-1)", y = "IWG Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
@@ -2217,8 +2673,86 @@ IcomboplotNEXF <- ggplot(data=NdXFI) +
   geom_text(data = sortedX_I, mapping = aes(x = 60, y = 3250, label = plvl))+
   geom_text(data = sortedX_M, mapping = aes(x = 60, y = 3100, label = plvl)) # add stars to figure
 # add stars to figure
+print(IcomboplotNECXF)
+# ggsave("figures/forage/IcomboplotNECXF.jpg", plot = IcomboplotNECXF, width = 10, height = 8, dpi = 300)
+
+#N:E
+# Define the desired order of 'P'
+desired_order <- c("KS", "MN", "NY", "WI")
+NdXFI$P <- factor(NdXFI$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultX<-emtrends(modNXFI1,~ N*P, var= "N", infer=TRUE)
+  emtrends_dfX <- as.data.frame(emtrends_resultX)
+  emtrends_dfX$plvl <-
+    ifelse(emtrends_dfX$p.value == 0.05, ".",
+    ifelse(emtrends_dfX$p.value < 0.05  & emtrends_dfX$p.value >= 0.01, "*",
+    ifelse(emtrends_dfX$p.value < 0.01  & emtrends_dfX$p.value >= 0.001, "**",
+    ifelse(emtrends_dfX$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfX$P <- factor(emtrends_dfX$P, levels = desired_order_P)
+emmeans_resultsX<-emmeans(modNXFI1, ~N*P, at=list(N=0))
+  emmeans_dfX <- as.data.frame(emmeans_resultsX)
+mergedX <- emtrends_dfX %>%
+  inner_join(emmeans_dfX, by = c("P")) %>%
+  dplyr::select(P, emmean, N.trend, SE.x, plvl)
+mergedX$P <- factor(mergedX$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+X_df <- mergedX %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedX <- X_df %>%
+  arrange(P)
+
+#plot
+IcomboplotNEXF <- ggplot(data=NdXFI) +
+  geom_point(data = NdXFI, aes(x = N, y = PlotIWGDryKgHa)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "IWG Forage")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 3000) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin'))) +
+  # functions come from equation in sorted
+  geom_function(data=subset(NdXFI, P== "MN"), fun=~651.94*exp(0.0020*.x),color='darkgrey')+
+  geom_function(data=subset(NdXFI, P== "NY"), fun=~263.84*exp(0.0044*.x),color='darkgrey')+
+  geom_function(data=subset(NdXFI, P== "WI"), fun=~283.04*exp(-0.0010*.x),color='darkgrey')+
+  geom_text(data = sortedX, mapping = aes(x = 30, y = 3000, label = equation),  size=3)+ # add equation to figure
+  geom_text(data = sortedX, mapping = aes(x = 60, y = 3000, label = plvl))+ # add stars to figure
+# add stars to figure
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
 print(IcomboplotNEXF)
-# ggsave("figures/forage/IcomboplotNEXF.jpg", plot = IcomboplotNEXF, width = 10, height = 8, dpi = 300)
+# ggsave("figures/Paper/IcomboplotNEXF.jpg", plot = IcomboplotNEXF, width = 10, height = 8, dpi = 300)
+
+#figure E:C (XF)
+NdXFI$predicted <- predict(modNXFI1, newdata = NdXFI, re.form = NA)
+IFemmsPC <- emmeans(modNXFI1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(IFemmsPC)
+cld_dataIFPC <- cld(IFemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataIFPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture IWG")
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+IXFEC<-ggplot(NdXFI, aes(x = P, y = exp(predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "IWG Forage (Kg Ha-1)") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
+     ggtitle("Year 1 Fall \nbacktransformed for visualization")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(IXFEC)
 ```
 
 #IWG forage year 2 summer
@@ -2403,7 +2937,7 @@ IYSPC<-ggplot(NdYSI, aes(x = P, y = exp(predicted), color = CROP)) +
 print(IYSPC)
 #ggsave("figures/forage/IYSPC.jpg", plot = IYSPC, width = 10, height = 8, dpi = 300)
 
-#N:E
+#N:E:C
 # Define the desired order of 'P'
 desired_order <- c("KS", "MN", "NY", "WI")
 NdYSI$P <- factor(NdYSI$P, levels = desired_order)
@@ -2449,7 +2983,7 @@ sym_M <- sortedY_M %>%
   )
 
 #plot
-IcomboplotNEYS <- ggplot(data=NdYSI) +
+IcomboplotNECYS <- ggplot(data=NdYSI) +
   geom_point(data = NdYSI, aes(x = N, y = PlotIWGDryKgHa, shape = CROP)) +
   labs(x = "N-Rate (Kg ha-1)", y = "IWG Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
@@ -2472,8 +3006,87 @@ IcomboplotNEYS <- ggplot(data=NdYSI) +
   geom_text(data = sortedY_I, mapping = aes(x = 60, y = 8500, label = plvl))+
   geom_text(data = sortedY_M, mapping = aes(x = 60, y = 8250, label = plvl)) # add stars to figure
 # add stars to figure
+print(IcomboplotNECYS)
+#ggsave("figures/forage/IcomboplotNECYS.jpg", plot = IcomboplotNECYS, width = 10, height = 8, dpi = 300)
+
+#N:E
+# Define the desired order of 'P'
+desired_order <- c("KS", "MN", "NY", "WI")
+NdYSI$P <- factor(NdYSI$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultX<-emtrends(modNYSI1,~ N*P, var= "N", infer=TRUE)
+  emtrends_dfX <- as.data.frame(emtrends_resultX)
+  emtrends_dfX$plvl <-
+    ifelse(emtrends_dfX$p.value == 0.05, ".",
+    ifelse(emtrends_dfX$p.value < 0.05  & emtrends_dfX$p.value >= 0.01, "*",
+    ifelse(emtrends_dfX$p.value < 0.01  & emtrends_dfX$p.value >= 0.001, "**",
+    ifelse(emtrends_dfX$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfX$P <- factor(emtrends_dfX$P, levels = desired_order_P)
+emmeans_resultsX<-emmeans(modNYSI1, ~N*P, at=list(N=0))
+  emmeans_dfX <- as.data.frame(emmeans_resultsX)
+mergedX <- emtrends_dfX %>%
+  inner_join(emmeans_dfX, by = c("P")) %>%
+  dplyr::select(P, emmean, N.trend, SE.x, plvl)
+mergedX$P <- factor(mergedX$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+X_df <- mergedX %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedX <- X_df %>%
+  arrange(P)
+
+#plot
+IcomboplotNEYS <- ggplot(data=NdYSI) +
+  geom_point(data = NdYSI, aes(x = N, y = PlotIWGDryKgHa)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "IWG Forage")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 9000) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin'))) +
+  # functions come from equation in sorted
+  geom_function(data=subset(NdYSI, P== "KS"), fun=~2145.60*exp(0.0008*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "MN"), fun=~3922.15*exp(0.0018*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "NY"), fun=~2688.03*exp(0.0049*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSI, P== "WI"), fun=~3315.20*exp(0.0042*.x),color='darkgrey')+
+  geom_text(data = sortedX, mapping = aes(x = 30, y = 9000, label = equation),  size=3)+ # add equation to figure
+  geom_text(data = sortedX, mapping = aes(x = 60, y = 9000, label = plvl))+ # add stars to figure
+# add stars to figure
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
 print(IcomboplotNEYS)
-#ggsave("figures/forage/IcomboplotNEYS.jpg", plot = IcomboplotNEYS, width = 10, height = 8, dpi = 300)
+# ggsave("figures/Paper/IcomboplotNEYS.jpg", plot = IcomboplotNEYS, width = 10, height = 8, dpi = 300)
+
+#figure E:C (YS)
+NdYSI$predicted <- predict(modNYSI1, newdata = NdYSI, re.form = NA)
+IFemmsPC <- emmeans(modNYSI1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(IFemmsPC)
+cld_dataIFPC <- cld(IFemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataIFPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture IWG")
+xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+IYSEC<-ggplot(NdYSI, aes(x = P, y = exp(predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "IWG Forage (Kg Ha-1)") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
+     ggtitle("Year 2 Summer \nbacktransformed for visualization")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(IYSEC)
 ```
 
 #IWG forage year 2 fall
@@ -2727,6 +3340,62 @@ IcomboplotNEYF <- ggplot(data=NdYFI) +
 # add stars to figure
 print(IcomboplotNEYF)
 # ggsave("figures/forage/IcomboplotNEYF.jpg", plot = IcomboplotNEYF, width = 10, height = 8, dpi = 300)
+
+#EQUATION table JUST N 
+emtrends_result<-emtrends(modNYFI1,~ 1, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNYFI1, ~1, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+emtrends_df <- emtrends_df %>% mutate(key = 1)
+emmeans_df <- emmeans_df %>% mutate(key = 1)
+merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
+  select(emmean, N.trend, SE.x)
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+new_df
+# N rate across location 
+IFNYF <- ggplot(NdYFI, aes(x = N, y = PlotIWGDryKgHa)) +
+  geom_point(color='black') + #geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  #use function from new_df calculated above
+  geom_function(data=NdYFI, fun=~564.40*exp(0.0024*.x),color='black')+
+  labs(x = "N-Rate (Kg/ha)", y = "IWG Forage") +  # Label the axes
+  ggtitle("Year 2 Fall Relationship between IWG Forage and N-rate \nbacktransformed for visualization") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 9750) +
+  geom_text(data = new_df, mapping = aes(x = 10, y = 9650, label = equation),  size=4)+ # add equation to figure
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18)) #change font size of axis titles
+# save figures/Paper/ITF_Nrate_N_yr2F  900x795
+
+#figure E:C (YF)
+NdYFI$predicted <- predict(modNYFI1, newdata = NdYFI, re.form = NA)
+IFemmsPC <- emmeans(modNYFI1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(IFemmsPC)
+cld_dataIFPC <- cld(IFemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataIFPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture IWG")
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+IYFEC<-ggplot(NdYFI, aes(x = P, y = exp(predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "IWG Forage (Kg Ha-1)") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
+     ggtitle("Year 2 Fall \nbacktransformed for visualization")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(IYFEC)
 ```
 
 #IWG forage year 3 summer
@@ -2997,6 +3666,84 @@ IcomboplotNCZS <- ggplot(data=NdZSI_2) +
 # add stars to figure
 print(IcomboplotNCZS)
 # ggsave("figures/forage/IcomboplotNCZS.jpg", plot = IcomboplotNCZS, width = 10, height = 8, dpi = 300)
+
+#N:E
+# Define the desired order of 'P'
+desired_order <- c("KS", "MN", "NY", "WI")
+NdZSI_2$P <- factor(NdZSI_2$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultZ<-emtrends(modNZSI2,~ N*P, var= "N", infer=TRUE)
+  emtrends_dfZ <- as.data.frame(emtrends_resultZ)
+  emtrends_dfZ$plvl <-
+    ifelse(emtrends_dfZ$p.value == 0.05, ".",
+    ifelse(emtrends_dfZ$p.value < 0.05  & emtrends_dfZ$p.value >= 0.01, "*",
+    ifelse(emtrends_dfZ$p.value < 0.01  & emtrends_dfZ$p.value >= 0.001, "**",
+    ifelse(emtrends_dfZ$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfZ$P <- factor(emtrends_dfZ$P, levels = desired_order_P)
+emmeans_resultsZ<-emmeans(modNZSI2, ~N*P, at=list(N=0))
+  emmeans_dfZ <- as.data.frame(emmeans_resultsZ)
+mergedZ <- emtrends_dfZ %>%
+  inner_join(emmeans_dfZ, by = c("P")) %>%
+  dplyr::select(P, emmean, N.trend, SE.x, plvl)
+mergedZ$P <- factor(mergedZ$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+Z_df <- mergedZ %>%
+  mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+  select(-emmean, -N.trend)
+sortedZ <- Z_df %>%
+  arrange(P)
+
+#plot
+IcomboplotNEZS <- ggplot(data=NdZSI_2) +
+  geom_point(data = NdZSI_2, aes(x = N, y = PlotIWGDryKgHa)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "IWG Forage")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 12500) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin'))) +
+  # functions come from equation in sorted
+  geom_function(data=subset(NdZSI_2, P== "MN"), fun=~2382.74+(7.4345*.x),color='darkgrey')+
+  geom_function(data=subset(NdZSI_2, P== "NY"), fun=~686.63+(1.4632*.x),color='darkgrey')+
+  geom_function(data=subset(NdZSI_2, P== "WI"), fun=~7144.09+(17.2438*.x),color='darkgrey')+
+  geom_text(data = sortedZ, mapping = aes(x = 30, y = 12500, label = equation),  size=3)+ # add equation to figure
+  geom_text(data = sortedZ, mapping = aes(x = 60, y = 12500, label = plvl))+ # add stars to figure
+# add stars to figure
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+print(IcomboplotNEZS)
+# ggsave("figures/Paper/IcomboplotNEZS.jpg", plot = IcomboplotNEZS, width = 10, height = 8, dpi = 300)
+
+#figure E:C (ZS)
+NdZSI_2$predicted <- predict(modNZSI2, newdata = NdZSI_2, re.form = NA)
+IFemmsPC <- emmeans(modNZSI2, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(IFemmsPC)
+cld_dataIFPC <- cld(IFemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataIFPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture IWG")
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+IZSEC<-ggplot(NdZSI_2, aes(x = P, y = (predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "IWG Forage (Kg Ha-1)") +
+  geom_point(data = emms_df, aes(x = P, y = emmean), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = emmean.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
+     ggtitle("Year 3 Summer")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(IZSEC)
 ```
 
 #IWG forage year 3 fall
@@ -3160,6 +3907,35 @@ IZFPC<-ggplot(NdZFI, aes(x = P, y = (predicted), color = CROP)) +
   scale_y_continuous(breaks = c(250, 500, 750, 1000, 1250, 1500), limits = c(0, 1500))
 print(IZFPC)
 #ggsave("figures/forage/IZFPC.jpg", plot = IZFPC, width = 10, height = 8, dpi = 300)
+
+#figure E:C (ZF)
+NdZFI$predicted <- predict(modNZFI, newdata = NdZFI, re.form = NA)
+IFemmsPC <- emmeans(modNZFI, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(IFemmsPC)
+cld_dataIFPC <- cld(IFemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataIFPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture IWG")
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+IZFEC<-ggplot(NdZFI, aes(x = P, y = (predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "IWG Forage (Kg Ha-1)") +
+  geom_point(data = emms_df, aes(x = P, y = emmean), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = emmean.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
+     ggtitle("Year 3 Fall")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(IZFEC)
 ```
 
 
@@ -3351,6 +4127,24 @@ IEC2
 #save figures/forage/IEC2.jpg   2000x1800
 ```
 
+# IWG forage all harvests E:C
+```{r}
+IEC <- ggarrange(
+IXSEC,
+IXFEC,
+IYSEC,
+IYFEC,
+IZSEC,
+IZFEC,
+nrow = 3, 
+ncol = 2,
+common.legend = TRUE,
+legend = "right"
+)
+IEC
+#save figures/Paper/IFEC.jpg   2500x1800
+```
+
 #IWG forage combo plot N:E
 ```{r}
 # Layer all the plots together!
@@ -3518,51 +4312,150 @@ AFplotN <- ggplot() +
     shape = guide_legend(title = "Cropping System"))
 print(AFplotN)
 
+# equations and plot N:C
+emtrends_result<-emtrends(modNXSA,~ CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", ""))))    
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+emmeans_results<-emmeans(modNXSA, ~ CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x, plvl)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoA"))  # Preferred order for CROP
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+  select(-emmean, -N.trend)
+sorted_df2 <- new_df %>%
+  arrange(CROP)
+sorted_df2
+sorted_I <- subset(sorted_df2, CROP== "inter")
+sorted_A <- subset(sorted_df2, CROP== "monoA")
+sym_I <- sorted_I %>%
+  distinct(CROP, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 10600
+  )
+sym_A <- sorted_A %>%
+  distinct(CROP, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 10400
+  )
+# N rate across C 
+AFNCXS <- ggplot(data=NdXSA) +
+  geom_point(data = NdXSA, aes(x = N, y = PlotAlfDryKgHa, shape = CROP)) +
+  #use function from new_df calculated above
+  geom_function(data=subset(NdXSA, CROP == "inter"), aes(linetype = CROP), fun=~3479.07+(-5.1720*.x), color='#000000')+
+  geom_function(data=subset(NdXSA, CROP == "monoA"), aes(linetype = CROP), fun=~5821.46+(0.9077*.x), color='#000000')+
+  ggtitle("Year 1 Summer \nRelationship between Alfalfa Forage and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 10750) +
+  geom_text(data = sorted_I, mapping = aes(x = 20, y = 10600, label = equation),  size=4)+ # add equation to figure
+  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1, inherit.aes = FALSE)+
+  geom_text(data = sorted_A, mapping = aes(x = 20, y = 10400, label = equation),  size=4)+ # add equation to figure
+  geom_point(data = sym_A, aes(x = x_sym, y = y_sym), shape = 1, size = 2, inherit.aes = FALSE)+
+  geom_text(data = sym_I, mapping = aes(x = 40, y = 10600, label = plvl))+ # add stars to figure
+  geom_text(data = sym_A, mapping = aes(x = 40, y = 10400, label = plvl))+ # add stars to figure
+  scale_linetype_manual(name = "Cropping System",
+                      labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa"),
+                      values = c(inter = "dotdash", inter = "dotdash", monoA = "dotted", monoA = "dotted")) +
+scale_shape_manual(name = "Cropping System",
+                     labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa"),
+                     values = c(4, 1, 4, 1))+
+  labs(x = "N-Rate (Kg ha-1)", y = "Alfalfa Forage (Kg ha-1)", shape = "Cropping System") +
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=12), #change font size of legend text
+        legend.title=element_text(size=16), #change font size of legend title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+AFNCXS
 
+#figure E:C (XS)
+NdXSA$predicted <- predict(modNXSA, newdata = NdXSA, re.form = NA)
+AFemmsPC <- emmeans(modNXSA, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(AFemmsPC)
+cld_dataAFPC <- cld(AFemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataAFPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture Alfalfa")
+xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+AXSEC<-ggplot(NdXSA, aes(x = P, y = (predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Alfalfa Forage (Kg Ha-1)") +
+  geom_point(data = emms_df, aes(x = P, y = emmean), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = emmean.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 1))+
+     ggtitle("Year 1 Summer")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(AXSEC)
 
-
-
-#Pairwise P
-emmsP <- emmeans(modNXSA, ~ P, type = "response") # Obtain estimated marginal means
-cld_dataNXSAP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
-#Pairwise C
-emmsC <- emmeans(modNXSA, ~ CROP, type = "response") # Obtain estimated marginal means 
-cld_dataNXSAC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
-#Pairwise N
-N_levels <- c(0, 40, 80, 120, 160)
-emmsN <- emmeans(modNXSA, specs = ~ N, at = list(N = N_levels), type = "response")
-cld_dataNXSAN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
-cld_dataNXSAN$response <- format(cld_dataNXSAN$response, digits = 5)
-cld_dataNXSAN<- cld_dataNXSAN %>%
-  select(N, response, .group)
-colnames(cld_dataNXSAN) <- c("N","ALF Forage (kg ha-1)", "Group")
-cld_dataNXSAN  |> 
-  data.frame() |> 
-  kbl(align = "c") |> 
-  kable_paper(full_width = F) |> 
-  column_spec(1, bold = T)
-#Pairwise P:C
-emmsPC <- emmeans(modNXSA, ~ P*CROP, type= "response") # Obtain estimated marginal means
-cld_dataNXSAPC <- cld(emmsPC, Letters=custom_letters) # Create compact letter display
-cld_dataNXSAPC$response <- format(cld_dataNXSAPC$response, digits = 5)
-rownames(cld_dataNXSAPC) <- NULL
-cld_dataNXSAPC<- cld_dataNXSAPC %>%
-  select(P,CROP, response, .group)
-colnames(cld_dataNXSAPC) <- c("Site","Cropping System","Alfalfa Forage (kg ha-1)", "Group")
-cld_dataNXSAPC  |> 
-  data.frame() |> 
-  kbl(align = "c") |> 
-  kable_paper(full_width = F) |> 
-  column_spec(1, bold = T)
-
-#This gives us the slope for each interactions as well as a P value indicating significance level for that slope
-emtrends(modNXSA,~ P*CROP, var= "N", infer=TRUE)
-emtrends(modNXSA,~ P, var= "N", infer=TRUE)
-emtrends(modNXSA,~ CROP, var= "N", infer=TRUE)
-emtrends(modNXSA,~N, var= "N", infer=TRUE)
-summary(modNXSA)
-emtrends(modNXSA,~ P, var= "N", infer=TRUE)
-summary(modNXSA)
+#N:E
+# Define the desired order of 'P'
+desired_order <- c("KS", "MN", "NY", "WI")
+NdXSA$P <- factor(NdXSA$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultX<-emtrends(modNXSA,~ N*P, var= "N", infer=TRUE)
+  emtrends_dfX <- as.data.frame(emtrends_resultX)
+  emtrends_dfX$plvl <-
+    ifelse(emtrends_dfX$p.value == 0.05, ".",
+    ifelse(emtrends_dfX$p.value < 0.05  & emtrends_dfX$p.value >= 0.01, "*",
+    ifelse(emtrends_dfX$p.value < 0.01  & emtrends_dfX$p.value >= 0.001, "**",
+    ifelse(emtrends_dfX$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfX$P <- factor(emtrends_dfX$P, levels = desired_order_P)
+emmeans_resultsX<-emmeans(modNXSA, ~N*P, at=list(N=0))
+  emmeans_dfX <- as.data.frame(emmeans_resultsX)
+mergedX <- emtrends_dfX %>%
+  inner_join(emmeans_dfX, by = c("P")) %>%
+  dplyr::select(P, emmean, N.trend, SE.x, plvl)
+mergedX$P <- factor(mergedX$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+X_df <- mergedX %>%
+  mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+  select(-emmean, -N.trend)
+sortedX <- X_df %>%
+  arrange(P)
+sortedX
+#plot
+AcomboplotNEXS <- ggplot(data=NdXSA) +
+  geom_point(data = NdXSA, aes(x = N, y = PlotAlfDryKgHa)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "Alfalfa Forage")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 10550) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin'))) +
+  # functions come from equation in sorted
+  geom_function(data=subset(NdXSA, P== "KS"), fun=~6077.28+(3.2854*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSA, P== "MN"), fun=~3111.87+(-3.1939*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSA, P== "NY"), fun=~5586.22+(-8.2667*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSA, P== "WI"), fun=~3825.70+(-0.3535*.x),color='darkgrey')+
+  geom_text(data = sortedX, mapping = aes(x = 15, y = 10500, label = equation),  size=3)+ # add equation to figure
+  geom_text(data = sortedX, mapping = aes(x = 40, y = 10500, label = plvl))+ # add stars to figure
+  ggtitle("Year 1 Summer") +  # Add a title
+# add stars to figure
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+print(AcomboplotNEXS)
 ```
 
 #Alf forage year 1 fall
@@ -3654,6 +4547,34 @@ new_df <- merged_df %>%
 new_df
 #write.csv(new_df, "data/Final_Data/Nrate_esteff_ALFforage_yr1F.csv") 
 
+#figure E:C (XS)
+NdXFA$predicted <- predict(modNXFA1, newdata = NdXFA, re.form = NA)
+AFemmsPC <- emmeans(modNXFA1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(AFemmsPC)
+cld_dataAFPC <- cld(AFemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataAFPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture Alfalfa")
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+AXFEC<-ggplot(NdXFA, aes(x = P, y = exp(predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Alfalfa Forage (Kg Ha-1)") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 1))+
+     ggtitle("Year 1 Fall \nbacktransformed for visualization")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(AXFEC)
 
 
 
@@ -3780,65 +4701,130 @@ AYSC<-ggplot(NdYSA, aes(x = CROP, y = (predicted), color = CROP)) +
 print(AYSC)
 #ggsave("figures/forage/AYSC.jpg", plot = AYSC, width = 6, height = 8, dpi = 300)
 
-
-
-
-
-
-#Pairwise P
-emmsP <- emmeans(modNYSA, ~ P, type = "response") # Obtain estimated marginal means (excluding N)
-cld_dataNYSAP <- cld(emmsP, Letters=custom_letters) # Create compact letter display
-cld_dataNYSAP$response <- format(cld_dataNYSAP$response, digits = 5)
-rownames(cld_dataNYSAP) <- NULL
-cld_dataNYSAP<- cld_dataNYSAP %>%
-  select(P, response, .group)
-colnames(cld_dataNYSAP) <- c("Site","ALF Forage (kg ha-1)", "Group")
-cld_dataNYSAP  |> 
-  data.frame() |> 
-  kbl(align = "c") |> 
-  kable_paper(full_width = F) |> 
-  column_spec(1, bold = T)
-#Pairwise C
-emmsC <- emmeans(modNYSA, ~ CROP, type = "response") # Obtain estimated marginal means (excluding N)
-cld_dataNYSAC <- cld(emmsC, Letters=custom_letters) # Create compact letter display
-#Pairwise N:C
-emmsNC <- emmeans(modNYSA, ~ N*CROP,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
-cld_dataNYSANC <- cld(emmsNC, Letters=custom_letters) # Create compact letter display
-cld_dataNYSANC$response <- format(cld_dataNYSANC$response, digits = 5)
-rownames(cld_dataNYSANC) <- NULL
-cld_dataNYSANC<- cld_dataNYSANC %>%
-  select(N,CROP, response, .group)
-colnames(cld_dataNYSANC) <- c("N","Cropping System","Alfalfa Forage (kg ha-1)", "Group")
-cld_dataNYSANC  |> 
-  data.frame() |> 
-  kbl(align = "c") |> 
-  kable_paper(full_width = F) |> 
-  column_spec(1, bold = T)
-
-#slope stuff
+# equations and plot N:C
 emtrends_result<-emtrends(modNYSA,~ CROP, var= "N", infer=TRUE)
   emtrends_df <- as.data.frame(emtrends_result)
-  desired_order_C <- c("intercrop", "monoculture")
-  emtrends_df$C <- factor(emtrends_df$C, levels = desired_order_C)
-  #view(emtrends_df)
-  
-#equations table
-emtrends_result<-emtrends(modNYSA,~ CROP, var= "N", infer=TRUE)
-emtrends_df <- as.data.frame(emtrends_result)
-emmeans_results<-emmeans(modNYSA, ~CROP, at=list(N=0))
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", ""))))    
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+emmeans_results<-emmeans(modNYSA, ~ CROP, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 merged_df <- emtrends_df %>%
-  inner_join(emmeans_df, by = c( "CROP")) %>%
-  select(CROP, emmean, N.trend, SE.x)
-#view(merged_df)
-merged_df$CROP <- factor(merged_df$C, levels = c("intercrop", "monoculture"))  # Preferred order for CROP
+  inner_join(emmeans_df, by = c("CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x, plvl)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoA"))  # Preferred order for CROP
 # Create a new data frame with the calculated column
 new_df <- merged_df %>%
-  mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+  mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
   select(-emmean, -N.trend)
-sorted_df <- new_df %>%
-  arrange( CROP)
-#view(sorted_df)
+sorted_df2 <- new_df %>%
+  arrange(CROP)
+sorted_df2
+sorted_I <- subset(sorted_df2, CROP== "inter")
+sorted_A <- subset(sorted_df2, CROP== "monoA")
+sym_I <- sorted_I %>%
+  distinct(CROP, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 6450
+  )
+sym_A <- sorted_A %>%
+  distinct(CROP, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 6300
+  )
+# N rate across C 
+AFNCYS <- ggplot(data=NdYSA) +
+  geom_point(data = NdYSA, aes(x = N, y = PlotAlfDryKgHa, shape = CROP)) +
+  #use function from new_df calculated above
+  geom_function(data=subset(NdYSA, CROP == "inter"), aes(linetype = CROP), fun=~1969.24+(-6.0479*.x), color='#000000')+
+  geom_function(data=subset(NdYSA, CROP == "monoA"), aes(linetype = CROP), fun=~2990.56+(0.8299*.x), color='#000000')+
+  ggtitle("Year 2 Summer \nRelationship between Alfalfa Forage and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 6500) +
+  geom_text(data = sorted_I, mapping = aes(x = 20, y = 6450, label = equation),  size=4)+ # add equation to figure
+  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1, inherit.aes = FALSE)+
+  geom_text(data = sorted_A, mapping = aes(x = 20, y = 6300, label = equation),  size=4)+ # add equation to figure
+  geom_point(data = sym_A, aes(x = x_sym, y = y_sym), shape = 1, size = 2, inherit.aes = FALSE)+
+  geom_text(data = sym_I, mapping = aes(x = 40, y = 6450, label = plvl))+ # add stars to figure
+  geom_text(data = sym_A, mapping = aes(x = 40, y = 6300, label = plvl))+ # add stars to figure
+  scale_linetype_manual(name = "Cropping System",
+                      labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa"),
+                      values = c(inter = "dotdash", inter = "dotdash", monoA = "dotted", monoA = "dotted")) +
+scale_shape_manual(name = "Cropping System",
+                     labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa"),
+                     values = c(4, 1, 4, 1))+
+  labs(x = "N-Rate (Kg ha-1)", y = "Alfalfa Forage (Kg ha-1)", shape = "Cropping System") +
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=12), #change font size of legend text
+        legend.title=element_text(size=16), #change font size of legend title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+AFNCYS
+
+#N:E
+# Define the desired order of 'P'
+desired_order <- c("KS", "MN", "NY", "WI")
+NdYSA$P <- factor(NdYSA$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultX<-emtrends(modNYSA,~ N*P, var= "N", infer=TRUE)
+  emtrends_dfX <- as.data.frame(emtrends_resultX)
+  emtrends_dfX$plvl <-
+    ifelse(emtrends_dfX$p.value == 0.05, ".",
+    ifelse(emtrends_dfX$p.value < 0.05  & emtrends_dfX$p.value >= 0.01, "*",
+    ifelse(emtrends_dfX$p.value < 0.01  & emtrends_dfX$p.value >= 0.001, "**",
+    ifelse(emtrends_dfX$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfX$P <- factor(emtrends_dfX$P, levels = desired_order_P)
+emmeans_resultsX<-emmeans(modNYSA, ~N*P, at=list(N=0))
+  emmeans_dfX <- as.data.frame(emmeans_resultsX)
+mergedX <- emtrends_dfX %>%
+  inner_join(emmeans_dfX, by = c("P")) %>%
+  dplyr::select(P, emmean, N.trend, SE.x, plvl)
+mergedX$P <- factor(mergedX$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+X_df <- mergedX %>%
+  mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+  select(-emmean, -N.trend)
+sortedX <- X_df %>%
+  arrange(P)
+sortedX
+#plot
+AcomboplotNEYS <- ggplot(data=NdYSA) +
+  geom_point(data = NdYSA, aes(x = N, y = PlotAlfDryKgHa)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "Alfalfa Forage")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 6250) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin'))) +
+  # functions come from equation in sorted
+  geom_function(data=subset(NdYSA, P== "KS"), fun=~1148.03+(2.8910*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSA, P== "MN"), fun=~1837.72+(-3.7801*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSA, P== "NY"), fun=~3595.74+(-6.4583*.x),color='darkgrey')+
+  geom_function(data=subset(NdYSA, P== "WI"), fun=~3338.11+(-3.0887*.x),color='darkgrey')+
+  geom_text(data = sortedX, mapping = aes(x = 15, y = 6150, label = equation),  size=3)+ # add equation 
+  geom_text(data = sortedX, mapping = aes(x = 40, y = 6150, label = plvl))+ # add stars 
+  ggtitle("Year 2 Summer") +  # Add title
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+print(AcomboplotNEYS)
+
+# Boxplot for alfalfa by E
+# Custom X-axis labels 
+xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+AFEYS <- ggplot(NdYSA, aes(x = P, y = PlotAlfDryKgHa)) +
+  geom_boxplot() +
+  labs(title = "Year 2 Summer", x = "Location", y = "Alfalfa Forage (Kg Ha-1)")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
 ```
 
 #Alf forage year 2 fall
@@ -3926,7 +4912,7 @@ sorted_df2 <- new_df %>%
 #view(sorted_df2)
 #write.csv(sorted_df2, "data/Final_Data/Nrate_esteff_ALFforage_yr2F_2.csv")
 
-#N:E
+#N:E:C
 # Define the desired order of 'P'
 desired_order <- c("KS", "MN", "NY", "WI")
 NdYFA$P <- factor(NdYFA$P, levels = desired_order)
@@ -3970,9 +4956,8 @@ sym_M <- sortedYF_M %>%
     x_sym = 0,
     y_sym = 4750
   )
-
 #plot
-AcomboplotNEYF <- ggplot(data=NdYFA) +
+AcomboplotNECYF <- ggplot(data=NdYFA) +
   geom_point(data = NdYFA, aes(x = N, y = PlotAlfDryKgHa, shape = CROP)) +
   labs(x = "N-Rate (Kg ha-1)", y = "Alfalfa Forage", linetype = "Cropping System", shape = "Cropping System", color = "Harvest")+
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
@@ -3992,56 +4977,84 @@ AcomboplotNEYF <- ggplot(data=NdYFA) +
   geom_text(data = sortedYF_I, mapping = aes(x = 60, y = 5000, label = plvl))+
   geom_text(data = sortedYF_M, mapping = aes(x = 60, y = 4750, label = plvl)) # add stars to figure
 # add stars to figure
-print(AcomboplotNEYF)
-# ggsave("figures/forage/AcomboplotNEYF.jpg", plot = AcomboplotNEYF, width = 10, height = 8, dpi = 300)
+print(AcomboplotNECYF)
+# ggsave("figures/forage/AcomboplotNECYF.jpg", plot = AcomboplotNECYF, width = 10, height = 8, dpi = 300)
 
-
-
-
-
-
-
-#Pairwise N
-emmsN <- emmeans(modNYFA1, ~ N,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
-cld_dataNYFAN <- cld(emmsN, Letters=custom_letters) # Create compact letter display
-#Pairwise N:C
-emmsNC <- emmeans(modNYFA1, ~ N*CROP,at = list(N = N_levels), type= "response") # Obtain estimated marginal means
-cld_dataNYFANC <- cld(emmsNC, Letters=custom_letters) # Create compact letter display
-cld_dataNYFANC$response <- format(cld_dataNYFANC$response, digits = 5)
-rownames(cld_dataNYFANC) <- NULL
-cld_dataNYFANC<- cld_dataNYFANC %>%
-  select(N,CROP, response, .group)
-colnames(cld_dataNYFANC) <- c("N","Cropping System","ALF Forage (kg ha-1)", "Group")
-cld_dataNYFANC  |> 
-  data.frame() |> 
-  kbl(align = "c") |> 
-  kable_paper(full_width = F) |> 
-  column_spec(1, bold = T)
-
-#slope stuff
+# equations and plot N:C
 emtrends_result<-emtrends(modNYFA1,~ CROP, var= "N", infer=TRUE)
   emtrends_df <- as.data.frame(emtrends_result)
-  desired_order_C <- c("intercrop", "monoculture")
-  emtrends_df$C <- factor(emtrends_df$C, levels = desired_order_C)
-  #view(emtrends_df)
-  
-  #equations table
-emtrends_result<-emtrends(modNYFA1,~ CROP, var= "N", infer=TRUE)
-emtrends_df <- as.data.frame(emtrends_result)
-emmeans_results<-emmeans(modNYFA1, ~CROP, at=list(N=0))
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", ""))))    
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+emmeans_results<-emmeans(modNYFA1, ~ CROP, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 merged_df <- emtrends_df %>%
-  inner_join(emmeans_df, by = c( "CROP")) %>%
-  select(CROP, emmean, N.trend, SE.x)
-#view(merged_df)
-merged_df$C <- factor(merged_df$C, levels = c("intercrop", "monoculture"))  # Preferred order for CROP
+  inner_join(emmeans_df, by = c("CROP")) %>%
+  select(CROP, emmean, N.trend, SE.x, plvl)
+merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoA"))  # Preferred order for CROP
 # Create a new data frame with the calculated column
 new_df <- merged_df %>%
   mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
   select(-emmean, -N.trend)
-sorted_df <- new_df %>%
-  arrange( C)
-#view(sorted_df)
+sorted_df2 <- new_df %>%
+  arrange(CROP)
+sorted_df2
+sorted_I <- subset(sorted_df2, CROP== "inter")
+sorted_A <- subset(sorted_df2, CROP== "monoA")
+sym_I <- sorted_I %>%
+  distinct(CROP, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 4550
+  )
+sym_A <- sorted_A %>%
+  distinct(CROP, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 4450
+  )
+# N rate across C 
+AFNCYF <- ggplot(data=NdYFA) +
+  geom_point(data = NdYFA, aes(x = N, y = PlotAlfDryKgHa, shape = CROP)) +
+  #use function from new_df calculated above
+  geom_function(data=subset(NdYFA, CROP == "inter"), aes(linetype = CROP), fun=~1903.95*exp(-0.0028*.x), color='#000000')+
+  geom_function(data=subset(NdYFA, CROP == "monoA"), aes(linetype = CROP), fun=~1722.57*exp(-0.0004*.x), color='#000000')+
+  ggtitle("Year 2 Fall \nRelationship between Alfalfa Forage and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 4750) +
+  geom_text(data = sorted_I, mapping = aes(x = 20, y = 4550, label = equation),  size=4)+ # add equation to figure
+  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1, inherit.aes = FALSE)+
+  geom_text(data = sorted_A, mapping = aes(x = 20, y = 4450, label = equation),  size=4)+ # add equation to figure
+  geom_point(data = sym_A, aes(x = x_sym, y = y_sym), shape = 1, size = 2, inherit.aes = FALSE)+
+  geom_text(data = sym_I, mapping = aes(x = 40, y = 4550, label = plvl))+ # add stars to figure
+  geom_text(data = sym_A, mapping = aes(x = 40, y = 4450, label = plvl))+ # add stars to figure
+  scale_linetype_manual(name = "Cropping System",
+                      labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa"),
+                      values = c(inter = "dotdash", inter = "dotdash", monoA = "dotted", monoA = "dotted")) +
+scale_shape_manual(name = "Cropping System",
+                     labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa"),
+                     values = c(4, 1, 4, 1))+
+  labs(x = "N-Rate (Kg ha-1)", y = "Alfalfa Forage (Kg ha-1)", shape = "Cropping System") +
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=12), #change font size of legend text
+        legend.title=element_text(size=16), #change font size of legend title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+AFNCYF
+
+# Boxplot for alfalfa by E
+# Custom X-axis labels 
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+AFEYF <- ggplot(NdYFA, aes(x = P, y = PlotAlfDryKgHa)) +
+  geom_boxplot() +
+  labs(title = "Year 2 Fall", x = "Location", y = "Alfalfa Forage (Kg Ha-1)")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
 ```
 
 #Alf forage year 3 summer
@@ -4281,6 +5294,16 @@ new_df <- merged_df %>%
 sorted_df <- new_df %>%
   arrange( CROP)
 #view(sorted_df)
+
+# Boxplot for alfalfa by E
+# Custom X-axis labels 
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+AFEZF <- ggplot(NdZFA, aes(x = P, y = PlotAlfDryKgHa)) +
+  geom_boxplot() +
+  labs(title = "Year 3 Fall", x = "Location", y = "Alfalfa Forage (Kg Ha-1)")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
 ```
 
 
@@ -4487,6 +5510,57 @@ AFcomboplotNC <- ggplot() +
 print(AFcomboplotNC)
 #ggsave("figures/forage/AFcomboplotNC.jpg", plot = AFcomboplotNC, width = 8, height = 6, dpi = 300)
 ```
+
+# ALF plot E:C XS XF
+```{r}
+AEC <- ggarrange(
+AXSEC,
+AXFEC,
+ncol = 2,
+common.legend = TRUE,
+legend = "right"
+)
+AEC
+#save figures/Paper/AFECXSXF    1240x720
+```
+
+# alfalfa N:C XS YS YF
+```{r}
+ANC <- ggarrange(
+AFNCXS,
+AFNCYS,
+AFNCYF,
+ncol = 2,
+nrow=2,
+common.legend = TRUE,
+legend = "top"
+)
+ANC
+# ggsave("figures/Paper/AFNCXSYSYF.jpg", plot = ANC, width = 20, height = 16, dpi = 300)
+```
+
+# alfalfa N:C XS YS 
+```{r}
+ANE <- ggarrange(
+AcomboplotNEXS,
+AcomboplotNEYS,
+ncol = 2)
+ANE
+#save figures/Paper/AFNEXSYS    1240x720
+```
+
+# alfalfa E YS YF ZF
+```{r}
+AE <- ggarrange(
+AFEYS,
+AFEYF,
+AFEZF,
+ncol = 2,
+nrow=2)
+AE
+# ggsave("figures/Paper/AFEYSYFZF.jpg", plot = AE, width = 20, height = 16, dpi = 300)
+```
+
 
 
 ## Proportion of species in Total Forage Yield
@@ -5619,6 +6693,7 @@ new_df
 # N rate across location 
 ggplot(TotLERYS_2, aes(x = N, y = LER)) +
   geom_point(color='black') + #geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  #use function from new_df calculated above
   geom_function(data=TotLERYS_2, fun=~1.35*exp(-0.0017*.x),color='black')+
   labs(x = "N-Rate (Kg/ha)", y = "Total LER") +  # Label the axes
   ggtitle("Year 2 Summer Relationship between Total LER and N-rate \nbacktransformed for visualization") +  # Add a title
@@ -6063,6 +7138,18 @@ cld_dataNXSCRN  |>
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
 # save CR_emmE_yr1S
+
+# Boxplot for Competitive Ratio by E
+# Custom X-axis labels 
+xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+CREXS <- ggplot(CRXS, aes(x = P, y = CR)) +
+  geom_boxplot() +
+  geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
+  labs(title = "Year 1 Summer", x = "Cropping System", y = "Competitive Ratio")+
+  scale_x_discrete(label = xlabels)+ 
+  ylim(0, 1) +
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
 ```
 
 #Year 1 Fall Competitive Ratio model 
@@ -6127,6 +7214,18 @@ cld_dataNXFCRN  |>
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
 # save CR_emmE_yr1F
+
+# Boxplot for Competitive Ratio by E
+# Custom X-axis labels 
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+CREXF <- ggplot(CRXF, aes(x = P, y = CR)) +
+  geom_boxplot() +
+  geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
+  labs(title = "Year 1 Fall", x = "Cropping System", y = "Competitive Ratio")+
+  scale_x_discrete(label = xlabels)+ 
+  ylim(0, 1) +
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
 ```
 
 #Year 2 Summer Competitive Ratio model 
@@ -6189,6 +7288,21 @@ new_df <- merged_df %>%
   select(-emmean, -N.trend)
 new_df
 #write.csv(new_df, "data/Final_Data/Nrate_esteff_CR_yr2S.csv")
+
+# N rate across location 
+CRNYS <- ggplot(CRYS, aes(x = N, y = CR)) +
+  geom_point(color='black') + #geom_line(aes(N, exp(predicted)))+ #regression through predicted values
+  # Function taken from new_df calculation above 
+  geom_function(data=CRYS, fun=~0.54+(0.0007*.x),color='black')+
+  labs(x = "N-Rate (Kg/ha)", y = "IWG Competitive Ratio") +  # Label the axes
+  ggtitle("Year 2 Summer Relationship between IWG Competitive Ratio and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 1.2) +
+  geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
+  geom_text(data = new_df, mapping = aes(x = 10, y = 1.1, label = equation),  size=4)+ # add equation to figure
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18)) #change font size of axis titles
+CRNYS
 
 
 
@@ -6293,6 +7407,33 @@ cld_dataNYFCRN  |>
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
 # save CR_emmP_yr2F
+
+# Boxplot for Competitive Ratio by E
+# Custom X-axis labels 
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+CREYF <- ggplot(CRYF, aes(x = P, y = CR)) +
+  geom_boxplot() +
+  geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
+  labs(title = "Year 2 Fall", x = "Cropping System", y = "Competitive Ratio")+
+  scale_x_discrete(label = xlabels)+ 
+  ylim(0, 1) +
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
+
+# N rate across location 
+CRNYF <- ggplot(CRYF, aes(x = N, y = CR)) +
+  geom_point(color='black') + #geom_line(aes(N, exp(predicted)))+ #regression through predicted values
+  # Function taken from new_df calculation above 
+  geom_function(data=CRYF, fun=~0.48+(0.0011*.x),color='black')+
+  labs(x = "N-Rate (Kg/ha)", y = "IWG Competitive Ratio") +  # Label the axes
+  ggtitle("Year 2 Fall Relationship between IWG Competitive Ratio and N-rate") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 1.2) +
+  geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
+  geom_text(data = new_df, mapping = aes(x = 10, y = 1.1, label = equation),  size=4)+ # add equation to figure
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18)) #change font size of axis titles
+CRNYF
 ```
 
 #Year 3 Summer Competitive Ratio model 
@@ -6497,6 +7638,25 @@ gt_NG <- gt(NG_stars)
 gt_NG |> gtsave("figures/forage/gt_CR.png", expand = 10)
 ```
 
+# Competitive Ratio combined E plot XS XF YF
+```{r}
+#CREXS
+#CREXF
+#CREYF
+CRcomboplotCXSXFYF <- ggarrange(CREXS, CREXF, CREYF, ncol=2, nrow=2)
+#ggsave("figures/Paper/CRcomboplotCXSXFYF.jpg", plot = CRcomboplotCXSXFYF, width = 10, height = 8, dpi = 300)
+```
+
+# Competitive Ratio combined E plot XS XF YF
+```{r}
+#CRNYS
+#CRNYF
+CRcomboplotNYSYF <- ggarrange(CRNYS, CRNYF, ncol=2)
+#ggsave("figures/Paper/CRcomboplotNYSYF.jpg", plot = CRcomboplotNYSYF, width = 15, height = 8, dpi = 300)
+```
+
+
+
 
 ## Forage Quality
 
@@ -6692,8 +7852,107 @@ qqline(NTCPXS_resid1)
 plot(modNTCPXS1)
 # normal is better for normality, no difference in significance
 
+#N:E:C
+desired_order <- c("KS", "MN", "NY", "WI")
+# Define the desired order of 'P'
+NdXSf1$P <- factor(NdXSf1$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultX<-emtrends(modNTCPXS,~ N*P*CROP, var= "N", infer=TRUE)
+  emtrends_dfX <- as.data.frame(emtrends_resultX)
+  emtrends_dfX$plvl <-
+    ifelse(emtrends_dfX$p.value == 0.05, ".",
+    ifelse(emtrends_dfX$p.value < 0.05  & emtrends_dfX$p.value >= 0.01, "*",
+    ifelse(emtrends_dfX$p.value < 0.01  & emtrends_dfX$p.value >= 0.001, "**",
+    ifelse(emtrends_dfX$p.value < 0.001, "***", ""))))  
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfX$PC <- paste0(emtrends_dfX$P,emtrends_dfX$CROP)
+  emtrends_dfX$P <- factor(emtrends_dfX$P, levels = desired_order_P)
+emmeans_resultsX<-emmeans(modNTCPXS, ~N*P*CROP, at=list(N=0))
+emmeans_dfX <- as.data.frame(emmeans_resultsX)
+emmeans_dfX$PC <- paste0(emmeans_dfX$P,emmeans_dfX$CROP)
+mergedX <- emtrends_dfX %>%
+  inner_join(emmeans_dfX, by = c("PC")) %>%
+  dplyr::select(PC, P.x, CROP.x, emmean, N.trend, SE.x, plvl)
+  colnames(mergedX)[2] <- "P"
+  colnames(mergedX)[3] <- "CROP"
+mergedX$P <- factor(mergedX$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+X_df <- mergedX %>%
+  mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+  select(-emmean, -N.trend)
+sortedX <- X_df %>%
+  arrange(P)
+sortedX_I <- subset(sortedX, CROP== "inter")
+sortedX_A <- subset(sortedX, CROP== "monoA")
+sortedX_M <- subset(sortedX, CROP== "monoI")
+
+sym_I <- sortedX_I %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 24
+  )
+sym_A <- sortedX_A %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 23
+  )
+sym_M <- sortedX_M %>%
+  distinct(P, plvl) %>%
+  mutate(
+    x_sym = 0,
+    y_sym = 22
+  )
+#plot
+CPcomboplotNECXS <- ggplot(data=NdXSf1) +
+  geom_point(data = NdXSf1, aes(x = N, y = totCP, shape = CROP)) +
+  geom_function(data=subset(NdXSf1, P== "KS" & CROP == "inter"), aes(linetype = CROP), fun=~8.73+(0.0065*.x), color='darkgrey')+
+  geom_function(data=subset(NdXSf1, P== "KS" & CROP == "monoA"), aes(linetype = CROP), fun=~12.35+(0.0017*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSf1, P== "KS" & CROP == "monoI"), aes(linetype = CROP), fun=~4.84+(0.0112*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSf1, P== "MN" & CROP == "inter"), aes(linetype = CROP), fun=~14.29+(0.0087*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSf1, P== "MN" & CROP == "monoA"), aes(linetype = CROP), fun=~18.84+(0.0015*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSf1, P== "MN" & CROP == "monoI"), aes(linetype = CROP), fun=~8.95+(0.0213*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSf1, P== "NY" & CROP == "inter"), aes(linetype = CROP), fun=~11.21+(-0.0234*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSf1, P== "NY" & CROP == "monoA"), aes(linetype = CROP), fun=~12.88+(0.0066*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSf1, P== "NY" & CROP == "monoI"), aes(linetype = CROP), fun=~1.75+(0.0097*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSf1, P== "WI" & CROP == "inter"), aes(linetype = CROP), fun=~4.17+(0.0028*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSf1, P== "WI" & CROP == "monoA"), aes(linetype = CROP), fun=~12.60+(-0.0033*.x),color='darkgrey')+  
+  geom_function(data=subset(NdXSf1, P== "WI" & CROP == "monoI"), aes(linetype = CROP), fun=~0.89+(0.0107*.x),color='darkgrey')+  
+  geom_text(data = sortedX_I, mapping = aes(x = 30, y = 24, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1, inherit.aes = FALSE)+
+  geom_text(data = sortedX_A, mapping = aes(x = 30, y = 23, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_A, aes(x = x_sym, y = y_sym), shape = 1, size = 2, inherit.aes = FALSE)+
+  geom_text(data = sortedX_M, mapping = aes(x = 30, y = 22, label = equation),  size=2)+ # add equation to figure
+  geom_point(data = sym_M, aes(x = x_sym, y = y_sym), shape = 25, size = 1, fill = "lightgrey", stroke = 0.6, inherit.aes = FALSE)+
+  geom_text(data = sym_I, mapping = aes(x = 60, y = 24, label = plvl))+ # add stars to figure
+  geom_text(data = sym_A, mapping = aes(x = 60, y = 23, label = plvl))+ # add stars to figure
+  geom_text(data = sym_M, mapping = aes(x = 60, y = 22, label = plvl))+ # add stars to figure
+
+  scale_linetype_manual(name = "Cropping System",
+                      labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
+                      values = c(inter = "dotdash", inter = "dotdash", monoA = "dotted", monoA = "dotted", monoI = "dashed", monoI = "dashed")) +
+scale_shape_manual(name = "Cropping System",
+                     labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
+                     values = c(4, 1, 25, 4, 1, 25))+
+  labs(x = "N-Rate (Kg ha-1)", y = "Crude Protien", shape = "Cropping System") +
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 25) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin')))+
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        legend.text=element_text(size=12), #change font size of legend text
+        legend.title=element_text(size=16), #change font size of legend title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+print(CPcomboplotNECXS)
+# ggsave("figures/Paper/CPcomboplotNECXS.jpg", plot = CPcomboplotNECXS, width = 10, height = 8, dpi = 300)
+
+
+
 #Pairwise NPC
-emmsNPC <- emmeans(modNTCPXS1, ~ N*P*CROP,at= list(N = N_levels)) 
+emmsNPC <- emmeans(modNTCPXS, ~ N*P*CROP,at= list(N = N_levels)) 
 cld_dataNTCPXSNPC <- cld(emmsNPC, Letters=custom_letters) # Create compact letter display
 cld_dataNTCPXSNPC$response <- format(cld_dataNTCPXSNPC$emmean, digits = 5)
 rownames(cld_dataNTCPXSNPC) <- NULL
@@ -6707,7 +7966,7 @@ cld_dataNTCPXSNPC  |>
   column_spec(1, bold = T)
 
 #This gives us the slope for each interactions as well as a P value indicating significance level for that slope
-emtrends_result<-emtrends(modNTCPXS1,~ P*CROP, var= "N", infer=TRUE)
+emtrends_result<-emtrends(modNTCPXS,~ P*CROP, var= "N", infer=TRUE)
   emtrends_df <- as.data.frame(emtrends_result)
   desired_order_P <- c("MN", "NY", "KS", "WI")
   emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
@@ -6716,10 +7975,10 @@ emtrends(modNTCPXS,~ P, var= "N", infer=TRUE)
 emtrends(modNTCPXS,~ CROP, var= "N", infer=TRUE)
 
 #emmeans for intercepts! via erika
-emtrends_result<-emtrends(modNTCPXS1,~ P*CROP, var= "N", infer=TRUE)
+emtrends_result<-emtrends(modNTCPXS,~ P*CROP, var= "N", infer=TRUE)
 emtrends_df <- as.data.frame(emtrends_result)
   emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
-emmeans_results<-emmeans(modNTCPXS1, ~P*CROP, at=list(N=0))
+emmeans_results<-emmeans(modNTCPXS, ~P*CROP, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 merged_df <- emtrends_df %>%
   inner_join(emmeans_df, by = c("P", "CROP")) %>%
@@ -6729,13 +7988,11 @@ merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Prefer
 merged_df$CROP <- factor(merged_df$CROP, levels = c("inter", "monoI","monoA"))  # Preferred order for CROP
 # Create a new data frame with the calculated column
 new_df <- merged_df %>%
-  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
   select(-emmean, -N.trend)
 sorted_df <- new_df %>%
   arrange(P, CROP)
 view(sorted_df)
-
-summary(modNTCPXS1)
 ```
 
 #Total CP year 1 fall
@@ -7386,6 +8643,39 @@ qqline(NTRFVXS_resid1)
 plot(modNTRFVXS1)
 anova(modNTRFVXS1)
 
+#figure E:C (XS)
+NdXSo$predicted <- predict(modNTRFVXS1, newdata = NdXSo, re.form = NA)
+XSRFVemmsPC <- emmeans(modNTRFVXS1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(XSRFVemmsPC)
+cld_dataXSRFVPC <- cld(XSRFVemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataXSRFVPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture Alfalfa", "Monoculture IWG")
+xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+RFVXSPC<-ggplot(NdXSo, aes(x = P, y = exp(predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "RFV") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 1, 25))+
+     ggtitle("Year 1 Summer \nbacktransformed for visualization")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(RFVXSPC)
+#ggsave("figures/Paper/RFVXSPC.jpg", plot = RFVXSPC, width = 10, height = 8, dpi = 300)
+
+
+
+
 #Pairwise P:C
 emmsNTRFVXS <- emmeans(modNTRFVXS1, specs = ~ P*CROP,  type = "response")
 cld_dataNTRFVXSPC <- cld(emmsNTRFVXS, Letters=custom_letters) # Create compact letter display
@@ -7448,6 +8738,26 @@ cld_dataNTRFVXF1C   |>
   kbl(align = "c") |> 
   kable_paper(full_width = F) |> 
   column_spec(1, bold = T)
+
+# Boxplot for RFV by E
+# Custom X-axis labels 
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+RFVEXF <- ggplot(NdXFo, aes(x = P, y = totRFV)) +
+  geom_boxplot() +
+  labs(title = "Year 1 Fall", x = "Location", y = "Total RFV")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
+
+# Boxplot for RFV by C
+# Custom X-axis labels 
+xlabels <- c("Intercrop", "Monoculture Alfalfa", "Monoculture IWG")
+RFVCXF <- ggplot(NdXFo, aes(x = CROP, y = totRFV)) +
+  geom_boxplot() +
+  labs(title = "Year 1 Fall", x = "Cropping System", y = "Total RFV")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
 ```
 #Total RFV year 2 summer
 ```{r}
@@ -7539,6 +8849,58 @@ qqnorm(NTRFVYF_resid1)
 qqline(NTRFVYF_resid1)
 plot(modNTRFVYF1)
 anova(modNTRFVYF1)
+
+#figure E:C (YF)
+
+NdYFo$predicted <- predict(modNTRFVYF1, newdata = NdYFo, re.form = NA)
+YFRFVemmsPC <- emmeans(modNTRFVYF1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(YFRFVemmsPC)
+cld_dataYFRFVPC <- cld(YFRFVemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataYFRFVPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom X-axis labels 
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+custom_labels <- c("Intercrop", "Monoculture Alfalfa", "Monoculture IWG")
+RFVYFPC<-ggplot(NdYFo, aes(x = P, y = exp(predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "RFV") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 1, 25))+
+     ggtitle("Year 2 Fall \nbacktransformed for visualization")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(RFVYFPC)
+#ggsave("figures/Paper/RFVYFPC.jpg", plot = RFVYFPC, width = 10, height = 8, dpi = 300)
+
+# Boxplot for RFV by E
+# Custom X-axis labels 
+xlabels <- c("Minnesota", "New York", "Wisconsin")
+RFVEYF <- ggplot(NdYFo, aes(x = P, y = totRFV)) +
+  geom_boxplot() +
+  labs(title = "Year 2 Fall", x = "Location", y = "Total RFV")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
+
+# Boxplot for RFV by C
+# Custom X-axis labels 
+xlabels <- c("Intercropping", "Monoculture Alfalfa", "Monoculture IWG")
+RFVCYF <- ggplot(NdYFo, aes(x = CROP, y = totRFV)) +
+  geom_boxplot() +
+  labs(title = "Year 2 Fall", x = "Cropping System", y = "Total RFV")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18))
+
 
 #Pairwise C
 emmsC <- emmeans(modNTRFVYF1, specs = ~ CROP, type = "response")
@@ -7839,3 +9201,21 @@ TRFVC<-grid.arrange(TRFVXFC, TRFVYFC, ncol = 2)
 ggsave("TRFVC.jpg", plot = TRFVC, width =12, height = 6, dpi = 350)
 
 ```
+#Total RFV E XF YF
+```{r}
+#RFVEXF
+#RFVEYF
+RFVcomboplotEXFYF <- ggarrange(RFVEXF, RFVEYF, ncol=2)
+#ggsave("figures/Paper/RFVcomboplotEXFYF.jpg", plot = RFVcomboplotEXFYF, width = 15, height = 8, dpi = 300)
+```
+#Total RFV C XF YF
+```{r}
+#RFVCXF
+#RFVCYF
+RFVcomboplotCXFYF <- ggarrange(RFVCXF, RFVCYF, ncol=2)
+#ggsave("figures/Paper/RFVcomboplotCXFYF.jpg", plot = RFVcomboplotCXFYF, width = 15, height = 8, dpi = 300)
+```
+
+
+
+

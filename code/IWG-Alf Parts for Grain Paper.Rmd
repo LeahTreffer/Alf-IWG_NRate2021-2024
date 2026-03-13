@@ -687,6 +687,64 @@ GraincomboplotNEX <- ggplot(data=NdXSIG) +
 print(GraincomboplotNEX)
 # ggsave("figures/grain/GrainplotNEX.jpg", plot = GraincomboplotNEX, width = 8, height = 6, dpi = 300)
 
+#figure E:C (XS)
+NdXSIG$predicted <- predict(modNXG1, newdata = NdXSIG, re.form = NA)
+XSGemmsPC <- emmeans(modNXG1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(XSGemmsPC)
+cld_dataXSGPC <- cld(XSGemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataXSGPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture IWG")
+xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+GXSPC<-ggplot(NdXSIG, aes(x = P, y = exp(predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Grain Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 2.5)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
+     ggtitle("Year 1 Summer \nbacktransformed for visualization")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(GXSPC)
+#ggsave("figures/Paper/GXSPC.jpg", plot = GXSPC, width = 10, height = 8, dpi = 300)
+
+modNXG1<-lmer(log(G)~N*P*CROP + (1|Rep), data=NdXSIG)
+#EQUATION tables JUST N 
+emtrends_result<-emtrends(modNXG1,~ 1, var= "N", infer=TRUE)
+emtrends_df <- as.data.frame(emtrends_result)
+emmeans_results<-emmeans(modNXG1, ~1, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+emtrends_df <- emtrends_df %>% mutate(key = 1)
+emmeans_df <- emmeans_df %>% mutate(key = 1)
+merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
+  select(emmean, N.trend, SE.x)
+new_df <- merged_df %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+new_df
+# N rate across location 
+GXSN <- ggplot(NdXSIG, aes(x = N, y = G)) +
+  geom_point(color='black') + #geom_line(aes(N, exp(predicted)))+ #regression through backtransformed predicted values
+  geom_function(data=NdXSIG, fun=~384.99*exp(0.0016*.x),color='black')+
+  labs(x = "N-Rate (Kg/ha)", y = "Grain Yield") +  # Label the axes
+  ggtitle("Year 1 Summer Relationship between Grain Yield and N-rate \nbacktransformed for visualization") +  # Add a title
+scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
+  ylim(0, 1550) +
+  geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
+  geom_text(data = new_df, mapping = aes(x = 10, y = 1500, label = equation),  size=4)+ # add equation to figure
+  theme(axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18)) #change font size of axis titles
+GXSN
+# save figures/Paper/G_Nrate_N_yr1S  900x795
 ```
 
 #Grain year 2 (all locations)
@@ -1198,6 +1256,35 @@ GraincomboplotNEZ <- ggplot(data=NdZSI) +
 print(GraincomboplotNEZ)
 # ggsave("figures/grain/GrainplotNEZ.jpg", plot = GraincomboplotNEZ, width = 8, height = 6, dpi = 300)
 
+#figure E:C (ZS)
+NdZSI$predicted <- predict(modNZG1, newdata = NdZSI, re.form = NA)
+ZSGemmsPC <- emmeans(modNZG1, ~ P*CROP, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(ZSGemmsPC)
+cld_dataZSGPC <- cld(ZSGemmsPC, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataZSGPC)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture IWG")
+xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+GZSPC<-ggplot(NdZSI, aes(x = P, y = exp(predicted), shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+  labs(x = "Environment", y = "Grain Yield") +
+  geom_point(data = emms_df, aes(x = P, y = response), 
+             size = 4, shape = 18, color = "black")+ 
+  geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
+                width = 0.2, color = "black", inherit.aes = FALSE) +
+  geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
+            color = "black", vjust = 0, hjust = 3)+
+  scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
+     ggtitle("Year 3 Summer \nbacktransformed for visualization")+
+  scale_x_discrete(label = xlabels)+ 
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=16), #change font size of axis titles
+        legend.text=element_text(size=10), #change font size of legend text
+        legend.title=element_text(size=14)) #change font size of legend title
+print(GZSPC)
+#ggsave("figures/Paper/GZSPC.jpg", plot = GZSPC, width = 10, height = 8, dpi = 300)
 ```
 
 # Grain anovas Table 
@@ -1215,21 +1302,27 @@ format_p_value <- function(p_val) {
 
 # Apply the function to your ANOVA results
 NG_stars_tibble <- map(anovasNG, as_tibble, rownames="term") %>%
-  bind_rows(.id = "model") %>%
+  bind_rows(.id = "year") %>%
   mutate(stars = map_chr(`Pr(>F)`, format_p_value))
 
 NG_stars_tibble <- NG_stars_tibble %>%
   mutate(term = ifelse(term == "P", "E", term)) %>%
+#  mutate(term = ifelse(term == "N", "Nitrogen Rate (N)", term)) %>%
+  mutate(term = ifelse(term == "CROP", "C", term)) %>%
   mutate(term = ifelse(term == "N:P", "N:E", term))%>%
-  mutate(term = ifelse(term == "P:C", "E:C", term))%>%
-  mutate(term = ifelse(term == "N:P:C", "N:E:C", term))
+  mutate(term = ifelse(term == "P:CROP", "E:C", term))%>%
+  mutate(term = ifelse(term == "N:P:CROP", "N:E:C", term))%>%
+  filter(term != "Residuals")
 
 # Print the tibble
 print(NG_stars_tibble)
 
 NG_stars <-NG_stars_tibble |> 
-  select(model, term, stars) |>
-  pivot_wider(names_from = term, values_from = stars)
+  select(year, term, stars) |>
+  pivot_wider(names_from = term, values_from = stars)|>
+  mutate(model = c("log", "log", "log"))|>
+  relocate(model, .after = year)
+
 
 gt_NG <- gt(NG_stars)
 
@@ -1415,7 +1508,34 @@ print(GZPC)
 # combined grain years plots E:C
 ```{r}
 GEC<-grid.arrange(GXPC, GYPC, GZPC, ncol = 2)
-ggsave("figures/grain/GEC.jpg", plot = GEC, width =12, height = 6, dpi = 350)
+#ggsave("figures/grain/GEC.jpg", plot = GEC, width =12, height = 6, dpi = 350)
+```
+
+```{r}
+# Function to extract legend
+get_legend <- function(myplot) {
+  tmp <- ggplot_gtable(ggplot_build(myplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  tmp$grobs[[leg]]
+}
+
+legend <- get_legend(GZSPC)
+
+# Remove legends
+GXSPC <- GXSPC + theme(legend.position = "none")
+GZSPC <- GZSPC + theme(legend.position = "none")
+
+GEC<-grid.arrange(GXSPC, GZSPC, legend, ncol = 3)
+# Combine plots and legend
+GEC <- plot_grid(
+  GXSPC, 
+  GZSPC, 
+  legend, 
+  ncol = 3, 
+  rel_widths = c(1, 1, 0.3) # shrink legend width
+)
+GEC
+#save figures/Paper/GEC_XZ  1250x780
 ```
 
 
