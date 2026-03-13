@@ -263,7 +263,7 @@ The IWG grain threshability visibly varied by site, and not all grains were full
 
 Adjusted plot grain yield= (estimated dehulled sample weight/ sample weight)*(plot grain yield weight) 
 
-In year 3, dehulled weight was estimated for each location by hand cleaning a subset of the samples and using those to set up a model to predict all dehulled grain weights. A linear model of $y = \beta_0 + \beta X$, where y is dehulled weight and X is the original sample weight, achieved a $R^2 > 0.9$. The resulting estimates were used to obtaine predicted dehulled grain weights for each sample via the predict function. This function uses the equation : predicted value = intercept + Threshed Weights*Estimate. 
+In year 3, dehulled weight was estimated for each location by hand cleaning a subset of the samples and using those to set up a linear regression model to predict all dehulled grain weights. A linear model of $y = \beta_0 + \beta X$, where y is dehulled weight and X is the original sample weight, achieved a $R^2 > 0.9$. The resulting estimates were used to obtain predicted dehulled grain weights for each sample via the predict function. This function uses the equation : predicted value = intercept + Threshed Weights*Estimate. 
 
 ### Land Equivalent Ratio (LER)
 
@@ -745,6 +745,55 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
         axis.title=element_text(size=18)) #change font size of axis titles
 GXSN
 # save figures/Paper/G_Nrate_N_yr1S  900x795
+
+#N:E
+# Define the desired order of 'P'
+desired_order <- c("KS", "MN", "NY", "WI")
+NdXSIG$P <- factor(NdXSIG$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultX<-emtrends(modNXG1,~ N*P, var= "N", infer=TRUE)
+  emtrends_dfX <- as.data.frame(emtrends_resultX)
+  emtrends_dfX$plvl <-
+    ifelse(emtrends_dfX$p.value == 0.05, ".",
+    ifelse(emtrends_dfX$p.value < 0.05  & emtrends_dfX$p.value >= 0.01, "*",
+    ifelse(emtrends_dfX$p.value < 0.01  & emtrends_dfX$p.value >= 0.001, "**",
+    ifelse(emtrends_dfX$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfX$P <- factor(emtrends_dfX$P, levels = desired_order_P)
+emmeans_resultsX<-emmeans(modNXG1, ~N*P, at=list(N=0))
+  emmeans_dfX <- as.data.frame(emmeans_resultsX)
+mergedX <- emtrends_dfX %>%
+  inner_join(emmeans_dfX, by = c("P")) %>%
+  dplyr::select(P, emmean, N.trend, SE.x, plvl)
+mergedX$P <- factor(mergedX$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+X_df <- mergedX %>%
+  mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
+  select(-emmean, -N.trend)
+sortedX <- X_df %>%
+  arrange(P)
+#plot
+GcomboplotNEXS <- ggplot(data=NdXSI) +
+  geom_point(data = NdXSIG, aes(x = N, y = G)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "Grain Yield")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 2000) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin'))) +
+  # functions come from equation in sorted
+  geom_function(data=subset(NdXSIG, P== "KS"), fun=~407.18*exp(-0.0002*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSIG, P== "MN"), fun=~179.38*exp(0.0021*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSIG, P== "NY"), fun=~408.24*exp(0.0047*.x),color='darkgrey')+
+  geom_function(data=subset(NdXSIG, P== "WI"), fun=~736.77*exp(-0.0001*.x),color='darkgrey')+
+  geom_text(data = sortedX, mapping = aes(x = 20, y = 1800, label = equation),  size=3)+ # add equation to figure
+  geom_text(data = sortedX, mapping = aes(x = 50, y = 1800, label = plvl))+ # add stars to figure
+# add stars to figure
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+print(GcomboplotNEXS)
+# ggsave("figures/Paper/GcomboplotNEXS.jpg", plot = GcomboplotNEXS, width = 10, height = 8, dpi = 300)
 ```
 
 #Grain year 2 (all locations)

@@ -1,7 +1,7 @@
 library(readxl)
 library(dplyr)
 
-YS_IWG_NIR <- read_excel("~/Desktop/YS_IWG_NIR.xlsx")
+YS_IWG_NIR <- read_excel("data/Original_Data/YS_IWG_NIR.xlsx")
 
 master <- YS_IWG_NIR %>%
   select(NumPlot) %>%     # select the column
@@ -16,7 +16,7 @@ aligned <- master %>%
 
 #write.csv(aligned, "data/Intermediate_Data/YS_IWG_NIR.csv", row.names = FALSE)
 
-YS_ALF_NIR <- read_excel("~/Desktop/YS_ALF_NIR.xlsx")
+YS_ALF_NIR <- read_excel("data/Original_Data/YS_ALF_NIR.xlsx")
 
 master <- YS_ALF_NIR %>%
   select(NumPlot) %>%     # select the column
@@ -31,7 +31,7 @@ aligned <- master %>%
 
 #write.csv(aligned, "data/Intermediate_Data/YS_ALF_NIR.csv", row.names = FALSE)
 
-YF_IWG_NIR <- read_excel("~/Desktop/YF_IWG_NIR.xlsx")
+YF_IWG_NIR <- read_excel("data/Original_Data/YF_IWG_NIR.xlsx")
 
 master <- YF_IWG_NIR %>%
   select(NumPlot) %>%     # select the column
@@ -46,7 +46,7 @@ aligned <- master %>%
 
 #write.csv(aligned, "data/Intermediate_Data/YF_IWG_NIR.csv", row.names = FALSE)
 
-YF_ALF_NIR <- read_excel("~/Desktop/YF_ALF_NIR.xlsx")
+YF_ALF_NIR <- read_excel("data/Original_Data/YF_ALF_NIR.xlsx")
 
 master <- YF_ALF_NIR %>%
   select(NumPlot) %>%     # select the column
