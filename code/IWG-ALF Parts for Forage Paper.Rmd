@@ -1558,7 +1558,7 @@ cld_df <-as.data.frame(cld_dataTFPC)
 merged_df <- merge(emms_df, cld_df,by = c("P", "CROP"))
 # Custom labels
 custom_labels <- c("Intercrop", "Monoculture Alfalfa", "Monoculture IWG")
-xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+xlabels <- c("Minnesota", "New York", "Wisconsin")
 TFYFPC<-ggplot(NdYF, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
   labs(x = "Environment", y = "Total Forage (Kg Ha-1)") +
