@@ -3367,12 +3367,17 @@ print(IcomboplotNEYF)
 #EQUATION table JUST N 
 emtrends_result<-emtrends(modNYFI1,~ 1, var= "N", infer=TRUE)
 emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", ""))))
 emmeans_results<-emmeans(modNYFI1, ~1, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 emtrends_df <- emtrends_df %>% mutate(key = 1)
 emmeans_df <- emmeans_df %>% mutate(key = 1)
 merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
-  select(emmean, N.trend, SE.x)
+  select(emmean, N.trend, SE.x, plvl)
 new_df <- merged_df %>%
   mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
   select(-emmean, -N.trend)
@@ -3387,6 +3392,7 @@ IFNYF <- ggplot(NdYFI, aes(x = N, y = PlotIWGDryKgHa)) +
 scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 9750) +
   geom_text(data = new_df, mapping = aes(x = 10, y = 9650, label = equation),  size=4)+ # add equation to figure
+  geom_text(data = new_df, mapping = aes(x = 30, y = 9650, label = plvl),  size=4)+ # add equation to figure
   theme(axis.text=element_text(size=14), #change font size of axis text
         axis.title=element_text(size=18)) #change font size of axis titles
 # save figures/Paper/ITF_Nrate_N_yr2F  900x795
@@ -6698,13 +6704,17 @@ cld_dataTLERYSN   |>
 #EQUATION tables JUST N 
 emtrends_result<-emtrends(modTotLERYS_21,~ 1, var= "N", infer=TRUE)
 emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", ""))))
 emmeans_results<-emmeans(modTotLERYS_21, ~1, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 emtrends_df <- emtrends_df %>% mutate(key = 1)
 emmeans_df <- emmeans_df %>% mutate(key = 1)
 merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
-  select(emmean, N.trend, SE.x)
-view(merged_df)
+  select(emmean, N.trend, SE.x, plvl)
 new_df <- merged_df %>%
   mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
   select(-emmean, -N.trend)
@@ -6722,6 +6732,7 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 3.5) +
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
   geom_text(data = new_df, mapping = aes(x = 10, y = 3.2, label = equation),  size=4)+ # add equation to figure
+  geom_text(data = new_df, mapping = aes(x = 30, y = 3.2, label = plvl),  size=4)+ # add equation to figure
   theme(axis.text=element_text(size=14), #change font size of axis text
         axis.title=element_text(size=18)) #change font size of axis titles
 # save figures/Paper/TLER_Nrate_N_yr2S  900x795
@@ -7190,7 +7201,7 @@ CREXS <- ggplot(CRXS, aes(x = P, y = CR)) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
           color = "black", vjust = -10, hjust = 1.5)+
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
-  labs(title = "Year 1 Summer", x = "Cropping System", y = "Competitive Ratio")+
+  labs(title = "Year 1 Summer", x = "Environment", y = "Competitive Ratio")+
   scale_x_discrete(label = xlabels)+ 
   ylim(0, 1) +
   theme(axis.text=element_text(size=14), #change font size of axis text
@@ -7275,7 +7286,7 @@ CREXF <- ggplot(CRXF, aes(x = P, y = CR)) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
           color = "black", vjust = -10, hjust = 1.5)+
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
-  labs(title = "Year 1 Fall", x = "Cropping System", y = "Competitive Ratio")+
+  labs(title = "Year 1 Fall", x = "Environment", y = "Competitive Ratio")+
   scale_x_discrete(label = xlabels)+ 
   ylim(0, 1) +
   theme(axis.text=element_text(size=14), #change font size of axis text
@@ -7331,12 +7342,17 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
 #EQUATION tables JUST N 
 emtrends_result<-emtrends(modCRYS,~ 1, var= "N", infer=TRUE)
 emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", ""))))
 emmeans_results<-emmeans(modCRYS, ~1, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 emtrends_df <- emtrends_df %>% mutate(key = 1)
 emmeans_df <- emmeans_df %>% mutate(key = 1)
 merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
-  select(emmean, N.trend, SE.x)
+  select(emmean, N.trend, SE.x, plvl)
 new_df <- merged_df %>%
   mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
   select(-emmean, -N.trend)
@@ -7354,6 +7370,7 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 1.2) +
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
   geom_text(data = new_df, mapping = aes(x = 10, y = 1.1, label = equation),  size=4)+ # add equation to figure
+  geom_text(data = new_df, mapping = aes(x = 30, y = 1.1, label = plvl),  size=4)+ # add equation to figure
   theme(axis.text=element_text(size=14), #change font size of axis text
         axis.title=element_text(size=18)) #change font size of axis titles
 CRNYS
@@ -7433,12 +7450,17 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
 #EQUATION tables JUST N 
 emtrends_result<-emtrends(modCRYF,~ 1, var= "N", infer=TRUE)
 emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", ""))))
 emmeans_results<-emmeans(modCRYF, ~1, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 emtrends_df <- emtrends_df %>% mutate(key = 1)
 emmeans_df <- emmeans_df %>% mutate(key = 1)
 merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
-  select(emmean, N.trend, SE.x)
+  select(emmean, N.trend, SE.x, plvl)
 new_df <- merged_df %>%
   mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
   select(-emmean, -N.trend)
@@ -7476,7 +7498,7 @@ CREYF <- ggplot(CRYF, aes(x = P, y = CR)) +
   geom_text(data = merged_df, aes(x = P, y = emmean.x, label = .group), 
           color = "black", vjust = -10, hjust = 1.5)+
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
-  labs(title = "Year 2 Fall", x = "Cropping System", y = "Competitive Ratio")+
+  labs(title = "Year 2 Fall", x = "Environment", y = "Competitive Ratio")+
   scale_x_discrete(label = xlabels)+ 
   ylim(0, 1) +
   theme(axis.text=element_text(size=14), #change font size of axis text
@@ -7493,6 +7515,7 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 1.2) +
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
   geom_text(data = new_df, mapping = aes(x = 10, y = 1.1, label = equation),  size=4)+ # add equation to figure
+  geom_text(data = new_df, mapping = aes(x = 30, y = 1.1, label = plvl),  size=4)+ # add equation to figure
   theme(axis.text=element_text(size=14), #change font size of axis text
         axis.title=element_text(size=18)) #change font size of axis titles
 CRNYF
@@ -7519,6 +7542,9 @@ qqnorm(CRZS_resid1)
 qqline(CRZS_resid1)
 plot(modCRZS1)
 # using normal
+
+mean(CRZS$CR)
+sd(CRZS$CR)
 ```
 
 #Year 3 Fall Competitive Ratio model 
@@ -7542,6 +7568,9 @@ qqnorm(CRZF_resid1)
 qqline(CRZF_resid1)
 plot(modCRZF1)
 # using normal
+
+mean(CRZF$CR)
+sd(CRZF$CR)
 ```
 
 
@@ -8410,12 +8439,17 @@ CPEYF <- ggplot(NdYFf, aes(x = P, y = totCP)) +
 #EQUATION table JUST N 
 emtrends_result<-emtrends(modNTCPYF,~ 1, var= "N", infer=TRUE)
 emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", ""))))
 emmeans_results<-emmeans(modNTCPYF, ~1, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 emtrends_df <- emtrends_df %>% mutate(key = 1)
 emmeans_df <- emmeans_df %>% mutate(key = 1)
 merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
-  select(emmean, N.trend, SE.x)
+  select(emmean, N.trend, SE.x, plvl)
 new_df <- merged_df %>%
   mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
   select(-emmean, -N.trend)
@@ -8430,6 +8464,7 @@ CPNYF <- ggplot(NdYFf, aes(x = N, y = totCP)) +
 scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 28) +
   geom_text(data = new_df, mapping = aes(x = 10, y = 27, label = equation),  size=4)+ # add equation to figure
+  geom_text(data = new_df, mapping = aes(x = 30, y = 27, label = plvl),  size=4)+ # add equation to figure
   theme(axis.text=element_text(size=14), #change font size of axis text
         axis.title=element_text(size=18)) #change font size of axis titles
 # save figures/Paper/CP_Nrate_N_yr2F  900x795
@@ -9107,12 +9142,17 @@ RFVCYF <- ggplot(NdYFo, aes(x = CROP, y = totRFV)) +
 #EQUATION table JUST N 
 emtrends_result<-emtrends(modNTRFVYF1,~ 1, var= "N", infer=TRUE)
 emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", ""))))
 emmeans_results<-emmeans(modNTRFVYF1, ~1, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 emtrends_df <- emtrends_df %>% mutate(key = 1)
 emmeans_df <- emmeans_df %>% mutate(key = 1)
 merged_df <- inner_join(emtrends_df, emmeans_df, by = "key")%>%
-  select(emmean, N.trend, SE.x)
+  select(emmean, N.trend, SE.x, plvl)
 new_df <- merged_df %>%
   mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
   select(-emmean, -N.trend)
@@ -9127,6 +9167,7 @@ RFVNYF <- ggplot(NdYFo, aes(x = N, y = totRFV)) +
 scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 275) +
   geom_text(data = new_df, mapping = aes(x = 10, y = 270, label = equation),  size=4)+ # add equation to figure
+  geom_text(data = new_df, mapping = aes(x = 30, y = 270, label = plvl),  size=4)+ # add equation to figure
   theme(axis.text=element_text(size=14), #change font size of axis text
         axis.title=element_text(size=18)) #change font size of axis titles
 # save figures/Paper/RFV_Nrate_N_yr2F  900x795
