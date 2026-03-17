@@ -31,7 +31,7 @@ library(gvlma)
 library(rstatix)
 library(sjPlot)
 library(gt)
-library(car)
+?library(car)
 library(Rmisc)
 library(nlme)
 library(pgirmess)
@@ -699,15 +699,15 @@ custom_labels <- c("Intercrop", "Monoculture IWG")
 xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
 GXSPC<-ggplot(NdXSIG, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
-  labs(x = "Environment", y = "Grain Yield") +
+  labs(x = "Environment", y = "Grain Yield (kg ha-1)") +
   geom_point(data = emms_df, aes(x = P, y = response), 
              size = 4, shape = 18, color = "black")+ 
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.5)+
+            color = "black", vjust = 0, hjust = 2.15)+
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
-     ggtitle("Year 1 Summer \nbacktransformed for visualization")+
+#     ggtitle("Year 1 Summer \nbacktransformed for visualization")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
         axis.text=element_text(size=12), #change font size of axis text
@@ -774,7 +774,7 @@ sortedX <- X_df %>%
 #plot
 GcomboplotNEXS <- ggplot(data=NdXSI) +
   geom_point(data = NdXSIG, aes(x = N, y = G)) +
-  labs(x = "N-Rate (Kg ha-1)", y = "Grain Yield")+
+  labs(x = "Nitrogen Rate (kg ha-1)", y = "Grain Yield (kg ha-1)")+
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
   ylim(0, 2000) +
   facet_wrap(~P, scales = "free_y", ncol = 2,
@@ -785,15 +785,15 @@ GcomboplotNEXS <- ggplot(data=NdXSI) +
   geom_function(data=subset(NdXSIG, P== "MN"), fun=~179.38*exp(0.0021*.x),color='darkgrey')+
   geom_function(data=subset(NdXSIG, P== "NY"), fun=~408.24*exp(0.0047*.x),color='darkgrey')+
   geom_function(data=subset(NdXSIG, P== "WI"), fun=~736.77*exp(-0.0001*.x),color='darkgrey')+
-  geom_text(data = sortedX, mapping = aes(x = 20, y = 1800, label = equation),  size=3)+ # add equation to figure
-  geom_text(data = sortedX, mapping = aes(x = 50, y = 1800, label = plvl))+ # add stars to figure
+  geom_text(data = sortedX, mapping = aes(x = 25, y = 1800, label = equation),  size=4)+ # add equation to figure
+  geom_text(data = sortedX, mapping = aes(x = 58, y = 1800, label = plvl), size=4)+ # add stars to figure
 # add stars to figure
   theme(axis.text=element_text(size=12), #change font size of axis text
         axis.title=element_text(size=18), #change font size of axis titles
         plot.title=element_text(size=20), #change font size of plot title
         strip.text.x = element_text(size = 18)) #change font size of facet title
 print(GcomboplotNEXS)
-# ggsave("figures/Paper/GcomboplotNEXS.jpg", plot = GcomboplotNEXS, width = 10, height = 8, dpi = 300)
+# ggsave("figures/Paper/final_figures/GcomboplotNEXS.jpg", plot = GcomboplotNEXS, width = 10, height = 8, dpi = 300)
 ```
 
 #Grain year 2 (all locations)
@@ -1031,29 +1031,18 @@ sym_I <- sortedY_I %>%
   distinct(P, plvl) %>%
   mutate(
     x_sym = 0,
-    y_sym = 1125
+    y_sym = 1175
   )
 sym_M <- sortedY_M %>%
   distinct(P, plvl) %>%
   mutate(
     x_sym = 0,
-    y_sym = 1000
+    y_sym = 1100
   )
 
 #plot
 GraincomboplotNECY <- ggplot(data=NdYSI) +
   geom_point(data = NdYSI, aes(x = N, y = G, shape = CROP)) +
-#  geom_point(data = subset(NdYSI, P== "MN"), aes(x = N, y = G, shape = CROP)) +
-#  geom_point(data = subset(NdYSI, P== "NY"), aes(x = N, y = G, shape = CROP)) +
-#  geom_point(data = subset(NdYSI, P== "WI"), aes(x = N, y = G, shape = CROP)) +
-#  labs(x = "N-Rate (Kg ha-1)", y = "Grain Yield (Kg ha-1)", shape = "Cropping System", color = "Cropping System", linetype = "Cropping System")+
-#  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
-#  ylim(0, 1200) +
-#  facet_wrap(~P, scales = "free_y", ncol = 2, labeller = as_labeller(c(KS='Kansas',
-#                                      MN='Minnesota',
-#                                      NY='New York',
-#                                      WI='Wisconsin'))) +
-#scale_shape_manual(values = c(4, 25),labels = c("Intercropped","Monoculture IWG"))+
   geom_function(data=subset(NdYSI, P== "KS" & CROP == "inter"), aes(linetype = CROP), fun=~93.35*exp(-0.0029*.x), color='darkgrey')+
   geom_function(data=subset(NdYSI, P== "KS" & CROP == "monoI"), aes(linetype = CROP), fun=~142.46*exp(-0.0001*.x),color='darkgrey')+
   geom_function(data=subset(NdYSI, P== "MN" & CROP == "inter"), aes(linetype = CROP), fun=~38.14*exp(0.0052*.x),color='darkgrey')+
@@ -1062,27 +1051,22 @@ GraincomboplotNECY <- ggplot(data=NdYSI) +
   geom_function(data=subset(NdYSI, P== "NY" & CROP == "monoI"), aes(linetype = CROP), fun=~253.99*exp(0.0008*.x),color='darkgrey')+
   geom_function(data=subset(NdYSI, P== "WI" & CROP == "inter"), aes(linetype = CROP), fun=~378.01*exp(0.0042*.x),color='darkgrey')+
   geom_function(data=subset(NdYSI, P== "WI" & CROP == "monoI"), aes(linetype = CROP), fun=~249.74*exp(0.0089*.x),color='darkgrey')+  
-  geom_text(data = sortedY_I, mapping = aes(x = 30, y = 1125, label = equation),  size=2)+ # add equation to figure
-  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1, inherit.aes = FALSE)+
-  geom_text(data = sortedY_M, mapping = aes(x = 30, y = 1000, label = equation),  size=2)+ # add equation to figure
-  geom_point(data = sym_M, aes(x = x_sym, y = y_sym), shape = 25, size = 1, fill = "lightgrey", stroke = 0.6, inherit.aes = FALSE)+
-  geom_text(data = sym_I, mapping = aes(x = 60, y = 1125, label = plvl))+ # add stars to figure
-  geom_text(data = sym_M, mapping = aes(x = 60, y = 1000, label = plvl))+ # add stars to figure
-#scale_shape_manual(values = c(4, 25),
-#                    labels = c("Intercropped", "Monoculture IWG"),
-#                     breaks = c("inter","monoI"),
-#                     name = "Cropping System") +
-#  scale_linetype_manual(values = c(inter = "dotdash", monoI = "dashed"),
-#                        labels = c(inter = "Intercropped", monoI = "Monoculture IWG"),
-#                        breaks = c("inter","monoI"),
-#                        name = "Cropping System") +
+
+  geom_text(data = sortedY_I, mapping = aes(x = 45, y = 1175, label = equation),  size=3.75)+ # add equation to figure
+  geom_point(data = sym_I, aes(x = x_sym, y = y_sym), shape = 4, size = 1.5, inherit.aes = FALSE)+
+  geom_text(data = sortedY_M, mapping = aes(x = 45, y = 1100, label = equation),  size=3.75)+ # add equation to figure
+  geom_point(data = sym_M, aes(x = x_sym, y = y_sym), shape = 25, size = 1.5, fill = "lightgrey", stroke = 0.6, inherit.aes = FALSE)+
+  geom_text(data = sym_I, mapping = aes(x = 90, y = 1175, label = plvl), size= 4)+ # add stars to figure
+  geom_text(data = sym_M, mapping = aes(x = 90, y = 1100, label = plvl), size= 4)+ # add stars to figure
+
 scale_linetype_manual(name = "Cropping System",
                       labels = c(inter = "Intercropped", inter = "Intercropped", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
                       values = c(inter = "dotdash", inter = "dotdash", monoI = "dashed", monoI = "dashed")) +
 scale_shape_manual(name = "Cropping System",
                      labels = c(inter = "Intercropped", inter = "Intercropped", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
                      values = c(4, 25, 4, 25))+
-  labs(x = "N-Rate (Kg ha-1)", y = "Grain Yield (Kg ha-1)", shape = "Cropping System") +
+  labs(x = "Nitrogen Rate (kg ha-1)", y = "Grain Yield (kg ha-1)", shape = "Cropping System") +
+  
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
   ylim(0, 1200) +
   facet_wrap(~P, scales = "free_y", ncol = 2,
@@ -1093,9 +1077,10 @@ scale_shape_manual(name = "Cropping System",
         plot.title=element_text(size=20), #change font size of plot title
         legend.text=element_text(size=12), #change font size of legend text
         legend.title=element_text(size=16), #change font size of legend title
-        strip.text.x = element_text(size = 18)) #change font size of facet title
+        strip.text.x = element_text(size = 18),
+        legend.key.width = unit(1.5, "cm")) #change font size of facet title
 print(GraincomboplotNECY)
-# ggsave("figures/Paper/GrainplotNECY.jpg", plot = GraincomboplotNECY, width = 10, height = 8, dpi = 300)
+# ggsave("figures/Paper/final_figures/GrainplotNECY.jpg", plot = GraincomboplotNECY, width = 10, height = 8, dpi = 300)
 ```
 
 #Grain year 3 (all locations)
@@ -1317,7 +1302,7 @@ custom_labels <- c("Intercrop", "Monoculture IWG")
 xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
 GZSPC<-ggplot(NdZSI, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
-  labs(x = "Environment", y = "Grain Yield") +
+  labs(x = "Environment", y = "Grain Yield (kg ha-1)") +
   geom_point(data = emms_df, aes(x = P, y = response), 
              size = 4, shape = 18, color = "black")+ 
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
@@ -1325,7 +1310,7 @@ GZSPC<-ggplot(NdZSI, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
             color = "black", vjust = 0, hjust = 3)+
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
-     ggtitle("Year 3 Summer \nbacktransformed for visualization")+
+#     ggtitle("Year 3 Summer \nbacktransformed for visualization")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
         axis.text=element_text(size=12), #change font size of axis text
@@ -1571,8 +1556,12 @@ get_legend <- function(myplot) {
 legend <- get_legend(GZSPC)
 
 # Remove legends
-GXSPC <- GXSPC + theme(legend.position = "none")
-GZSPC <- GZSPC + theme(legend.position = "none")
+GXSPC <- GXSPC + theme(legend.position = "none",
+                       axis.title.x = element_blank(),
+                       axis.title.y = element_blank())
+GZSPC <- GZSPC + theme(legend.position = "none",
+                       axis.title.x = element_blank(),
+                       axis.title.y = element_blank())
 
 GEC<-grid.arrange(GXSPC, GZSPC, legend, ncol = 3)
 # Combine plots and legend
@@ -1584,6 +1573,13 @@ GEC <- plot_grid(
   rel_widths = c(1, 1, 0.3) # shrink legend width
 )
 GEC
+
+test <- ggdraw(GEC) +
+  draw_label("Environment", x = 0.45, y = 0.0005, vjust = 0.5, size = 16) +
+  draw_label("Grain Yield (kg ha-1)", x = 0.0005, y = 0.5, angle = 90, vjust = 0.5, size = 16)+
+  theme(plot.margin = margin(10, 5, 15, 20))
+test
+
 #save figures/Paper/GEC_XZ  1250x780
 ```
 
