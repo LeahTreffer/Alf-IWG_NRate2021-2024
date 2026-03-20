@@ -4239,7 +4239,7 @@ IEC_2
 #Alf forage year 1 summer
 ```{r}
 #LINEAR 
-modNXSA<-lmer(PlotAlfDryKgHa~N*P*CROP + (1|P:Rep), data=NdXSA)
+modNXSA<-lmer(PlotAlfDryKgHa~N*P*CROP + (1|Rep), data=NdXSA)
 anova(modNXSA)
 #Check assumptions
 NXSA_resid<-resid(modNXSA)
@@ -4247,7 +4247,7 @@ qqnorm(NXSA_resid)
 qqline(NXSA_resid)
 plot(modNXSA)
 #log transform
-modNXSA1<-lmer(log(PlotAlfDryKgHa)~N*P*CROP + (1|P:Rep), data=NdXSA)
+modNXSA1<-lmer(log(PlotAlfDryKgHa)~N*P*CROP + (1|Rep), data=NdXSA)
 anova(modNXSA1)
 #Check assumptions
 NXSA_resid1<-resid(modNXSA1)
