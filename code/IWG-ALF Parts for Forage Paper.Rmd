@@ -6596,8 +6596,8 @@ cld_dataNXSTLERN  |>
 #Response across N and E 
 emms <- emmeans(modTotLERXS1, ~1) # type = "response"
 cld_data <- cld(emms, Letters=custom_letters)
-cld_data$response <- format(cld_data$response, digits = 2)
-cld_data$lower.CL <- format(cld_data$lower.CL, digits = 2) # lower confidence interval
+cld_data$emmean <- format(cld_data$emmean, digits = 4)
+cld_data$lower.CL <- format(cld_data$lower.CL, digits = 3) # lower confidence interval
 cld_data$upper.CL <- format(cld_data$upper.CL, digits = 3) # upper confidence interval 
 rownames(cld_data ) <- NULL
 cld_dataLERXS<- cld_data  %>%
@@ -6940,8 +6940,8 @@ plot(modTotLERZS1)
 #Response across N and E 
 emms <- emmeans(modTotLERZS1, ~1) # type = "response"
 cld_data <- cld(emms, Letters=custom_letters)
-cld_data$response <- format(cld_data$response, digits = 2)
-cld_data$lower.CL <- format(cld_data$lower.CL, digits = 2) # lower confidence interval
+cld_data$emmean <- format(cld_data$emmean, digits = 4)
+cld_data$lower.CL <- format(cld_data$lower.CL, digits = 3) # lower confidence interval
 cld_data$upper.CL <- format(cld_data$upper.CL, digits = 3) # upper confidence interval 
 rownames(cld_data ) <- NULL
 cld_dataLERZS<- cld_data  %>%
@@ -6978,8 +6978,8 @@ plot(modTotLERZF1)
 #Response across N and E 
 emms <- emmeans(modTotLERZF1, ~1) # type = "response"
 cld_data <- cld(emms, Letters=custom_letters)
-cld_data$response <- format(cld_data$response, digits = 2)
-cld_data$lower.CL <- format(cld_data$lower.CL, digits = 2) # lower confidence interval
+cld_data$emmean <- format(cld_data$emmean, digits = 4) #response
+cld_data$lower.CL <- format(cld_data$lower.CL, digits = 3) # lower confidence interval
 cld_data$upper.CL <- format(cld_data$upper.CL, digits = 3) # upper confidence interval 
 rownames(cld_data ) <- NULL
 cld_dataLERZF<- cld_data  %>%
@@ -7743,8 +7743,8 @@ sd(CRZS$CR)
 #Response across N and E 
 emms <- emmeans(modCRZS, ~1) # type = "response"
 cld_data <- cld(emms, Letters=custom_letters)
-cld_data$response <- format(cld_data$response, digits = 2)
-cld_data$lower.CL <- format(cld_data$lower.CL, digits = 2) # lower confidence interval
+cld_data$emmean <- format(cld_data$emmean, digits = 4) #response
+cld_data$lower.CL <- format(cld_data$lower.CL, digits = 3) # lower confidence interval
 cld_data$upper.CL <- format(cld_data$upper.CL, digits = 3) # upper confidence interval 
 rownames(cld_data ) <- NULL
 cld_dataCRZS<- cld_data  %>%
@@ -7785,8 +7785,8 @@ sd(CRZF$CR)
 #Response across N and E 
 emms <- emmeans(modCRZF, ~1) # type = "response"
 cld_data <- cld(emms, Letters=custom_letters)
-cld_data$response <- format(cld_data$response, digits = 2)
-cld_data$lower.CL <- format(cld_data$lower.CL, digits = 2) # lower confidence interval
+cld_data$emmean <- format(cld_data$emmean, digits = 4) #response
+cld_data$lower.CL <- format(cld_data$lower.CL, digits = 3) # lower confidence interval
 cld_data$upper.CL <- format(cld_data$upper.CL, digits = 3) # upper confidence interval 
 rownames(cld_data ) <- NULL
 cld_dataCRZF<- cld_data  %>%
