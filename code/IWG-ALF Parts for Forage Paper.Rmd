@@ -7164,7 +7164,7 @@ LERcomboplotEXFYF_2
 #ggsave("figures/Paper/final_figures/LERcomboplotEXFYF_2.jpg", plot = LERcomboplotEXFYF_2, width = 14, height = 10, dpi = 300)
 ```
 
-# LER CI Tables
+# LER & CR CI Tables
 
 ```{r}
 # Table of mean LER across E and C with confidence intervals
@@ -7175,7 +7175,7 @@ LER_table_merge <- rbind(cld_dataLERXS, cld_dataLERZS, cld_dataLERZF)
 #colnames(LER_table_merge) <- make.unique(colnames(LER_table_merge))
 #LER_table_merge2 <- LER_table_merge[,c('LER', 'l', 'h','LER.1', 'l.1', 'h.1','LER.2', 'l.2', 'h.2')]
 
-LER_table_merge$Harvest <- c("Year 2 Summer", "Year 3 Summer", "Year 3 Fall")
+LER_table_merge$Harvest <- c("Year 1 Summer", "Year 3 Summer", "Year 3 Fall")
 LER_table_merge2 <- LER_table_merge[,c('Harvest','LER','l','h')]
 LER_table_merge2 <- as.data.frame(LER_table_merge2)
 colnames(LER_table_merge2) <- c("Harvest","Total Forage LER","CI 25","CI 95")
