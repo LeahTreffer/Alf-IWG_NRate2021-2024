@@ -1319,6 +1319,13 @@ GZSPC<-ggplot(NdZSI, aes(x = P, y = exp(predicted), shape = CROP)) +
         legend.title=element_text(size=14)) #change font size of legend title
 print(GZSPC)
 #ggsave("figures/Paper/GZSPC.jpg", plot = GZSPC, width = 10, height = 8, dpi = 300)
+
+
+# mean grain yield across P and N rate (gives mean for each CROP)
+NdZSI %>%
+  dplyr::group_by(CROP) %>%
+  dplyr:: summarise(meanG = mean(G, na.rm = TRUE), .groups = "drop")%>%
+  flextable()
 ```
 
 # Grain anovas Table 
@@ -2132,6 +2139,7 @@ summarise(
 avg_value = mean(LER, na.rm = TRUE)
 )%>% arrange(as.numeric(NRATE))
 flextable(data = testZ)
+
 ```
 
 # GPLER E plot (Z)
