@@ -1717,7 +1717,7 @@ xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
 ggplot(NdZS_2, aes(x = P, y = PlotTotForageKgHa)) +
   geom_boxplot() +
     geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = -15, hjust = 1.5)+
+            color = "black", vjust = -10, hjust = 1.5, size=5.5)+
   labs(title = " ", x = "Environment", y = "Total Forage (kg ha-1)")+
   scale_x_discrete(label = xlabels)+ 
   theme(axis.text=element_text(size=14), #change font size of axis text
@@ -1736,12 +1736,15 @@ xlabels <- c("Intercropping", "Monoculture Alfalfa", "Monoculture IWG")
 TFCZS <- ggplot(NdZS_2, aes(x = CROP, y = PlotTotForageKgHa)) +
   geom_boxplot() +
   geom_text(data = merged_df, aes(x = CROP, y = response.x, label = .group), 
-            color = "black", vjust = -50, hjust = 1.5)+
+            color = "black", vjust = -30, hjust = 1.5, size=6)+
 #  labs(title = "Year 3 Summer", x = "Cropping System", y = "Total Forage (Kg Ha-1)")+
   scale_x_discrete(label = xlabels)+ 
 #  theme(axis.text=element_text(size=14), #change font size of axis text
 #        axis.title=element_text(size=18))
-  theme(axis.title = element_blank())
+#  theme(axis.title = element_blank(),
+  theme(axis.title = element_blank(),
+        axis.text.x=element_text(size=16),
+        axis.text.y=element_text(size=14)) #change font size of axis text
 ```
 
 # Total forage year 3 fall
@@ -1906,12 +1909,15 @@ xlabels <- c("Intercropping", "Monoculture Alfalfa", "Monoculture IWG")
 TFCZF <- ggplot(NdZF_2, aes(x = CROP, y = PlotTotForageKgHa)) +
   geom_boxplot() +
   geom_text(data = merged_df, aes(x = CROP, y = response.x, label = .group), 
-            color = "black", vjust = -30, hjust = 1.5)+
+            color = "black", vjust = -20, hjust = 1.5, size=6)+
 #  labs(title = "Year 3 Fall", x = "Cropping System", y = "Total Forage (Kg Ha-1)")+
   scale_x_discrete(label = xlabels)+ 
 #  theme(axis.text=element_text(size=14), #change font size of axis text
 #        axis.title=element_text(size=18))
-  theme(axis.title = element_blank())
+#  theme(axis.title = element_blank(),
+  theme(axis.title = element_blank(),
+        axis.text.x=element_text(size=16),
+        axis.text.y=element_text(size=14)) #change font size of axis text
 ```
 
 
@@ -2094,11 +2100,11 @@ TFPC
 #TFcomboplotNECXS
 #TFcomboplotNECXF
 #TFcomboplotNECYS
-TFcomboplotNECXS_2 <- TFcomboplotNECXS + theme(axis.title = element_blank())
-TFcomboplotNECXF_2 <- TFcomboplotNECXF + theme(axis.title = element_blank())
-TFcomboplotNECYS_2 <- TFcomboplotNECYS + theme(axis.title = element_blank())
+TFcomboplotNECXS_2 <- TFcomboplotNECXS + theme(axis.title = element_blank()) + labs(title = "a")
+TFcomboplotNECXF_2 <- TFcomboplotNECXF + theme(axis.title = element_blank()) + labs(title = "b")
+TFcomboplotNECYS_2 <- TFcomboplotNECYS + theme(axis.title = element_blank()) + labs(title = "c")
 
-TFcomboplotNECXSXFYS <- ggarrange(TFcomboplotNECXS_2, TFcomboplotNECXF_2, TFcomboplotNECYS_2, ncol=2, nrow=2, common.legend = TRUE, legend="right")
+TFcomboplotNECXSXFYS <- ggarrange(TFcomboplotNECXS_2, TFcomboplotNECXF_2, TFcomboplotNECYS_2, ncol=1, nrow=3, common.legend = TRUE, legend="right")
 
 TFcomboplotNECXSXFYS <- annotate_figure(
   TFcomboplotNECXSXFYS,
@@ -2109,23 +2115,29 @@ TFcomboplotNECXSXFYS
 
 # ggsave("figures/Paper/final_figures/TFcomboplotNECXSXFYS.jpg", plot = TFcomboplotNECXSXFYS, width = 20, height = 16, dpi = 300)
 # 1690x1132
-# 2250x1800
+# 2250x1800 #ncol=2,nrow=2
+# 1300x2700 #ncol=1,nrow=3
 ```
 
 # total forage combined harvests Year 3 C
 ```{r}
 # TFCZS
 # TFCZF
+
+TFCZS <- TFCZS + labs(title = "a") + theme(plot.title = element_text(size = 18, hjust = 0))
+TFCZF <- TFCZF + labs(title = "b") + theme(plot.title = element_text(size = 18, hjust = 0))
+
 TFcomboplotCZSZF <- ggarrange(TFCZS, TFCZF, ncol=2)
 #ggsave("figures/Paper/TFcomboplotCZSZF.jpg", plot = TFcomboplotCZSZF, width = 14, height = 10, dpi = 300)
 
 TFcomboplotCZSZF_2 <- annotate_figure(
   TFcomboplotCZSZF,
-  bottom = text_grob("Cropping System", x = 0.5, size = 16),
-  left = text_grob("Total Forage (kg ha-1)", rot = 90, size = 16)
+  bottom = text_grob("Cropping System", x = 0.5, size = 20),
+  left = text_grob("Total Forage (kg ha-1)", rot = 90, size = 20)
 )
 TFcomboplotCZSZF_2
 #ggsave("figures/Paper/final_figures/TFcomboplotCZSZF_2.jpg", plot = TFcomboplotCZSZF_2, width = 14, height = 10, dpi = 300)
+# 1400x1200
 ```
 
 
@@ -2457,15 +2469,15 @@ IXSEC<-ggplot(NdXSI, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.75)+
+            color = "black", vjust = 0, hjust = 2.75, size=6)+
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
 #     ggtitle("Year 1 Summer \nbacktransformed for visualization")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
-        axis.title=element_text(size=16), #change font size of axis titles
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=24)) #change font size of legend title
 print(IXSEC)
 ```
 
@@ -2790,15 +2802,15 @@ IXFEC<-ggplot(NdXFI, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = 0, hjust = 3.2)+
+            color = "black", vjust = 0, hjust = 3.2, size = 6)+
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
 #     ggtitle("Year 1 Fall \nbacktransformed for visualization")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
-        axis.title=element_text(size=16), #change font size of axis titles
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=24)) #change font size of legend title
 print(IXFEC)
 ```
 
@@ -3124,15 +3136,15 @@ IYSEC<-ggplot(NdYSI, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.5)+
+            color = "black", vjust = 0, hjust = 2.5, size=6)+
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
 #     ggtitle("Year 2 Summer \nbacktransformed for visualization")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
-        axis.title=element_text(size=16), #change font size of axis titles
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=24)) #change font size of legend title
 print(IYSEC)
 ```
 
@@ -3439,15 +3451,15 @@ IYFEC<-ggplot(NdYFI, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.75)+
+            color = "black", vjust = 0, hjust = 2.75, size=6)+
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
 #     ggtitle("Year 2 Fall \nbacktransformed for visualization")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
-        axis.title=element_text(size=16), #change font size of axis titles
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=24)) #change font size of legend title
 print(IYFEC)
 ```
 
@@ -3785,15 +3797,15 @@ IZSEC<-ggplot(NdZSI_2, aes(x = P, y = (predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = emmean.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.6)+
+            color = "black", vjust = 0, hjust = 2.6, size=6)+
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
 #     ggtitle("Year 3 Summer")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
-        axis.title=element_text(size=16), #change font size of axis titles
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=24)) #change font size of legend title
 print(IZSEC)
 ```
 
@@ -3977,15 +3989,15 @@ IZFEC<-ggplot(NdZFI, aes(x = P, y = (predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = emmean.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.7)+
+            color = "black", vjust = 0, hjust = 2.7, size=6)+
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
 #     ggtitle("Year 3 Fall")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
-        axis.title=element_text(size=16), #change font size of axis titles
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=20), #change font size of axis titles
+        legend.text=element_text(size=20), #change font size of legend text
+        legend.title=element_text(size=24)) #change font size of legend title
 print(IZFEC)
 ```
 
@@ -4201,12 +4213,12 @@ INE
 
 # IWG forage all harvests E:C
 ```{r}
-IXSEC_2 <- IXSEC + theme(axis.title = element_blank())
-IXFEC_2 <- IXFEC + theme(axis.title = element_blank())
-IYSEC_2 <- IYSEC + theme(axis.title = element_blank())
-IYFEC_2 <- IYFEC + theme(axis.title = element_blank())
-IZSEC_2 <- IZSEC + theme(axis.title = element_blank())
-IZFEC_2 <- IZFEC + theme(axis.title = element_blank())
+IXSEC_2 <- IXSEC + labs(title = "a") + theme(plot.title = element_text(size=22, hjust=0), axis.title = element_blank())
+IXFEC_2 <- IXFEC + labs(title = "b") + theme(plot.title = element_text(size=22, hjust=0), axis.title = element_blank())
+IYSEC_2 <- IYSEC + labs(title = "c") + theme(plot.title = element_text(size=22, hjust=0), axis.title = element_blank())
+IYFEC_2 <- IYFEC + labs(title = "d") + theme(plot.title = element_text(size=22, hjust=0), axis.title = element_blank())
+IZSEC_2 <- IZSEC + labs(title = "e") + theme(plot.title = element_text(size=22, hjust=0), axis.title = element_blank())
+IZFEC_2 <- IZFEC + labs(title = "f") + theme(plot.title = element_text(size=22, hjust=0), axis.title = element_blank())
 
 IEC <- ggarrange(
 IXSEC_2,
@@ -4225,8 +4237,8 @@ IEC
 
 IEC_2 <- annotate_figure(
   IEC,
-  bottom = text_grob("Environment", x = 0.46, size = 18),
-  left = text_grob("IWG Forage (kg ha-1)", rot = 90, size = 18)
+  bottom = text_grob("Environment", x = 0.46, size = 28),
+  left = text_grob("IWG Forage (kg ha-1)", rot = 90, size = 28)
 )
 IEC_2
 #save figures/Paper/final_figres/IFEC.jpg   2000x1800
@@ -4434,15 +4446,15 @@ AXSEC<-ggplot(NdXSA, aes(x = P, y = (predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = emmean.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.5)+
+            color = "black", vjust = 0, hjust = 1.5, size=8)+ #hjust=2.5
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 1))+
 #     ggtitle("Year 1 Summer")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
-        axis.title=element_text(size=16), #change font size of axis titles
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        axis.text=element_text(size=18), #change font size of axis text
+        axis.title=element_text(size=22), #change font size of axis titles
+        legend.text=element_text(size=18), #change font size of legend text
+        legend.title=element_text(size=20)) #change font size of legend title
 print(AXSEC)
 
 #N:E
@@ -4603,15 +4615,15 @@ AXFEC<-ggplot(NdXFA, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.5)+
+            color = "black", vjust = 0, hjust = 1.5, size=8)+ #hjust=2.5
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 1))+
 #     ggtitle("Year 1 Fall \nbacktransformed for visualization")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
-        axis.title=element_text(size=16), #change font size of axis titles
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        axis.text=element_text(size=18), #change font size of axis text
+        axis.title=element_text(size=22), #change font size of axis titles
+        legend.text=element_text(size=18), #change font size of legend text
+        legend.title=element_text(size=20)) #change font size of legend title
 print(AXFEC)
 
 
@@ -5573,6 +5585,10 @@ print(AFcomboplotNC)
 
 # ALF plot E:C XS XF
 ```{r}
+
+AXSEC <- AXSEC + labs(title = "a") + theme(plot.title = element_text(size=18, hjust=0))
+AXFEC <- AXFEC + labs(title = "b") + theme(plot.title = element_text(size=18, hjust=0))
+
 AEC <- ggarrange(
 AXSEC,
 AXFEC,
@@ -5583,8 +5599,8 @@ legend = "right"
 AEC
 #save figures/Paper/AFECXSXF    1240x720
 
-AXSEC_2 <- AXSEC + theme(axis.title = element_blank())
-AXFEC_2 <- AXFEC + theme(axis.title = element_blank())
+AXSEC_2 <- AXSEC + labs(title = "a") + theme(plot.title = element_text(size=18, hjust=0), axis.title = element_blank())
+AXFEC_2 <- AXFEC + labs(title = "b") + theme(plot.title = element_text(size=18, hjust=0), axis.title = element_blank())
 
 AEC <- ggarrange(
 AXSEC_2,
@@ -5596,11 +5612,12 @@ legend = "right"
 
 AEC_2 <- annotate_figure(
   AEC,
-  bottom = text_grob("Environment", x = 0.46, size = 16),
-  left = text_grob("Alfalfa Forage (kg ha-1)", rot = 90, size = 16)
+  bottom = text_grob("Environment", x = 0.46, size = 22),
+  left = text_grob("Alfalfa Forage (kg ha-1)", rot = 90, size = 22)
 )
 AEC_2
 #save figures/Paper/final_figures/AFECXSXF    1220x720
+# 1500x1000
 ```
 
 # alfalfa N:C XS YS YF
@@ -6684,7 +6701,8 @@ xlabels <- c("Minnesota", "New York", "Wisconsin")
 LEREXF <- ggplot(TotLERXF, aes(x = P, y = LER)) +
   geom_boxplot() +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-          color = "black", vjust = -15, hjust = 1.5)+
+          color = "black", vjust = -15, hjust = 1.5, size = 6)+
+  ylim(0,7)+
 #  labs(title = "Year 1 Fall Total LER by Location", x = "Location", y = "Total LER")+
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
   scale_x_discrete(label = xlabels)+ 
@@ -6887,7 +6905,8 @@ xlabels <- c("Minnesota", "New York", "Wisconsin")
 LEREYF <- ggplot(TotLERYF, aes(x = P, y = LER)) +
   geom_boxplot() +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-          color = "black", vjust = -15, hjust = 1.5)+
+          color = "black", vjust = -15, hjust = 1.5, size= 6)+
+  ylim(0,7)+
 #  labs(title = "Year 2 Fall Total LER by Location", x = "Location", y = "Total LER")+
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
   scale_x_discrete(label = xlabels)+ 
@@ -7152,16 +7171,21 @@ gt_NG |> gtsave("figures/forage/gt_TLER.png", expand = 10)
 ```{r}
 #LEREXF
 #LEREYF
+
+LEREXF <- LEREXF + labs(title="a") + theme(plot.title = element_text(size = 18), axis.text.x=element_text(size=18), axis.text.y=element_text(size=14))
+LEREYF <- LEREYF + labs(title="b") + theme(plot.title = element_text(size = 18), axis.text.x=element_text(size=18), axis.text.y=element_text(size=14))
+
 LERcomboplotEXFYF <- ggarrange(LEREXF, LEREYF, ncol=2)
 #ggsave("figures/Paper/LERcomboplotEXFYF.jpg", plot = LERcomboplotEXFYF, width = 14, height = 10, dpi = 300)
 
 LERcomboplotEXFYF_2 <- annotate_figure(
   LERcomboplotEXFYF,
-  bottom = text_grob("Environment", x = 0.5, size = 16),
-  left = text_grob("Total LER", rot = 90, size = 16)
+  bottom = text_grob("Environment", x = 0.5, size = 20),
+  left = text_grob("Total LER", rot = 90, size = 20)
 )
 LERcomboplotEXFYF_2
 #ggsave("figures/Paper/final_figures/LERcomboplotEXFYF_2.jpg", plot = LERcomboplotEXFYF_2, width = 14, height = 10, dpi = 300)
+# 1300x 1050
 ```
 
 # LER & CR CI Tables
@@ -7388,14 +7412,16 @@ xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
 CREXS <- ggplot(CRXS, aes(x = P, y = CR)) +
   geom_boxplot() +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-          color = "black", vjust = -10, hjust = 1.5)+
+          color = "black", vjust = -6, hjust = 1.5, size=6)+
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
 #  labs(title = "Year 1 Summer", x = "Environment", y = "Competitive Ratio")+
   scale_x_discrete(label = xlabels)+ 
   ylim(0, 1) +
 #  theme(axis.text=element_text(size=14), #change font size of axis text
 #        axis.title=element_text(size=18))+
-  theme(axis.title = element_blank())
+  theme(axis.title = element_blank(),
+      axis.text.x=element_text(size=16),
+      axis.text.y=element_text(size=14)) #change font size of axis text)
 ```
 
 #Year 1 Fall Competitive Ratio model 
@@ -7474,14 +7500,16 @@ xlabels <- c("Minnesota", "New York", "Wisconsin")
 CREXF <- ggplot(CRXF, aes(x = P, y = CR)) +
   geom_boxplot() +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-          color = "black", vjust = -10, hjust = 1.5)+
+          color = "black", vjust = -6, hjust = 1.5, size=6)+
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
 #  labs(title = "Year 1 Fall", x = "Environment", y = "Competitive Ratio")+
   scale_x_discrete(label = xlabels)+ 
   ylim(0, 1) +
 #  theme(axis.text=element_text(size=14), #change font size of axis text
 #        axis.title=element_text(size=18))+
-    theme(axis.title = element_blank())
+    theme(axis.title = element_blank(),
+          axis.text.x=element_text(size=16),
+          axis.text.y=element_text(size=14))
 ```
 
 #Year 2 Summer Competitive Ratio model 
@@ -7560,11 +7588,13 @@ CRNYS <- ggplot(CRYS, aes(x = N, y = CR)) +
 scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 1.2) +
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
-  geom_text(data = new_df, mapping = aes(x = 15, y = 1.17, label = equation), size=5)+ # add equation to figure
-  geom_text(data = new_df, mapping = aes(x = 40, y = 1.17, label = plvl), size=5)+ # add equation to figure
+  geom_text(data = new_df, mapping = aes(x = 15, y = 1.17, label = equation), size=8)+ # add equation to figure
+  geom_text(data = new_df, mapping = aes(x = 45, y = 1.17, label = plvl), size=8)+ # add equation to figure
 #  theme(axis.text=element_text(size=14), #change font size of axis text
 #        axis.title=element_text(size=18))+ #change font size of axis titles
-theme(axis.title = element_blank())
+theme(axis.title = element_blank(),
+      axis.text.x=element_text(size=18),
+      axis.text.y=element_text(size=16))
 CRNYS
 
 
@@ -7688,14 +7718,16 @@ xlabels <- c("Minnesota", "New York", "Wisconsin")
 CREYF <- ggplot(CRYF, aes(x = P, y = CR)) +
   geom_boxplot() +
   geom_text(data = merged_df, aes(x = P, y = emmean.x, label = .group), 
-          color = "black", vjust = -10, hjust = 1.5)+
+          color = "black", vjust = -6, hjust = 1.5, size=6)+
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
 #  labs(title = "Year 2 Fall", x = "Environment", y = "Competitive Ratio")+
   scale_x_discrete(label = xlabels)+ 
   ylim(0, 1) +
 #  theme(axis.text=element_text(size=14), #change font size of axis text
 #        axis.title=element_text(size=18))+
-  theme(axis.title = element_blank())
+  theme(axis.title = element_blank(),
+        axis.text.x=element_text(size=16),
+        axis.text.y=element_text(size=14))
 
 # N rate across location 
 CRNYF <- ggplot(CRYF, aes(x = N, y = CR)) +
@@ -7707,11 +7739,13 @@ CRNYF <- ggplot(CRYF, aes(x = N, y = CR)) +
 scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 1.2) +
   geom_abline(intercept = 1, slope = 0, color = "darkgrey", linetype = "longdash")+
-  geom_text(data = new_df, mapping = aes(x = 15, y = 1.17, label = equation), size=5)+ # add equation to figure
-  geom_text(data = new_df, mapping = aes(x = 40, y = 1.17, label = plvl), size=5)+ # add equation to figure
+  geom_text(data = new_df, mapping = aes(x = 15, y = 1.17, label = equation), size=8)+ # add equation to figure
+  geom_text(data = new_df, mapping = aes(x = 45, y = 1.17, label = plvl), size=8)+ # add equation to figure
 #  theme(axis.text=element_text(size=14), #change font size of axis text
 #        axis.title=element_text(size=18))+ #change font size of axis titles
-theme(axis.title = element_blank())
+theme(axis.title = element_blank(),
+      axis.text.x=element_text(size=18),
+      axis.text.y=element_text(size=16))
 CRNYF
 ```
 
@@ -7960,32 +7994,43 @@ gt_NG |> gtsave("figures/forage/gt_CR.png", expand = 10)
 #CREXS
 #CREXF
 #CREYF
+
+CREXS <- CREXS + labs(title = "a") + theme(plot.title = element_text(size=18, hjust = 0))
+CREXF <- CREXF + labs(title = "b") + theme(plot.title = element_text(size=18, hjust = 0))
+CREYF <- CREYF + labs(title = "c") + theme(plot.title = element_text(size=18, hjust = 0))
+
 CRcomboplotCXSXFYF <- ggarrange(CREXS, CREXF, CREYF, ncol=2, nrow=2)
 #ggsave("figures/Paper/CRcomboplotCXSXFYF.jpg", plot = CRcomboplotCXSXFYF, width = 14, height = 12, dpi = 300)
 
 CRcomboplotCXSXFYF_2 <- annotate_figure(
   CRcomboplotCXSXFYF,
-  bottom = text_grob("Environment", x = 0.5, size = 16),
-  left = text_grob("IWG Competitive Ratio", rot = 90, size = 16)
+  bottom = text_grob("Environment", x = 0.5, size = 20),
+  left = text_grob("IWG Competitive Ratio", rot = 90, size = 20)
 )
 CRcomboplotCXSXFYF_2
 #ggsave("figures/Paper/final_figures/CRcomboplotCXSXFYF.jpg", plot = CRcomboplotCXSXFYF_2, width = 14, height = 12, dpi = 300)
+# 1300x1100
 ```
 
 # Competitive Ratio combined N plot YS YF
 ```{r}
 #CRNYS
 #CRNYF
+
+CRNYS <- CRNYS + labs(title = "a") + theme(plot.title = element_text(size=18, hjust=0))
+CRNYF <- CRNYF + labs(title = "b") + theme(plot.title = element_text(size=18, hjust=0))
+
 CRcomboplotNYSYF <- ggarrange(CRNYS, CRNYF, ncol=2)
 #ggsave("figures/Paper/CRcomboplotNYSYF.jpg", plot = CRcomboplotNYSYF, width = 15, height = 8, dpi = 300)
 
 CRcomboplotNYSYF_2 <- annotate_figure(
   CRcomboplotNYSYF,
-  bottom = text_grob("Nitrogen Rate (kg ha-1)", x = 0.5, size = 16),
-  left = text_grob("IWG Competitive Ratio", rot = 90, size = 16)
+  bottom = text_grob("Nitrogen Rate (kg ha-1)", x = 0.5, size = 20),
+  left = text_grob("IWG Competitive Ratio", rot = 90, size = 20)
 )
 CRcomboplotNYSYF_2
 #ggsave("figures/Paper/final_figures/CRcomboplotNYSYF.jpg", plot = CRcomboplotNYSYF_2, width = 15, height = 8, dpi = 300)
+# 1750x900
 ```
 
 
@@ -8266,7 +8311,7 @@ CPcomboplotNECXS <- ggplot(data=NdXSf1) +
 scale_shape_manual(name = "Cropping System",
                      labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
                      values = c(4, 1, 25, 4, 1, 25))+
-  labs(x = "Nitrogen Rate (kg ha-1)", y = "Crude Protien", shape = "Cropping System") +
+  labs(x = "Nitrogen Rate (kg ha-1)", y = "Crude Protein", shape = "Cropping System") +
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
   ylim(0, 27) +
   facet_wrap(~P, scales = "free_y", ncol = 2,
@@ -8398,7 +8443,7 @@ CPNCXF <- ggplot(data=NdXFf) +
   geom_function(data=subset(NdXFf, CROP == "inter"), aes(linetype = CROP), fun=~18.83+(0.0033*.x), color='#2F2F2F')+
   geom_function(data=subset(NdXFf, CROP == "monoA"), aes(linetype = CROP), fun=~19.50+(-0.0025*.x), color='#2F2F2F')+
   geom_function(data=subset(NdXFf, CROP == "monoI"), aes(linetype = CROP), fun=~14.03+(-0.0059*.x), color='#2F2F2F')+
-#  ggtitle("Year 1 Fall \nRelationship between Crude Protien and N-rate") +  # Add a title
+#  ggtitle("Year 1 Fall \nRelationship between Crude Protein and N-rate") +  # Add a title
 scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
   ylim(0, 30) +
   geom_text(data = sorted_I, mapping = aes(x = 25, y = 29, label = equation),  size=5)+ # add equation to figure
@@ -8416,11 +8461,11 @@ scale_x_continuous(breaks = c(0, 40, 80, 120, 160))+ #fix x axis scale
 scale_shape_manual(name = "Cropping System",
                       labels = c(inter = "Intercropped", inter = "Intercropped", monoA = "Monoculture Alfalfa", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG", monoI = "Monoculture IWG"),
                      values = c(4, 1, 25, 4, 1, 25))+
-  labs(x = "Nitrogen Rate (kg ha-1)", y = "Crude Protien", shape = "Cropping System") +
-  theme(axis.text=element_text(size=12), #change font size of axis text
+  labs(x = "Nitrogen Rate (kg ha-1)", y = "Crude Protein", shape = "Cropping System") +
+  theme(axis.text=element_text(size=14), #change font size of axis text
         axis.title=element_text(size=18), #change font size of axis titles
         plot.title=element_text(size=20), #change font size of plot title
-        legend.text=element_text(size=12), #change font size of legend text
+        legend.text=element_text(size=14), #change font size of legend text
         legend.title=element_text(size=16), #change font size of legend title
         strip.text.x = element_text(size = 18),
         legend.key.width = unit(1.5, "cm")) #change font size of facet title
@@ -8493,16 +8538,17 @@ CPXFPC<-ggplot(NdXFf, aes(x = P, y = (predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = emmean.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.75)+
+            color = "black", vjust = 0, hjust = 1.5, size=8)+ #hjust=2.75
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 1, 25))+
 #     ggtitle("Year 1 Fall")+
   scale_x_discrete(label = xlabels)+ 
+  ylim(9, 25)+
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
+        axis.text=element_text(size=16), #change font size of axis text
         #axis.title=element_text(size=16), #change font size of axis titles
         axis.title = element_blank(),
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        legend.text=element_text(size=14), #change font size of legend text
+        legend.title=element_text(size=18)) #change font size of legend title
 print(CPXFPC)
 ```
 
@@ -8549,7 +8595,7 @@ plot(NTCPYS_resid4)
 # decided to go with linear
 
 
-# Boxplot for Total Forage by C
+# Boxplot for CP by C
 NdYSf$predicted <- predict(modNTCPYS, newdata = NdYSf, re.form = NA)
 CPemmsC <- emmeans(modNTCPYS, ~ CROP, type = "response") # Obtain estimated marginal means
 emms_df <- as.data.frame(CPemmsC)
@@ -8561,13 +8607,15 @@ xlabels <- c("Intercropping", "Monoculture Alfalfa", "Monoculture IWG")
 CPCYS <- ggplot(NdYSf, aes(x = CROP, y = totCP)) +
   geom_boxplot() +
   geom_text(data = merged_df, aes(x = CROP, y = emmean.x, label = .group), 
-            color = "black", vjust = -10, hjust = 1.5)+
-  labs(title = "Year 2 Summer", x = "Cropping System", y = "Crude Protien")+
+            color = "black", vjust = -10, hjust = 1.5, size=6)+
+  labs(x = "Cropping System", y = "Crude Protein")+ #title="Year 2 Summer"
   scale_x_discrete(label = xlabels)+ 
-  theme(axis.text=element_text(size=14), #change font size of axis text
-        axis.title=element_text(size=18))
+  theme(axis.text.y=element_text(size=14), #change font size of axis text
+        axis.text.x=element_text(size=16),
+        axis.title=element_text(size=22))
+# 750x1050
 
-# Boxplot for Total Forage by E
+# Boxplot for CP by E
 NdYSf$predicted <- predict(modNTCPYS, newdata = NdYSf, re.form = NA)
 CPemmsP <- emmeans(modNTCPYS, ~ P, type = "response") # Obtain estimated marginal means
 emms_df <- as.data.frame(CPemmsP)
@@ -8579,11 +8627,12 @@ xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
 CPEYS <- ggplot(NdYSf, aes(x = P, y = totCP)) +
   geom_boxplot() +
     geom_text(data = merged_df, aes(x = P, y = emmean.x, label = .group), 
-            color = "black", vjust = -29, hjust = 1.5)+
-  labs(x = "Environment", y = "Crude Protien")+
+            color = "black", vjust = -18, hjust = 1.5, size=8)+
+  labs(x = "Environment", y = "Crude Protein")+
   scale_x_discrete(label = xlabels)+ 
-  theme(axis.text=element_text(size=14), #change font size of axis text
-        axis.title=element_text(size=18))
+  theme(axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=26))
+# 800x1100
 ```
 
 #Total CP year 2 Fall
@@ -8633,16 +8682,17 @@ CPYFPC<-ggplot(NdYFf, aes(x = P, y = (predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = emmean.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.75)+
+            color = "black", vjust = 0, hjust = 1.5, size=8)+ #hjust=2.75
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 1, 25))+
 #     ggtitle("Year 2 Fall")+
   scale_x_discrete(label = xlabels)+ 
+  ylim(9,25)+
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
+        axis.text=element_text(size=16), #change font size of axis text
         #axis.title=element_text(size=16), #change font size of axis titles
         axis.title = element_blank(),
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        legend.text=element_text(size=14), #change font size of legend text
+        legend.title=element_text(size=18)) #change font size of legend title
 print(CPYFPC)
 
 # Boxplot for Total Forage by C
@@ -8833,6 +8883,10 @@ gt_NG |> gtsave("figures/forage/gt_CP.png", expand = 10)
 
 # CP E:C XF YF
 ```{r}
+
+CPXFPC <- CPXFPC + labs(title = "a") + theme(plot.title = element_text(size=18, hjust=0))
+CPYFPC <- CPYFPC + labs(title = "b") + theme(plot.title = element_text(size=18, hjust=0))
+
 CPEC <- ggarrange(
 CPXFPC,
 CPYFPC,
@@ -8845,11 +8899,12 @@ CPEC
 
 CPEC_2 <- annotate_figure(
   CPEC,
-  bottom = text_grob("Environment", x = 0.45, size = 16),
-  left = text_grob("Crude Protien", rot = 90, size = 16)
+  bottom = text_grob("Environment", x = 0.45, size = 20),
+  left = text_grob("Crude Protein", rot = 90, size = 20)
 )
 CPEC_2
 #save figures/Paper/final_figures/CPECXFYF    1240x720
+# 1400x1000
 ```
 
 #CP C YS YF
@@ -9104,7 +9159,7 @@ RFVXSPC<-ggplot(NdXSo, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.5)+
+            color = "black", vjust = 0, hjust = 1.25, size=8)+
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 1, 25))+
 #     ggtitle("Year 1 Summer \nbacktransformed for visualization")+
   scale_x_discrete(label = xlabels)+ 
@@ -9112,8 +9167,8 @@ RFVXSPC<-ggplot(NdXSo, aes(x = P, y = exp(predicted), shape = CROP)) +
         axis.text=element_text(size=12), #change font size of axis text
         #axis.title=element_text(size=16), #change font size of axis titles
         axis.title = element_blank(),
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        legend.text=element_text(size=14), #change font size of legend text
+        legend.title=element_text(size=18)) #change font size of legend title
 print(RFVXSPC)
 #ggsave("figures/Paper/RFVXSPC.jpg", plot = RFVXSPC, width = 10, height = 8, dpi = 300)
 
@@ -9225,12 +9280,13 @@ xlabels <- c("Minnesota", "New York", "Wisconsin")
 RFVEXF <- ggplot(NdXFo, aes(x = P, y = totRFV)) +
   geom_boxplot() +
     geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = -15, hjust = 1.5)+
+            color = "black", vjust = -15, hjust = 1.5, size=8)+
   labs(x = "Environment", y = "Total Forage RFV")+
   scale_x_discrete(label = xlabels)+ 
-  theme(axis.text=element_text(size=14), #change font size of axis text
-        axis.title=element_text(size=18))
+  theme(axis.text=element_text(size=20), #change font size of axis text
+        axis.title=element_text(size=26))
 # save figures/Paper/RFVEXF
+# 800x1100
 
 # Boxplot for RFV by C
 NdXFo$predicted <- predict(modNTRFVXF1, newdata = NdXFo, re.form = NA)
@@ -9244,10 +9300,10 @@ xlabels <- c("Intercrop", "Monoculture Alfalfa", "Monoculture IWG")
 RFVCXF <- ggplot(NdXFo, aes(x = CROP, y = totRFV)) +
   geom_boxplot() +
   geom_text(data = merged_df, aes(x = CROP, y = response.x, label = .group), 
-            color = "black", vjust = -15, hjust = 1.5)+
+            color = "black", vjust = -10, hjust = 1.5, size=8)+
   labs(x = "Cropping System", y = "Total Forage RFV")+
   scale_x_discrete(label = xlabels)+ 
-  theme(axis.text=element_text(size=14), #change font size of axis text
+  theme(axis.text=element_text(size=16), #change font size of axis text
         axis.title=element_text(size=18))
 # save figures/Paper/RFVCXF
 ```
@@ -9361,16 +9417,16 @@ RFVYFPC<-ggplot(NdYFo, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.5)+
+            color = "black", vjust = 0, hjust = 1.75, size=8)+
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 1, 25))+
 #     ggtitle("Year 2 Fall \nbacktransformed for visualization")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
+        axis.text=element_text(size=16), #change font size of axis text
         #axis.title=element_text(size=16), #change font size of axis titles
         axis.title = element_blank(),
-        legend.text=element_text(size=10), #change font size of legend text
-        legend.title=element_text(size=14)) #change font size of legend title
+        legend.text=element_text(size=14), #change font size of legend text
+        legend.title=element_text(size=18)) #change font size of legend title
 print(RFVYFPC)
 #ggsave("figures/Paper/RFVYFPC.jpg", plot = RFVYFPC, width = 10, height = 8, dpi = 300)
 
@@ -9719,17 +9775,22 @@ RFVcomboplotCXFYF <- ggarrange(RFVCXF, RFVCYF, ncol=2)
 ```{r}
 #RFVXSPC
 #RFVYFPC
+
+RFVXSPC <- RFVXSPC + labs(title = "a") + theme(plot.title = element_text(size=18, hjust=0))
+RFVYFPC <- RFVYFPC + labs(title = "b") + theme(plot.title = element_text(size=18, hjust=0))
+
 RFVcomboplotECXSYF <- ggarrange(RFVXSPC, RFVYFPC, ncol=2, common.legend = TRUE,
 legend = "right")
 #ggsave("figures/Paper/RFVcomboplotECXSYF.jpg", plot = RFVcomboplotECXSYF, width = 15, height = 8, dpi = 300)
 
 RFVcomboplotECXSYF_2 <- annotate_figure(
   RFVcomboplotECXSYF,
-  bottom = text_grob("Environment", x = 0.45, size = 16),
-  left = text_grob("Total Forage RFV", rot = 90, size = 16)
+  bottom = text_grob("Environment", x = 0.45, size = 20),
+  left = text_grob("Total Forage RFV", rot = 90, size = 20)
 )
 RFVcomboplotECXSYF_2
 #ggsave("figures/Paper/final_figures/RFVcomboplotECXSYF.jpg", plot = RFVcomboplotECXSYF_2, width = 15, height = 8, dpi = 300)
+# 1400x1000
 ```
 
 

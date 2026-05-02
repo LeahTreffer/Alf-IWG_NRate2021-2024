@@ -587,7 +587,7 @@ new_df <- merged_df %>%
   select(-emmean, -N.trend)
 sorted_df <- new_df %>%
   arrange(P)
-view(sorted_df)
+#view(sorted_df)
 #write.csv(sorted_df, "data/Final_Data/Nrate_esteff_grain_yr1.csv")
 
 # percent change in grain yield per unit increase in nitrogen broken out by location and CROP
@@ -608,7 +608,7 @@ new_df <- merged_df %>%
   select(-emmean, -N.trend)
 sorted_df <- new_df %>%
   arrange(P)
-view(sorted_df)
+#view(sorted_df)
 #write.csv(sorted_df, "data/Final_Data/Nrate_esteff_grain_yr1_PC.csv")
 
 
@@ -682,7 +682,7 @@ GraincomboplotNEX <- ggplot(data=NdXSIG) +
   geom_function(data=subset(NdXSIG, P== "NY"), fun=~408.24*exp(0.0047*.x),color='darkgrey')+
   geom_function(data=subset(NdXSIG, P== "KS"), fun=~407.18*exp(-0.0002*.x),color='darkgrey')+
   geom_function(data=subset(NdXSIG, P== "WI"), fun=~736.77*exp(-0.0001*.x),color='darkgrey')+
-  geom_text(data = sortedX, mapping = aes(x = -Inf, y = -Inf, label = equation), hjust   = -0.1, vjust   = -38,  size=2)+ # add equation to figure
+  geom_text(data = sortedX, mapping = aes(x = -Inf, y = -Inf, label = equation), hjust   = -0.1, vjust   = -38,  size=4)+ # add equation to figure
   geom_text(data = sortedX, mapping = aes(x = -Inf, y = -Inf, label = plvl), hjust   = -2, vjust   = -20) # add stars to figure
 print(GraincomboplotNEX)
 # ggsave("figures/grain/GrainplotNEX.jpg", plot = GraincomboplotNEX, width = 8, height = 6, dpi = 300)
@@ -705,13 +705,13 @@ GXSPC<-ggplot(NdXSIG, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = 0, hjust = 2.15)+
+            color = "black", vjust = 0, hjust = 1.75, size=6)+ #2.15
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
 #     ggtitle("Year 1 Summer \nbacktransformed for visualization")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
-        axis.title=element_text(size=16), #change font size of axis titles
+        axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
         legend.text=element_text(size=10), #change font size of legend text
         legend.title=element_text(size=14)) #change font size of legend title
 print(GXSPC)
@@ -785,15 +785,16 @@ GcomboplotNEXS <- ggplot(data=NdXSI) +
   geom_function(data=subset(NdXSIG, P== "MN"), fun=~179.38*exp(0.0021*.x),color='darkgrey')+
   geom_function(data=subset(NdXSIG, P== "NY"), fun=~408.24*exp(0.0047*.x),color='darkgrey')+
   geom_function(data=subset(NdXSIG, P== "WI"), fun=~736.77*exp(-0.0001*.x),color='darkgrey')+
-  geom_text(data = sortedX, mapping = aes(x = 25, y = 1800, label = equation),  size=4)+ # add equation to figure
-  geom_text(data = sortedX, mapping = aes(x = 58, y = 1800, label = plvl), size=4)+ # add stars to figure
+  geom_text(data = sortedX, mapping = aes(x = 35, y = 1800, label = equation),  size=7)+ # add equation to figure
+  geom_text(data = sortedX, mapping = aes(x = 80, y = 1800, label = plvl), size=7)+ # add stars to figure
 # add stars to figure
-  theme(axis.text=element_text(size=12), #change font size of axis text
-        axis.title=element_text(size=18), #change font size of axis titles
-        plot.title=element_text(size=20), #change font size of plot title
-        strip.text.x = element_text(size = 18)) #change font size of facet title
+  theme(axis.text=element_text(size=22), #change font size of axis text
+        axis.title=element_text(size=26), #change font size of axis titles
+        plot.title=element_text(size=28), #change font size of plot title
+        strip.text.x = element_text(size = 26)) #change font size of facet title
 print(GcomboplotNEXS)
 # ggsave("figures/Paper/final_figures/GcomboplotNEXS.jpg", plot = GcomboplotNEXS, width = 10, height = 8, dpi = 300)
+# ggsave("~/Desktop/Y.jpg", plot = GcomboplotNEXS, width = 13, height = 10.4, dpi = 300)
 ```
 
 #Grain year 2 (all locations)
@@ -1308,13 +1309,13 @@ GZSPC<-ggplot(NdZSI, aes(x = P, y = exp(predicted), shape = CROP)) +
   geom_errorbar(data = emms_df, aes(x = P, ymin = lower.CL, ymax = upper.CL), 
                 width = 0.2, color = "black", inherit.aes = FALSE) +
   geom_text(data = merged_df, aes(x = P, y = response.x, label = .group), 
-            color = "black", vjust = 0, hjust = 3)+
+            color = "black", vjust = 0, hjust = 2.5, size=6)+ #3
   scale_shape_manual(name = "Cropping System", labels = custom_labels, values = c(4, 25))+
 #     ggtitle("Year 3 Summer \nbacktransformed for visualization")+
   scale_x_discrete(label = xlabels)+ 
   theme(plot.title = element_text(hjust = 0.5),
-        axis.text=element_text(size=12), #change font size of axis text
-        axis.title=element_text(size=16), #change font size of axis titles
+        axis.text=element_text(size=14), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
         legend.text=element_text(size=10), #change font size of legend text
         legend.title=element_text(size=14)) #change font size of legend title
 print(GZSPC)
@@ -1563,14 +1564,17 @@ get_legend <- function(myplot) {
 legend <- get_legend(GZSPC)
 
 # Remove legends
-GXSPC <- GXSPC + theme(legend.position = "none",
+GXSPC <- GXSPC + labs(title="a") + theme(legend.position = "none",
+                       plot.title = element_text(size = 16, hjust = 0),
                        axis.title.x = element_blank(),
                        axis.title.y = element_blank())
-GZSPC <- GZSPC + theme(legend.position = "none",
+GZSPC <- GZSPC + labs(title="b") + theme(legend.position = "none",
+                       plot.title = element_text(size = 16, hjust = 0),
                        axis.title.x = element_blank(),
                        axis.title.y = element_blank())
 
 GEC<-grid.arrange(GXSPC, GZSPC, legend, ncol = 3)
+
 # Combine plots and legend
 GEC <- plot_grid(
   GXSPC, 
@@ -1582,12 +1586,13 @@ GEC <- plot_grid(
 GEC
 
 test <- ggdraw(GEC) +
-  draw_label("Environment", x = 0.45, y = 0.0005, vjust = 0.5, size = 16) +
-  draw_label("Grain Yield (kg ha-1)", x = 0.0005, y = 0.5, angle = 90, vjust = 0.5, size = 16)+
+  draw_label("Environment", x = 0.45, y = 0.0005, vjust = 0.5, size = 18) +
+  draw_label("Grain Yield (kg ha-1)", x = 0.0005, y = 0.5, angle = 90, vjust = 0.5, size = 18)+
   theme(plot.margin = margin(10, 5, 15, 20))
 test
 
 #save figures/Paper/GEC_XZ  1250x780
+# 1450 x 1050
 ```
 
 
