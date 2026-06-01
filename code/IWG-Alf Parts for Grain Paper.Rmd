@@ -500,6 +500,8 @@ qqline(NXG_resid1)
 plot(modNXG1)
 
 
+
+
 monoIformean<-NdXSIG[NdXSIG$C == 'monoculture',]
 mean(monoIformean$G)
 Iformean<-NdXSIG[NdXSIG$C == 'intercrop',]

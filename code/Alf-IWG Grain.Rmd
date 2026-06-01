@@ -1,0 +1,503 @@
+---
+title: "Alf-IWG Grain"
+date: "2026-06-01"
+editor_options: 
+  chunk_output_type: console
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# just loading these in, unsure which exactly are still used
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(ggthemes)
+library(gapminder)
+library(multcomp)
+library(emmeans)
+library(multcompView)
+library(lmerTest)
+library(scales)
+library(tidyverse)
+library(readxl)
+library(lme4)
+library(gvlma)
+library(rstatix)
+library(sjPlot)
+library(gt)
+?library(car)
+library(Rmisc)
+library(nlme)
+library(pgirmess)
+library(MuMIn)
+library(sjPlot)
+library(grateful)
+library(cowplot)
+library(kableExtra)
+library(MuMIn)
+library(ggpmisc)
+library(bestNormalize)
+library(flextable)
+```
+
+# making emmeans functions 
+```{r}
+# Define a 3 WAY function for year 1 summer
+compute_emmeansNXS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Summer")
+  
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 1 fall
+compute_emmeansNXF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 2 Summer
+compute_emmeansNYS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a 3 WAY function for year 2 Fall
+compute_emmeansNYF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a 3 WAY function for year 3 summer
+compute_emmeansNZS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Summer")
+  
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 3 fall
+compute_emmeansNZF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Fall")
+  return(emm_df)}
+
+
+
+# Define a NP function for year 1 summer
+compute_emmeansNXS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP  function for year 1 fall
+compute_emmeansNXF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a NP  function for year 2 Summer
+compute_emmeansNYS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP function for year 2 Fall
+compute_emmeansNYF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a NP function for year 3 summer
+compute_emmeansNZS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP  function for year 3 fall
+compute_emmeansNZF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Fall")
+  return(emm_df)}
+```
+
+# letters for compact letter display
+```{r}
+custom_letters <- c("a", "b", "c", "d", "e", "f", "g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z")  # Customize the letters as needed
+```
+
+### Estimation of Dehulled Grain Yield
+
+The IWG grain threshability visibly varied by site, and not all grains were fully dehulled, so it was deemed necessary to estimate the true mass of dehulled grain in order to prevent poorly threshed plots from being incorrectly represented as higher yielding. To correct for this, 3-gram samples were taken from each plot’s grain yield. These samples were weighed and imaged, and the images were analyzed using the software ilastik, which visually estimated the proportion of grain still in the hull, naked grain, grain still in the spikelet, and empty hulls and spikelets. The resulting proportions were used to create an estimated dehulled grain weight for the sample, which was then extrapolated to derive an adjusted dehulled grain yield for each experimental plot (Altendorf et al., 2021)
+
+Adjusted plot grain yield= (estimated dehulled sample weight/ sample weight)*(plot grain yield weight) 
+
+In year 3, dehulled weight was estimated for each location by hand cleaning a subset of the samples and using those to set up a linear regression model to predict all dehulled grain weights. A linear model of $y = \beta_0 + \beta X$, where y is dehulled weight and X is the original sample weight, achieved a $R^2 > 0.9$. The resulting estimates were used to obtain predicted dehulled grain weights for each sample via the predict function. This function uses the equation : predicted value = intercept + Threshed Weights*Estimate. 
+
+### Land Equivalent Ratio (LER)
+
+Land Equivalent Ratio (LER) was calculated to compare the performance of intercrops to that of monocultures... Indicates a relative total forage yield advantage for intercropped plots if the TLER is greater than 1(Mead & Willey, 1980). 
+
+Total LER: TLER= LA+LB= YA/SA + YB/SB
+where LA and LB are the partial land equivalent ratio (PLER) for the individual crops. YA and YB are the yields of an individual crop within the intercropped plot, and SA and SB are the yields of an individual crop within a monoculture plot (Mead & Willey, 1980). 
+
+Proportional LER (PrLER) was calculated for each species’ biomass yield to determine each species’ relative contribution to the total LER (Oyejola & Mead, 1982). PLERs can be compared to determine competitive effects between the species in intercrop... A PLER greater than 0.5 indicates a relative yield advantage for a single crop in intercrop compared to its yield at the same seeding rate in monoculture. The proportional partial land equivalent ratio (PrPLER) is the proportion of component crop A to the TLER and can be used to understand how much each intercropped crop contributes to the TLER. 
+
+Proportional LER: PrPLER= LA/TLER
+where LA is the partial land equivalent ratio (PLER) for an individual crops and TLER is the total land equivalent ratio for an intercropped plot. 
+
+
+TLER, PLER, and PrLER were calculated using plots of the same N rate to allow for comparison in the performance of the intercropped system at different N rates (Oyejola & Mead, 1982). TLER and PrLER could not be calculated for grain yields, as IWG only represented one grain-bearing crop in the intercrop, but PLER was calculated for grain yield to allow for comparison between N rates
+
+Grain Partial LER : the ratio of grain yield in intercrop to the grain yield in IWG monoculture at a given N rate
+
+### Relative Yield (RY)
+
+Grain Relative Yield : the proportion of the grain yield in intercrop at 0 kg N ha-1 to the grain yield in monoculture at a non-zero N rate
+
+### Effects and interactions of N rate (N), cropping system (CROP), and environment (E)
+
+Log-linear mixed-effects models with replication as a random effect (ϵ) 
+log(Response variable) ~ N*E*C + ϵ
+Models for each year-harvest ( Year 1 Summer, Year 1 Fall, Year 2 Summer, Year 2 Fall, Year 3 Summer, Year 3 Fall) as Summer and Fall harvests were expected to have large differences in yield, and so that the change in response variables between years could be easily captured and compared.
+
+Response variables: Yields
+- Grain yield
+Response variables: LER
+- PLER of grain 
+- Grain Relative Yield (RY)
+Cropping system (C) was not included as a fixed effect for LER, as LER values are calculated as a ratio of yield in intercropping to yield in monoculture.
+
+Analysis of covariance (ANCOVA) was used to determine significant differences (P<0.05) between independent variables and their interactions. Estimated marginal means (EMMs) were calculated and pairwise comparisons were used to understand and rank results between independent variables. 
+
+
+### Data prep for analysis 
+
+```{r}
+data<-read.csv('data/Original_Data/MasterDataSpreadsheet.csv')
+```
+# Rows to remove due to missing data
+NY 208 s22 missing alfalfa 
+MN 1122 s23 missing grain 
+```{r}
+# 2022 Summer NY 208 is the first row in the data table
+data <- data[-1, ] # 2022 Summer NY 208
+# then the new row 1 becomes the next row needing to be taken out
+data <- data[-1, ] # 2023 Summer MN 1122
+```
+# Rename variables to match models 
+```{r}
+data2 <- data |> 
+  separate_wider_delim(Crop, delim = " + ", 
+                       names = c("first_value", "second_value"), 
+                       too_few = "align_start") |> 
+  mutate(C = if_else(is.na(second_value), "monoculture", "intercrop")) |> 
+  mutate(CROP = case_when(
+    Intercropped == "y" ~ "Intercropped",  # If intercrop is "y", set CROP to intercrop
+    Monocrop == "y" & ALF == "y" ~ "Mono_ALF",  # If monoculture is "y" and alfalfa is "y", set CROP to alfalfa
+    Monocrop == "y" & IWG == "y" ~ "Mono_IWG",  # If monoculture is "y" and iwg is "y", set CROP to iwg
+    Monocrop == "y" ~ "NA",  # If monoculture is "y" and neither alfalfa nor iwg is "y", set CROP to NA
+    TRUE ~ NA_character_  # If no condition matches, assign NA
+  ))
+
+V<-data2$first_value #Variety (IWG, Shockwave, Higest, WL)
+data2$V<-as.factor(V)
+N<-data2$NRate # Nitrogen Rate (0, 40, 80, 120, 160)
+data2$N<-as.numeric(N)
+P<-data2$Location # Location ("MN", "NY", "WI", "KS")
+data2$P<-as.factor(P)
+data2$Rep<-as.factor(data2$Rep) # (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
+data2$C<-as.factor(data2$C) # Crop (intercrop, monoculture)
+data2$CROP <- as.factor(data2$CROP) # Crop (intercrop, monoculture_IWG, monoculture_Alfalfa)
+```
+
+# Grain conversion
+
+```{r}
+#need to calculate the fractions 
+# data points from imaging giving proportionss
+# for yr 1 and 2 there are columns with plot individual info for this
+data3 <- data2%>%filter(YearCode %in% c("X", "Y"))
+#hull fraction 
+data3$hullNHd<-data3$hull_N/(data3$hull_N+data3$nkd_N+data3$spklt_N)
+#naked seed fraction 
+data3$NdkNHd<-data3$nkd_N/(data3$hull_N+data3$nkd_N+data3$spklt_N)
+#spiklet fraction 
+data3$SpkltNHd <- ifelse(data3$spklt_N == 0, 0, data3$spklt_N / (data3$hull_N + data3$nkd_N + data3$spklt_N))
+
+#IGNORE (Lee's equation)
+# converted grain weight using proportion information and his calibration values
+#then can just plug and chug into this equation 
+#data2$YldHdDH <- (1.26975580047546E-03) + (0.897057684933234 * data2$image_sample_wt_g) - ((1.07961789616701E-05) * data2$hullNHd * data2$hull_A) + ((4.61501772182347E-06) * data2$NdkNHd * data2$nkd_A) - ((2.00025159218368E-05) * ifelse(is.nan(data2$SpkltNHd), 0, data2$SpkltNHd) * ifelse(is.nan(data2$spklt_A), 0, data2$spklt_A))
+
+#new equation from Lee
+# converted grain wieghts 
+data3$WhSamDH = (0.905045351733363*data3$image_sample_wt_g)-((1.10627799960595E-05)*data3$hullNHd*data3$hull_A)+((4.10249606987368E-06)*data3$NdkNHd*data3$nkd_A)-((2.01262650442053E-05)* ifelse(is.nan(data3$SpkltNHd), 0, data3$SpkltNHd) * ifelse(is.nan(data3$spklt_A), 0, data3$spklt_A)) 
+
+
+#fix below to create the right proportion and save it  
+#samples sent for imaging were a subset, so have to apply the conversion factor to the subsample, need to calculate up to the whole plot samples
+data3$G<-((data3$WhSamDH)/(data3$image_sample_wt_g))*(data3$PlotThreshedGrainKgHa)
+
+
+# Year 3 adjustments 
+# need to have naked seed weights to match the adjustments made in yr 1 and yr 2
+# NY yr3 was hand threshed, so looks clean as is. No need for adjustments or dehulling
+# KS, WI, and MN sending to NY to dehull
+## weigh a subset of these after they are threshed. then clean that subset. Find the r^2 and if good (~80) then use to estimate a clean weight for the rest of the samples
+data4 <- data2%>%filter(YearCode == "Z")
+data4$hullNHd <- ""
+data4$NdkNHd <- ""
+data4$SpkltNHd <- ""
+data4$WhSamDH <- ""
+data4$G <- data4$PlotThreshedGrainKgHa
+data_fixed <- rbind(data3,data4)
+```
+
+# Making things numeric as needed 
+```{r}
+data_fixed$G<-as.numeric(data_fixed$G)
+data_fixed$PlotIWGDryKgHa<-as.numeric(data_fixed$PlotIWGDryKgHa)
+data_fixed$PlotAlfDryKgHa<-as.numeric(data_fixed$PlotAlfDryKgHa)
+data_fixed$PlotTotForageKgHa<-as.numeric(data_fixed$PlotTotForageKgHa)
+data_fixed$IWGCP<-as.numeric(data_fixed$IWGCP)
+data_fixed$IWGdNDF48<-as.numeric(data_fixed$IWGdNDF48)
+data_fixed$IWGLignin<-as.numeric(data_fixed$IWGLignin)
+data_fixed$ALFCP<-as.numeric(data_fixed$ALFCP)
+data_fixed$ALFdNDF48<-as.numeric(data_fixed$ALFdNDF48)
+data_fixed$ALFLignin<-as.numeric(data_fixed$ALFLignin)
+data_fixed$ALFADF<-as.numeric(data_fixed$ALFADF)
+data_fixed$IWGADF<-as.numeric(data_fixed$IWGADF)
+data_fixed$ALFaNDF<-as.numeric(data_fixed$ALFaNDF)
+```
+# Nrate data isolation
+```{r}
+#Just shockwave 
+Nd<-data_fixed[data_fixed$first_value != "WL" & data_fixed$first_value != "Higest" ,]
+
+Nd <- Nd %>%
+  mutate(CROP = case_when(
+    `Crop1` == "Shockwave" ~ "monoA",
+    `Crop1` == "IWG" ~ "monoI",
+    `Crop1` == "Shockwave + IWG" ~ "inter",
+    TRUE ~ NA_character_  # Handle other cases if any
+  ))
+
+# MN 2024 has some Filler plots which get the NA character, but code later in this script dosn't like it. 
+# So removing these here
+Nd <- Nd %>%
+  filter(!is.na(CROP))
+```
+
+```{r}
+#Year
+NdX<-Nd[Nd$YearCode == "X",]
+NdY<-Nd[Nd$YearCode == "Y",]
+NdZ<-Nd[Nd$YearCode == "Z",]
+
+#REMOVE this once you get the corrected year 2 grain values in 
+NdY$G<-NdY$PlotThreshedGrainKgHa
+
+#Harvest 
+NdXS<-NdX[NdX$Harvest == "Summer",]
+NdXF<-NdX[NdX$Harvest == "Fall",]
+
+NdYS<-NdY[NdY$Harvest == "Summer",]
+NdYF<-NdY[NdY$Harvest == "Fall",]
+
+NdZS<-NdZ[NdZ$Harvest == "Summer",]
+NdZF<-NdZ[NdZ$Harvest == "Fall",]
+
+#IWG vs ALF 
+NdXSI<-NdXS[NdXS$Crop1 != "Shockwave",]
+NdXSA<-NdXS[NdXS$Crop1 != "IWG",]
+
+NdXFI<-NdXF[NdXF$Crop1 != "Shockwave",]
+NdXFA<-NdXF[NdXF$Crop1 != "IWG",]
+
+NdYSI<-NdYS[NdYS$Crop1 != "Shockwave" ,]
+NdYSA<-NdYS[NdYS$Crop1 != "IWG",]
+
+NdYFI<-NdYF[NdYF$Crop1 != "Shockwave",]
+NdYFA<-NdYF[NdYF$Crop1 != "IWG",]
+
+NdZSI<-NdZS[NdZS$Crop1 != "Shockwave" ,]
+NdZSA<-NdZS[NdZS$Crop1 != "IWG",]
+
+NdZFI<-NdZF[NdZF$Crop1 != "Shockwave",]
+NdZFA<-NdZF[NdZF$Crop1 != "IWG",]
+```
+
+```{r}
+#adding year 1 mn grain to the G column because they were actually dehulled instead of imaged for using the equation
+NdXSInoMN<-NdXSI[NdXSI$Location != "MN",]
+NdXSIMN<-NdXSI[NdXSI$Location == "MN",]
+NdXSIMN$G<-NdXSIMN$X2023MNGrainDeHulledKgHa
+NdXSIG<-rbind(NdXSInoMN, NdXSIMN)
+```
+
+```{r}
+# this chunk subsets to just columns that might be used in a anslysis then combines each year
+
+#  "Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQal", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGRFV", "IWGADF", "IWGaNDF", "ALFaNDF", "ALFRFV", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G"
+
+
+shortenX <- NdXSIG[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+
+shortenY <- NdYSI[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+
+shortenZ <- NdZSI[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+
+newXY <- rbind(shortenX, shortenY)
+grain_data <- rbind(newXY, shortenZ)
+```
+
+### Analysis for the paper
+
+## Grain Yield 
+
+* Table (Grain yield significance of variables and interactions): Grain anovas 
+
+* Figure (Grain yield response to nitrogen rate (N-Rate) and site by harvest)
+
+* Figure (Grain yield response to cropping system and site by harvest)
+
+# Grain anovas 
+
