@@ -391,7 +391,7 @@ data4$G <- data4$PlotThreshedGrainKgHa
 data_fixed <- rbind(data3,data4)
 ```
 
-# Making things numeric as needed 
+# Making things different data types as needed
 ```{r}
 data_fixed$G<-as.numeric(data_fixed$G)
 data_fixed$PlotIWGDryKgHa<-as.numeric(data_fixed$PlotIWGDryKgHa)
@@ -406,6 +406,7 @@ data_fixed$ALFLignin<-as.numeric(data_fixed$ALFLignin)
 data_fixed$ALFADF<-as.numeric(data_fixed$ALFADF)
 data_fixed$IWGADF<-as.numeric(data_fixed$IWGADF)
 data_fixed$ALFaNDF<-as.numeric(data_fixed$ALFaNDF)
+data_fixed$YearCode <- as.factor(data_fixed$YearCode)
 ```
 # Nrate data isolation
 ```{r}
@@ -489,6 +490,25 @@ newXY <- rbind(shortenX, shortenY)
 grain_data <- rbind(newXY, shortenZ)
 ```
 
+# Optional data viewing
+```{r}
+table(grain_data$Rep, grain_data$P) # make sure replicates are unique to a location
+table(grain_data$P, grain_data$Rep)  # make sure replicates are unique to a location
+table(grain_data$Plot, grain_data$P) # look to see if plot ids are unique to a location (they arn't)
+with(subset(grain_data, !is.na(G)), table(P, Year)) # look at which years have data and how many data points
+with(subset(grain_data, !is.na(G)), table(CROP, N, P, Year)) # for each site-year, look to see if and how many data points exist for each N rate
+table(grain_data$Plot, grain_data$P) # look at each plot name and if and how many data points there are for that plot at each site
+grain_data %>% group_by(P,Rep,Plot)%>%count()%>%View()# makes viewable data frame for each plot within a rep within a location and shows how many data points exisit for that specific plot
+```
+
+# fixed negative grain yield
+```{r}
+# Year Z S for MN shows plot 1106 has a G value of zero (row 433)
+# Year Z S for MN shows plot 1304 has a negative G value(row 452)
+# G is in col 53
+# grain_data[452,53] <- 0 
+```
+
 ### Analysis for the paper
 
 ## Grain Yield 
@@ -500,4 +520,50 @@ grain_data <- rbind(newXY, shortenZ)
 * Figure (Grain yield response to cropping system and site by harvest)
 
 # Grain anovas 
+
+```{r}
+# want N to be numeric
+is.numeric(grain_data$N)
+# want P, CROP, and Year to be factors
+is.factor(grain_data$P)
+is.factor(grain_data$CROP)
+is.character(grain_data$CROP)
+is.factor(grain_data$YearCode)
+is.character(grain_data$YearCode)
+# grain_data$YearCode <- as.factor(grain_data$YearCode)
+# Rep and Plot should also be factors
+is.factor(grain_data$Rep)
+is.factor(grain_data$Plot)
+# grain_data$Plot <- as.character(grain_data$Plot)
+
+
+# Linear Model
+modG <- lmer(G~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=grain_data)
+summary(modG)
+# singularity : (look at random effects) variance on plot level is low compared to residual or rep so plot-to-plot var is essentially zero; stats consulting said this is okay to proceed
+hist(residuals(modG)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modG),residuals(modG)) # check for homoscedasisity; each point distribution, no fan shape
+
+modGsqrt <- lmer(sqrt(G)~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=grain_data)
+summary(modGsqrt)
+hist(residuals(modGsqrt)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modGsqrt),residuals(modGsqrt)) # check for homoscedasisity; each point distribution, no fan shape
+
+# Sqrt transformation looks better
+
+anova(modGsqrt)
+emmeans(modGsqrt, ~N*P*CROP*YearCode, cov.reduce=FALSE)
+emmip(modGsqrt, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales
+#emmip(modGsqrt, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales
+emtrends(modGsqrt, ~YearCode+CROP+P, var="N", infer=TRUE) # slope different than zero
+emtrends(modGsqrt, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+
+```
+
+```{r}
+ggplot(grain_data, aes(x=N, y=G, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
+```
+
+
+
 
