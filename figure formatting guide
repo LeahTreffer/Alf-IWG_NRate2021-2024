@@ -24,5 +24,10 @@ Equation for log
   mutate(equation = sprintf("=%.2f*e(%.4fN)", exp(emmean), N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", (exp(N.trend) - 1) * 100))%>%
 Equation for linear
   mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+Equation for sqrt
+  mutate(equation = sprintf("=√G=%.2f+(%.4fN)", emmean, N.trend), SE.x = sprintf("%.4f", SE.x))
+  OR transformed back to linear: 
+  mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x))
+  mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", 100 * (2 * N.trend / emmean)))
 
 theme(axis.title = element_blank())

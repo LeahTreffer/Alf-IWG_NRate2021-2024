@@ -551,19 +551,54 @@ plot(predict(modGsqrt),residuals(modGsqrt)) # check for homoscedasisity; each po
 
 # Sqrt transformation looks better
 
-anova(modGsqrt)
-emmeans(modGsqrt, ~N*P*CROP*YearCode, cov.reduce=FALSE)
-emmip(modGsqrt, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales
-#emmip(modGsqrt, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales
-emtrends(modGsqrt, ~YearCode+CROP+P, var="N", infer=TRUE) # slope different than zero
+anova(modGsqrt) # print anova results
+emmeans(modGsqrt, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modGsqrt, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
 emtrends(modGsqrt, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
 
 ```
 
+# Two quick figures for fun (not cleaned up)
 ```{r}
 ggplot(grain_data, aes(x=N, y=G, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
+
+emmip(modGsqrt, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales
+#emmip(modGsqrt, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
 ```
 
+```{r}
+# percent change in grain yield per unit increase in nitrogen
+# Back transformed from sqrt model to normal 
+# by location (P) or by location, year, and cropping system (P+YearCode+CROP)
+# pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
+
+#emtrends_result<-emtrends(modGsqrt,~ P, var= "N", infer=TRUE)
+emtrends_result<-emtrends(modGsqrt,~ P+YearCode+CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
+#emmeans_results<-emmeans(modGsqrt, ~P, at=list(N=0))
+emmeans_results<-emmeans(modGsqrt, ~P+YearCode+CROP, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "YearCode", "CROP")) %>%
+  #select(P, emmean, N.trend, SE.x, plvl)
+  select(P, YearCode, CROP, emmean, N.trend, SE.x, plvl)
+view(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+    mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", 100 * (2 * N.trend / emmean)))%>%
+  select(-emmean, -N.trend)
+sorted_df <- new_df %>%
+  arrange(P, YearCode)
+view(sorted_df)
+```
 
 
 
