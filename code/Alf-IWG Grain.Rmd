@@ -555,7 +555,7 @@ anova(modGsqrt) # print anova results
 emmeans(modGsqrt, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
 emtrends(modGsqrt, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
 emtrends(modGsqrt, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
-
+  # make this a box and whisker plot; with pairwise comparison on the figure
 ```
 
 # Two quick figures for fun (not cleaned up)
@@ -568,12 +568,12 @@ emmip(modGsqrt, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predic
 
 ```{r}
 # percent change in grain yield per unit increase in nitrogen
-# Back transformed from sqrt model to normal 
 # by location (P) or by location, year, and cropping system (P+YearCode+CROP)
 # pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
 
+# N slopes
 #emtrends_result<-emtrends(modGsqrt,~ P, var= "N", infer=TRUE)
-emtrends_result<-emtrends(modGsqrt,~ P+YearCode+CROP, var= "N", infer=TRUE)
+emtrends_result<-emtrends(modGsqrt,~ P+YearCode+CROP, var= "N", infer=TRUE) # added type="response" to backtransform confidence levels 
   emtrends_df <- as.data.frame(emtrends_result)
   desired_order_P <- c("MN", "NY", "KS", "WI")
   emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
@@ -582,23 +582,187 @@ emtrends_result<-emtrends(modGsqrt,~ P+YearCode+CROP, var= "N", infer=TRUE)
     ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
     ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
     ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
+# Intercepts at N=0
 #emmeans_results<-emmeans(modGsqrt, ~P, at=list(N=0))
-emmeans_results<-emmeans(modGsqrt, ~P+YearCode+CROP, at=list(N=0))
+emmeans_results<-emmeans(modGsqrt, ~P+YearCode+CROP, at=list(N=0)) # added type="response" to backtransform confidence levels 
 emmeans_df <- as.data.frame(emmeans_results)
+# Merge slopes and intercepts
 merged_df <- emtrends_df %>%
   inner_join(emmeans_df, by = c("P", "YearCode", "CROP")) %>%
   #select(P, emmean, N.trend, SE.x, plvl)
-  select(P, YearCode, CROP, emmean, N.trend, SE.x, plvl)
-view(merged_df)
+  select(P, YearCode, CROP, emmean, N.trend, SE.x, plvl) # change emmean to response
+View(merged_df)
 merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
 # Create a new data frame with the calculated column
 new_df <- merged_df %>%
-    mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", 100 * (2 * N.trend / emmean)))%>%
-  select(-emmean, -N.trend)
+    #mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", 100 * (2 * N.trend / emmean)))%>% # change emmean to response
+    mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", 100 * N.trend^2))%>% # change emmean to response
+
+    select(-emmean, -N.trend) # change emmean to response
 sorted_df <- new_df %>%
   arrange(P, YearCode)
-view(sorted_df)
+View(sorted_df)
 ```
 
+
+# do figure and above chunk not broken down to cropping system (just the three way interaction)
+
+```{r}
+emmip(modGsqrt, YearCode~N | P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales
+#emmip(modGsqrt, N~YearCode | P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
+```
+
+```{r}
+# percent change in grain yield per unit increase in nitrogen
+# pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
+
+# N slopes
+emtrends_result<-emtrends(modGsqrt,~ P+YearCode, var= "N", infer=TRUE) # added type="response" to backtransform confidence levels 
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
+# Intercepts at N=0
+emmeans_results<-emmeans(modGsqrt, ~P+YearCode, at=list(N=0)) # added type="response" to backtransform confidence levels 
+emmeans_df <- as.data.frame(emmeans_results)
+# Merge slopes and intercepts
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "YearCode")) %>%
+  select(P, YearCode, emmean, N.trend, SE.x, plvl) # change emmean to response
+View(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+    mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", 100 * N.trend^2))%>% # change emmean to response
+    select(-emmean, -N.trend) # change emmean to response
+sorted_df <- new_df %>%
+  arrange(P, YearCode)
+View(sorted_df)
+```
+
+# Location:Crop:Year
+
+```{r}
+emtrends(modGsqrt, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+  # make this a box and whisker plot; with pairwise comparison on the figure
+
+#NdXSIG$predicted <- predict(modNXG1, newdata = NdXSIG, re.form = NA)
+GemmsPCY <- emmeans(modGsqrt, ~ P*CROP*YearCode, type = "response") # Obtain estimated marginal means (excluding N)
+emms_df <- as.data.frame(GemmsPCY)
+cld_dataPCY <- cld(GemmsPCY, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataPCY)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP", "YearCode"))
+# Custom labels
+custom_labels <- c("Intercrop", "Monoculture IWG")
+xlabels <- c("Kansas", "Minnesota", "New York", "Wisconsin")
+
+GPCY <- ggplot(grain_data,
+               aes(x = P, y = G, shape = CROP)) +
+  geom_jitter(width = 0.2, height = 0, size = 3, alpha = 0.7) +
+
+  geom_point(data = emms_df,
+             aes(x = P, y = response),
+             size = 4, shape = 18,
+             color = "black",
+             inherit.aes = FALSE) +
+
+  geom_errorbar(data = emms_df,
+                aes(x = P, ymin = lower.CL, ymax = upper.CL),
+                width = 0.2,
+                color = "black",
+                inherit.aes = FALSE) +
+
+  geom_text(data = merged_df,
+            aes(x = P, y = response.x, label = .group),
+            vjust = 0,
+            hjust = 1,
+            size = 4,
+            inherit.aes = FALSE) +
+
+  facet_grid(~YearCode, switch = "x") +
+
+  scale_x_discrete(
+    labels = c(
+      KS = "Kansas",
+      MN = "Minnesota",
+      NY = "New York",
+      WI = "Wisconsin"
+    )
+  ) +
+
+  scale_shape_manual(
+    name = "Cropping System",
+    labels = c("Intercrop", "Monoculture IWG"),
+    values = c(4, 25)
+  ) +
+
+  labs(
+    x = "Environment",
+    y = expression("Grain Yield (kg ha"^{-1}*")")
+  ) +
+
+  theme_bw() +
+  theme(
+    strip.placement = "outside",
+    strip.background = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+GPCY
+```
+
+# N Rate : Location
+
+```{r}
+# Define the desired order of 'P'
+desired_order <- c("KS", "MN", "NY", "WI")
+grain_data$P <- factor(grain_data$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_resultX<-emtrends(modGsqrt,~ N*P, var= "N", infer=TRUE)
+  emtrends_dfX <- as.data.frame(emtrends_resultX)
+  emtrends_dfX$plvl <-
+    ifelse(emtrends_dfX$p.value == 0.05, ".",
+    ifelse(emtrends_dfX$p.value < 0.05  & emtrends_dfX$p.value >= 0.01, "*",
+    ifelse(emtrends_dfX$p.value < 0.01  & emtrends_dfX$p.value >= 0.001, "**",
+    ifelse(emtrends_dfX$p.value < 0.001, "***", ""))))
+  desired_order_P <- c("KS", "MN", "NY", "WI")
+  emtrends_dfX$P <- factor(emtrends_dfX$P, levels = desired_order_P)
+emmeans_resultsX<-emmeans(modGsqrt, ~N*P, at=list(N=0))
+  emmeans_dfX <- as.data.frame(emmeans_resultsX)
+mergedX <- emtrends_dfX %>%
+  inner_join(emmeans_dfX, by = c("P")) %>%
+  dplyr::select(P, emmean, N.trend, SE.x, plvl)
+mergedX$P <- factor(mergedX$P, levels = c("KS", "MN", "NY", "WI"))  # Preferred order for P
+X_df <- mergedX %>%
+  mutate(equation = sprintf("=(%.2f+(%.4fN))^2", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", ((N.trend)^2) * 100))%>%
+  select(-emmean, -N.trend)
+sortedX <- X_df %>%
+  arrange(P)
+#plot
+GcomboplotNE <- ggplot(data=grain_data) +
+  geom_point(data = grain_data, aes(x = N, y = G)) +
+  labs(x = "Nitrogen Rate (kg ha-1)", y = "Grain Yield (kg ha-1)")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 1750) +
+  facet_wrap(~P, scales = "free_y", ncol = 2,
+             labeller = as_labeller(c(KS='Kansas', MN='Minnesota',
+                                      NY='New York', WI='Wisconsin'))) +
+  # functions come from equation in sorted
+  geom_function(data=subset(grain_data, P== "KS"), fun=~(12.99+(-0.0026*.x))^2,color='darkgrey')+
+  geom_function(data=subset(grain_data, P== "MN"), fun=~(11.59+(0.0136*.x))^2,color='darkgrey')+
+  geom_function(data=subset(grain_data, P== "NY"), fun=~(14.50+(0.0222*.x))^2,color='darkgrey')+
+  geom_function(data=subset(grain_data, P== "WI"), fun=~(17.52+(0.0289*.x))^2,color='darkgrey')+
+  geom_text(data = sortedX, mapping = aes(x = 35, y = 1600, label = equation),  size=7)+ # add equation to figure
+  geom_text(data = sortedX, mapping = aes(x = 80, y = 1600, label = plvl), size=7)+ # add stars to figure
+# add stars to figure
+  theme(axis.text=element_text(size=22), #change font size of axis text
+        axis.title=element_text(size=26), #change font size of axis titles
+        plot.title=element_text(size=28), #change font size of plot title
+        strip.text.x = element_text(size = 26)) #change font size of facet title
+print(GcomboplotNE)
+```
 
 
