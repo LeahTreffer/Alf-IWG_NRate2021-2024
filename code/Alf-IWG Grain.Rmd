@@ -297,6 +297,7 @@ Grain Relative Yield : the proportion of the grain yield in intercrop at 0 kg N 
 Log-linear mixed-effects models with replication as a random effect (ϵ) 
 log(Response variable) ~ N*E*C + ϵ
 Models for each year-harvest ( Year 1 Summer, Year 1 Fall, Year 2 Summer, Year 2 Fall, Year 3 Summer, Year 3 Fall) as Summer and Fall harvests were expected to have large differences in yield, and so that the change in response variables between years could be easily captured and compared.
+Can use numeric if treatment values are evenly spaced and we want to model a linear trend. Otherwise set to factor
 
 Response variables: Yields
 - Grain yield
@@ -520,16 +521,14 @@ grain_data %>% group_by(P,Rep,Plot)%>%count()%>%View()# makes viewable data fram
 * Figure (Grain yield response to cropping system and site by harvest)
 
 # Grain anovas 
-
 ```{r}
 # want N to be numeric
 is.numeric(grain_data$N)
 # want P, CROP, and Year to be factors
 is.factor(grain_data$P)
 is.factor(grain_data$CROP)
-is.character(grain_data$CROP)
+# grain_data$CROP <- as.factor(grain_data$CROP)
 is.factor(grain_data$YearCode)
-is.character(grain_data$YearCode)
 # grain_data$YearCode <- as.factor(grain_data$YearCode)
 # Rep and Plot should also be factors
 is.factor(grain_data$Rep)
@@ -543,29 +542,41 @@ summary(modG)
 # singularity : (look at random effects) variance on plot level is low compared to residual or rep so plot-to-plot var is essentially zero; stats consulting said this is okay to proceed
 hist(residuals(modG)) # check normality; look for normal distribution, ideally not too narrow
 plot(predict(modG),residuals(modG)) # check for homoscedasisity; each point distribution, no fan shape
+modG_resid<-resid(modG)
+qqnorm(modG_resid)
+qqline(modG_resid)
 
 modGsqrt <- lmer(sqrt(G)~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=grain_data)
 summary(modGsqrt)
 hist(residuals(modGsqrt)) # check normality; look for normal distribution, ideally not too narrow
 plot(predict(modGsqrt),residuals(modGsqrt)) # check for homoscedasisity; each point distribution, no fan shape
+modGsqrt_resid<-resid(modGsqrt)
+qqnorm(modGsqrt_resid)
+qqline(modGsqrt_resid)
 
 # Sqrt transformation looks better
-
 anova(modGsqrt) # print anova results
 emmeans(modGsqrt, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
 emtrends(modGsqrt, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
 emtrends(modGsqrt, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
   # make this a box and whisker plot; with pairwise comparison on the figure
-```
 
+# but normal is fine and interpretation is strait forward (biologically relevant)
+anova(modG) # print anova results
+emmeans(modG, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modG, ~N+P+CROP+YearCode, var="N", infer=TRUE) # slope different than zero
+emtrends(modG, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+
+```
 # Two quick figures for fun (not cleaned up)
 ```{r}
 ggplot(grain_data, aes(x=N, y=G, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
 
-emmip(modGsqrt, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales
+emmip(modG, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
 #emmip(modGsqrt, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
 ```
-
+# percent change in grain yield per unit increase in nitrogen
 ```{r}
 # percent change in grain yield per unit increase in nitrogen
 # by location (P) or by location, year, and cropping system (P+YearCode+CROP)
@@ -573,7 +584,7 @@ emmip(modGsqrt, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predic
 
 # N slopes
 #emtrends_result<-emtrends(modGsqrt,~ P, var= "N", infer=TRUE)
-emtrends_result<-emtrends(modGsqrt,~ P+YearCode+CROP, var= "N", infer=TRUE) # added type="response" to backtransform confidence levels 
+emtrends_result<-emtrends(modG,~ P+YearCode+CROP, var= "N", infer=TRUE) # added type="response" to backtransform confidence levels 
   emtrends_df <- as.data.frame(emtrends_result)
   desired_order_P <- c("MN", "NY", "KS", "WI")
   emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
@@ -584,7 +595,7 @@ emtrends_result<-emtrends(modGsqrt,~ P+YearCode+CROP, var= "N", infer=TRUE) # ad
     ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
 # Intercepts at N=0
 #emmeans_results<-emmeans(modGsqrt, ~P, at=list(N=0))
-emmeans_results<-emmeans(modGsqrt, ~P+YearCode+CROP, at=list(N=0)) # added type="response" to backtransform confidence levels 
+emmeans_results<-emmeans(modG, ~P+YearCode+CROP, at=list(N=0)) # added type="response" to backtransform confidence levels
 emmeans_df <- as.data.frame(emmeans_results)
 # Merge slopes and intercepts
 merged_df <- emtrends_df %>%
@@ -595,9 +606,7 @@ View(merged_df)
 merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
 # Create a new data frame with the calculated column
 new_df <- merged_df %>%
-    #mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", 100 * (2 * N.trend / emmean)))%>% # change emmean to response
-    mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", 100 * N.trend^2))%>% # change emmean to response
-
+    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
     select(-emmean, -N.trend) # change emmean to response
 sorted_df <- new_df %>%
   arrange(P, YearCode)
@@ -605,10 +614,263 @@ View(sorted_df)
 ```
 
 
+## Grain PLER  
+
+# GPLER math 
+```{r}
+#0 
+W0GLER <- grain_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW0 = (G[Treatment == 10]) / (G[Treatment == 5])
+  )
+W0GLER<-W0GLER[W0GLER$Harvest == "Summer",]
+
+#40
+W40GLER <- grain_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW40 = (G[Treatment == 11]) / (G[Treatment == 6])
+  )
+W40GLER<-W40GLER[W40GLER$Harvest == "Summer",]
+
+#80
+W80GLER <- grain_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW80 = (G[Treatment == 12]) / (G[Treatment == 7])
+  )
+W80GLER<-W80GLER[W80GLER$Harvest == "Summer",]
+
+#120
+W120GLER <- grain_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW120 = (G[Treatment == 13]) / (G[Treatment == 8])
+  )
+W120GLER<-W120GLER[W120GLER$Harvest == "Summer",]
+
+#160
+W160GLER <- grain_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERGSW160= (G[Treatment == 14]) / (G[Treatment == 9])
+  )
+W160GLER<-W160GLER[W160GLER$Harvest == "Summer",]
+
+#merge dataframes 
+GLER1<-left_join(W0GLER, W40GLER, by = c("Rep", "P", "YearCode", "Harvest"))
+GLER2<-left_join(GLER1, W80GLER, by = c("Rep", "P", "YearCode", "Harvest"))
+GLER3<-left_join(GLER2, W120GLER, by = c("Rep", "P", "YearCode", "Harvest"))
+GLER4<-left_join(GLER3, W160GLER, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#rearrange dataframe 
+GLER5 <- GLER4 %>%
+  pivot_longer(cols = starts_with("PartialLER") | starts_with("TotalLER"),
+               names_to = "Nrate",
+               values_to = "LER")
+
+#cut off total and partial 
+GLER5$Type <- sub("^(Partial|Total)", "", GLER5$Nrate)
+GLER5$tot_or_part <- sub("^(Partial|Total).*", "\\1", GLER5$Nrate)
+
+#cut off LERIWGSW and LERAlfSW and LERSW
+GLER5$NRATE <- sub("^(LERGSW|LERAlfSW|LERSW)", "", GLER5$Type)
+GLER5$PlotType <- sub("^(LERGSW|LERAlfSW|LERSW).*", "\\1", GLER5$Type)
+GLER5$N<-as.numeric(GLER5$NRATE)
+
+#get rid of pesky NA results (caused by missing plots inherent in year 1 KS summer data)
+GLER<- na.omit(GLER5)
+
+### WI N120 for year 3 looks weird 
+### What to do about it????
+GLER_2 <- GLER%>%dplyr::filter(!(YearCode == "Z" & P == "WI" & Rep == "5" & Type == "LERGSW120"))
+```
+# GPLER anova
+```{r}
+# want N to be numeric
+is.numeric(GLER$N)
+# want LER to be numeric
+is.numeric(GLER$LER)
+# want P and Year to be factors
+is.factor(GLER$P)
+is.factor(GLER$YearCode)
+# Rep and Plot should also be factors
+is.factor(GLER$Rep)
+
+#linear
+modGPLER<-lmer(LER~N*P*YearCode + (1|Rep:P), data= GLER)
+summary(modGPLER)
+hist(residuals(modGPLER)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modGPLER),residuals(modGPLER)) # check for homoscedasisity; each point distribution, no fan shape
+modGPLER_resid<-resid(modGPLER)
+qqnorm(modGPLER_resid)
+qqline(modGPLER_resid)
+
+anova(modGPLER) # print anova results
+emmeans(modGPLER, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modGPLER, ~N+P+CROP+YearCode, var="N", infer=TRUE) # slope different than zero
+emtrends(modGPLER, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+
+```
+
+
+## Nrate Relative Yield (RY)
+
+# RY math
+```{r}
+#0
+NGRY0 <- grain_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield0 = (G[Treatment == 10]) / (G[Treatment == 5]))
+#40
+NGRY40 <- grain_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield40 = (G[Treatment == 10]) / (G[Treatment == 6]))
+#80
+NGRY80 <- grain_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield80 = (G[Treatment == 10]) / (G[Treatment == 7]))
+#120
+NGRY120 <- grain_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield120 = (G[Treatment == 10]) / (G[Treatment == 8]))
+#160
+NGRY160 <- grain_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    GRelativeYield160 = (G[Treatment == 10]) / (G[Treatment == 9]))
+
+#Join together all the tables
+NGRY<-left_join(NGRY0, NGRY40, by = c("Rep", "P", "YearCode", "Harvest"))
+NGRY<-left_join(NGRY, NGRY80, by = c("Rep", "P", "YearCode", "Harvest"))
+NGRY<-left_join(NGRY, NGRY120, by = c("Rep", "P", "YearCode", "Harvest"))
+NGRY<-left_join(NGRY, NGRY160, by = c("Rep", "P", "YearCode", "Harvest"))
+
+# Reshape the data from wide to long format
+NGRY_long <- NGRY %>%
+  pivot_longer(cols = starts_with("GRelativeYield"),
+               names_to = "N_rate",
+               values_to = "GRelativeYield") %>%
+  separate(N_rate, into = c("N_rate", "N"), sep = "GRelativeYield") %>%
+  mutate(N = as.numeric(N))
+
+NGRY_long$N <- as.factor(NGRY_long$N)
+NGRY_long$P <- as.factor(NGRY_long$P)
+```
+# RY anova
+```{r}
+# want N to be numeric
+is.numeric(NGRY_long$N)
+# want LER to be numeric
+is.numeric(NGRY_long$GRelativeYield)
+# want P and Year to be factors
+is.factor(NGRY_long$P)
+is.factor(NGRY_long$YearCode)
+# Rep and Plot should also be factors
+is.factor(NGRY_long$Rep)
+
+modGRY<-lmer(GRelativeYield~N*P*YearCode + (1|Rep:P), data=NGRY_long)
+summary(modGRY)
+hist(residuals(modGRY)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modGRY),residuals(modGRY)) # check for homoscedasisity; each point distribution, no fan shape
+modRY_resid<-resid(modGRY)
+qqnorm(modRY_resid)
+qqline(modRY_resid)
+
+modGRYlog<-lmer(log(GRelativeYield+0.00001)~N*P*YearCode + (1|Rep:P), data=NGRY_long)
+summary(modGRYlog)
+hist(residuals(modGRYlog)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modGRYlog),residuals(modGRYlog)) # check for homoscedasisity; each point distribution, no fan shape
+modRYlog_resid<-resid(modGRYlog)
+qqnorm(modRYlog_resid)
+qqline(modRYlog_resid)
+
+modGRYsqrt<-lmer(sqrt(GRelativeYield)~N*P*YearCode + (1|Rep:P), data=NGRY_long)
+summary(modGRYsqrt)
+hist(residuals(modGRYsqrt)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modGRYsqrt),residuals(modGRYsqrt)) # check for homoscedasisity; each point distribution, no fan shape
+modRYsqrt_resid<-resid(modGRYsqrt)
+qqnorm(modRYsqrt_resid)
+qqline(modRYsqrt_resid)
+
+anova(modGRY) # print anova results
+emmeans(modGRY, ~N*P*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modGRY, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
+emtrends(modGRY, pairwise~YearCode|P, var="N", infer=TRUE) # slope different by cropP
+
+```
+
+```{r}
+# average RY
+testX <- NGRY_long %>%
+group_by(P) %>%
+summarise(
+avg_value = mean(GRelativeYield, na.rm = TRUE)
+)
+flextable(data = testX)
+testX <- NGRY_long %>%
+group_by(N) %>%
+summarise(
+avg_value = mean(GRelativeYield, na.rm = TRUE)
+)%>% arrange(as.numeric(N))
+flextable(data = testX)
+```
+# relationship of location and year
+```{r}
+emtrends(modGRY, pairwise~YearCode|P, var="N", infer=TRUE) # slope different by cropP
+emmeans(modGRY, ~N*P*YearCode, cov.reduce=FALSE) # estimated marginal means
+emmeans(modGRY, ~P*YearCode, cov.reduce=FALSE) # estimated marginal means
+
+# box and wisker plot with post-hoc compact letter display for sig differences?
+
+RYemms <- emmeans(modGRY, ~ P*YearCode, type = "response") # Obtain estimated marginal means
+emmsRY_df <- as.data.frame(RYemms)
+cld_dataRY <- cld(RYemms, Letters=custom_letters)
+cldRY_df <-as.data.frame(cld_dataRY)
+mergedRY_df <- merge(emmsRY_df, cldRY_df,by = c("P", "YearCode"))
+# custom cld position 
+mergedRY_df <- mergedRY_df %>%
+  left_join(
+    NGRY_long %>%
+      group_by(P, YearCode) %>%
+      dplyr::summarise(label_y = max(GRelativeYield, na.rm = TRUE) * 0.9, .groups = "drop"),
+    by = c("P", "YearCode")
+  )
+# Custom X-axis labels
+RY_PY <- ggplot(NGRY_long, aes(x = YearCode, y = GRelativeYield, colour= P)) + 
+  geom_boxplot(position = position_dodge(width = 0.8)) + # blank
+  geom_text(data = mergedRY_df, aes(x = YearCode, y = label_y, label = .group, colour = P, group = P), 
+            position = position_dodge(width = 0.8), size = 6, show.legend = FALSE)+
+  facet_wrap(~P, scales = "free", ncol = 2) +
+#  scale_colour_manual(values = c(inter = "#DDCC77", monoA = "#332288", monoI = "#661100")) +
+  labs(x = "Year", y = "Relative Yield")+ #title=""
+  theme(axis.text.y=element_text(size=14), #change font size of axis text
+        axis.text.x=element_text(size=16),
+        axis.title=element_text(size=22))
+RY_PY
+# 1500x1200
+```
+
+
+
+
+
+
+
+
+
+# Old
+
 # do figure and above chunk not broken down to cropping system (just the three way interaction)
 
 ```{r}
-emmip(modGsqrt, YearCode~N | P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales
+emmip(modGsqrt, YearCode~N | P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
 #emmip(modGsqrt, N~YearCode | P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
 ```
 

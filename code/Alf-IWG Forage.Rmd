@@ -1,0 +1,1897 @@
+---
+title: "Alf-IWG Forage"
+date: "2026-06-01"
+editor_options: 
+  chunk_output_type: console
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# just loading these in, unsure which exactly are still used
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(gridExtra)
+library(reshape2)
+library(ggthemes)
+library(gapminder)
+library(multcomp)
+library(emmeans)
+library(multcompView)
+library(lmerTest)
+library(scales)
+library(tidyverse)
+library(readxl)
+library(lme4)
+library(gvlma)
+library(rstatix)
+library(sjPlot)
+library(gt)
+?library(car)
+library(Rmisc)
+library(nlme)
+library(pgirmess)
+library(MuMIn)
+library(sjPlot)
+library(grateful)
+library(cowplot)
+library(kableExtra)
+library(MuMIn)
+library(ggpmisc)
+library(bestNormalize)
+library(flextable)
+```
+
+# making emmeans functions 
+```{r}
+# Define a 3 WAY function for year 1 summer
+compute_emmeansNXS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Summer")
+  
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 1 fall
+compute_emmeansNXF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 2 Summer
+compute_emmeansNYS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a 3 WAY function for year 2 Fall
+compute_emmeansNYF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a 3 WAY function for year 3 summer
+compute_emmeansNZS <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Summer")
+  
+  return(emm_df)}
+
+# Define a 3 WAY  function for year 3 fall
+compute_emmeansNZF <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P*CROP, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Fall")
+  return(emm_df)}
+
+
+
+# Define a NP function for year 1 summer
+compute_emmeansNXS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP  function for year 1 fall
+compute_emmeansNXF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "1", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a NP  function for year 2 Summer
+compute_emmeansNYS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP function for year 2 Fall
+compute_emmeansNYF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "2", Harvest = "Fall")
+  return(emm_df)}
+
+# Define a NP function for year 3 summer
+compute_emmeansNZS2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Summer")
+  return(emm_df)}
+
+# Define a NP  function for year 3 fall
+compute_emmeansNZF2 <- function(model_name) {
+  N_levels <- c(0, 40, 80, 120, 160)
+  # Get the model object using the provided name
+  mod <- get(model_name)
+  # Compute estimated marginal means
+  emm <- emmeans(mod, specs = ~ N*P, at = list(N = N_levels))
+  emm <- update(emm, type = "response")
+  # Summarize the results
+  summary_emm <- summary(emm)
+  # Convert to data frame
+  emm_df <- as.data.frame(summary_emm)
+  # Add additional columns
+  emm_df <- emm_df %>%
+    mutate(Year = "3", Harvest = "Fall")
+  return(emm_df)}
+```
+
+# letters for compact letter display
+```{r}
+custom_letters <- c("a", "b", "c", "d", "e", "f", "g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z")  # Customize the letters as needed
+```
+
+### Estimation of Dehulled Grain Yield
+
+The IWG grain threshability visibly varied by site, and not all grains were fully dehulled, so it was deemed necessary to estimate the true mass of dehulled grain in order to prevent poorly threshed plots from being incorrectly represented as higher yielding. To correct for this, 3-gram samples were taken from each plot’s grain yield. These samples were weighed and imaged, and the images were analyzed using the software ilastik, which visually estimated the proportion of grain still in the hull, naked grain, grain still in the spikelet, and empty hulls and spikelets. The resulting proportions were used to create an estimated dehulled grain weight for the sample, which was then extrapolated to derive an adjusted dehulled grain yield for each experimental plot (Altendorf et al., 2021)
+
+Adjusted plot grain yield= (estimated dehulled sample weight/ sample weight)*(plot grain yield weight) 
+
+In year 3, dehulled weight was estimated for each location by hand cleaning a subset of the samples and using those to set up a linear regression model to predict all dehulled grain weights. A linear model of $y = \beta_0 + \beta X$, where y is dehulled weight and X is the original sample weight, achieved a $R^2 > 0.9$. The resulting estimates were used to obtain predicted dehulled grain weights for each sample via the predict function. This function uses the equation : predicted value = intercept + Threshed Weights*Estimate. 
+
+### Land Equivalent Ratio (LER)
+
+Land Equivalent Ratio (LER) was calculated to compare the performance of intercrops to that of monocultures... Indicates a relative total forage yield advantage for intercropped plots if the TLER is greater than 1(Mead & Willey, 1980). 
+
+Total LER: TLER= LA+LB= YA/SA + YB/SB
+where LA and LB are the partial land equivalent ratio (PLER) for the individual crops. YA and YB are the yields of an individual crop within the intercropped plot, and SA and SB are the yields of an individual crop within a monoculture plot (Mead & Willey, 1980). 
+
+Proportional LER (PrLER) was calculated for each species’ biomass yield to determine each species’ relative contribution to the total LER (Oyejola & Mead, 1982). PLERs can be compared to determine competitive effects between the species in intercrop... A PLER greater than 0.5 indicates a relative yield advantage for a single crop in intercrop compared to its yield at the same seeding rate in monoculture. The proportional partial land equivalent ratio (PrPLER) is the proportion of component crop A to the TLER and can be used to understand how much each intercropped crop contributes to the TLER. 
+
+Proportional LER: PrPLER= LA/TLER
+where LA is the partial land equivalent ratio (PLER) for an individual crops and TLER is the total land equivalent ratio for an intercropped plot. 
+
+
+TLER, PLER, and PrLER were calculated using plots of the same N rate to allow for comparison in the performance of the intercropped system at different N rates (Oyejola & Mead, 1982). TLER and PrLER could not be calculated for grain yields, as IWG only represented one grain-bearing crop in the intercrop, but PLER was calculated for grain yield to allow for comparison between N rates
+
+Grain Partial LER : the ratio of grain yield in intercrop to the grain yield in IWG monoculture at a given N rate
+
+### Relative Yield (RY)
+
+Grain Relative Yield : the proportion of the grain yield in intercrop at 0 kg N ha-1 to the grain yield in monoculture at a non-zero N rate
+
+### Effects and interactions of N rate (N), cropping system (CROP), and environment (E)
+
+Log-linear mixed-effects models with replication as a random effect (ϵ) 
+log(Response variable) ~ N*E*C + ϵ
+Models for each year-harvest ( Year 1 Summer, Year 1 Fall, Year 2 Summer, Year 2 Fall, Year 3 Summer, Year 3 Fall) as Summer and Fall harvests were expected to have large differences in yield, and so that the change in response variables between years could be easily captured and compared.
+
+Response variables: Yields
+- Grain yield
+Response variables: LER
+- PLER of grain 
+- Grain Relative Yield (RY)
+Cropping system (C) was not included as a fixed effect for LER, as LER values are calculated as a ratio of yield in intercropping to yield in monoculture.
+
+Analysis of covariance (ANCOVA) was used to determine significant differences (P<0.05) between independent variables and their interactions. Estimated marginal means (EMMs) were calculated and pairwise comparisons were used to understand and rank results between independent variables. 
+
+
+### Data prep for analysis 
+
+```{r}
+data<-read.csv('data/Original_Data/MasterDataSpreadsheet.csv')
+```
+# Rows to remove due to missing data
+NY 208 s22 missing alfalfa 
+MN 1122 s23 missing grain 
+```{r}
+# 2022 Summer NY 208 is the first row in the data table
+data <- data[-1, ] # 2022 Summer NY 208
+# then the new row 1 becomes the next row needing to be taken out
+data <- data[-1, ] # 2023 Summer MN 1122
+```
+# Rename variables to match models 
+```{r}
+data2 <- data |> 
+  separate_wider_delim(Crop, delim = " + ", 
+                       names = c("first_value", "second_value"), 
+                       too_few = "align_start") |> 
+  mutate(C = if_else(is.na(second_value), "monoculture", "intercrop")) |> 
+  mutate(CROP = case_when(
+    Intercropped == "y" ~ "Intercropped",  # If intercrop is "y", set CROP to intercrop
+    Monocrop == "y" & ALF == "y" ~ "Mono_ALF",  # If monoculture is "y" and alfalfa is "y", set CROP to alfalfa
+    Monocrop == "y" & IWG == "y" ~ "Mono_IWG",  # If monoculture is "y" and iwg is "y", set CROP to iwg
+    Monocrop == "y" ~ "NA",  # If monoculture is "y" and neither alfalfa nor iwg is "y", set CROP to NA
+    TRUE ~ NA_character_  # If no condition matches, assign NA
+  ))
+
+V<-data2$first_value #Variety (IWG, Shockwave, Higest, WL)
+data2$V<-as.factor(V)
+N<-data2$NRate # Nitrogen Rate (0, 40, 80, 120, 160)
+data2$N<-as.numeric(N)
+P<-data2$Location # Location ("MN", "NY", "WI", "KS")
+data2$P<-as.factor(P)
+data2$Rep<-as.factor(data2$Rep) # (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
+data2$C<-as.factor(data2$C) # Crop (intercrop, monoculture)
+data2$CROP <- as.factor(data2$CROP) # Crop (intercrop, monoculture_IWG, monoculture_Alfalfa)
+```
+
+# Grain conversion
+
+```{r}
+#need to calculate the fractions 
+# data points from imaging giving proportionss
+# for yr 1 and 2 there are columns with plot individual info for this
+data3 <- data2%>%filter(YearCode %in% c("X", "Y"))
+#hull fraction 
+data3$hullNHd<-data3$hull_N/(data3$hull_N+data3$nkd_N+data3$spklt_N)
+#naked seed fraction 
+data3$NdkNHd<-data3$nkd_N/(data3$hull_N+data3$nkd_N+data3$spklt_N)
+#spiklet fraction 
+data3$SpkltNHd <- ifelse(data3$spklt_N == 0, 0, data3$spklt_N / (data3$hull_N + data3$nkd_N + data3$spklt_N))
+
+#IGNORE (Lee's equation)
+# converted grain weight using proportion information and his calibration values
+#then can just plug and chug into this equation 
+#data2$YldHdDH <- (1.26975580047546E-03) + (0.897057684933234 * data2$image_sample_wt_g) - ((1.07961789616701E-05) * data2$hullNHd * data2$hull_A) + ((4.61501772182347E-06) * data2$NdkNHd * data2$nkd_A) - ((2.00025159218368E-05) * ifelse(is.nan(data2$SpkltNHd), 0, data2$SpkltNHd) * ifelse(is.nan(data2$spklt_A), 0, data2$spklt_A))
+
+#new equation from Lee
+# converted grain wieghts 
+data3$WhSamDH = (0.905045351733363*data3$image_sample_wt_g)-((1.10627799960595E-05)*data3$hullNHd*data3$hull_A)+((4.10249606987368E-06)*data3$NdkNHd*data3$nkd_A)-((2.01262650442053E-05)* ifelse(is.nan(data3$SpkltNHd), 0, data3$SpkltNHd) * ifelse(is.nan(data3$spklt_A), 0, data3$spklt_A)) 
+
+
+#fix below to create the right proportion and save it  
+#samples sent for imaging were a subset, so have to apply the conversion factor to the subsample, need to calculate up to the whole plot samples
+data3$G<-((data3$WhSamDH)/(data3$image_sample_wt_g))*(data3$PlotThreshedGrainKgHa)
+
+
+# Year 3 adjustments 
+# need to have naked seed weights to match the adjustments made in yr 1 and yr 2
+# NY yr3 was hand threshed, so looks clean as is. No need for adjustments or dehulling
+# KS, WI, and MN sending to NY to dehull
+## weigh a subset of these after they are threshed. then clean that subset. Find the r^2 and if good (~80) then use to estimate a clean weight for the rest of the samples
+data4 <- data2%>%filter(YearCode == "Z")
+data4$hullNHd <- ""
+data4$NdkNHd <- ""
+data4$SpkltNHd <- ""
+data4$WhSamDH <- ""
+data4$G <- data4$PlotThreshedGrainKgHa
+data_fixed <- rbind(data3,data4)
+```
+
+# Making things different data types as needed
+```{r}
+data_fixed$G<-as.numeric(data_fixed$G)
+data_fixed$PlotIWGDryKgHa<-as.numeric(data_fixed$PlotIWGDryKgHa)
+data_fixed$PlotAlfDryKgHa<-as.numeric(data_fixed$PlotAlfDryKgHa)
+data_fixed$PlotTotForageKgHa<-as.numeric(data_fixed$PlotTotForageKgHa)
+data_fixed$IWGCP<-as.numeric(data_fixed$IWGCP)
+data_fixed$IWGdNDF48<-as.numeric(data_fixed$IWGdNDF48)
+data_fixed$IWGLignin<-as.numeric(data_fixed$IWGLignin)
+data_fixed$ALFCP<-as.numeric(data_fixed$ALFCP)
+data_fixed$ALFdNDF48<-as.numeric(data_fixed$ALFdNDF48)
+data_fixed$ALFLignin<-as.numeric(data_fixed$ALFLignin)
+data_fixed$ALFADF<-as.numeric(data_fixed$ALFADF)
+data_fixed$IWGADF<-as.numeric(data_fixed$IWGADF)
+data_fixed$ALFaNDF<-as.numeric(data_fixed$ALFaNDF)
+data_fixed$YearCode <- as.factor(data_fixed$YearCode)
+```
+# Nrate data isolation
+```{r}
+#Just shockwave 
+Nd<-data_fixed[data_fixed$first_value != "WL" & data_fixed$first_value != "Higest" ,]
+
+Nd <- Nd %>%
+  mutate(CROP = case_when(
+    `Crop1` == "Shockwave" ~ "monoA",
+    `Crop1` == "IWG" ~ "monoI",
+    `Crop1` == "Shockwave + IWG" ~ "inter",
+    TRUE ~ NA_character_  # Handle other cases if any
+  ))
+
+# MN 2024 has some Filler plots which get the NA character, but code later in this script dosn't like it. 
+# So removing these here
+Nd <- Nd %>%
+  filter(!is.na(CROP))
+```
+
+```{r}
+#Year
+NdX<-Nd[Nd$YearCode == "X",]
+NdY<-Nd[Nd$YearCode == "Y",]
+NdZ<-Nd[Nd$YearCode == "Z",]
+
+#REMOVE this once you get the corrected year 2 grain values in 
+NdY$G<-NdY$PlotThreshedGrainKgHa
+
+#Harvest 
+NdXS<-NdX[NdX$Harvest == "Summer",]
+NdXF<-NdX[NdX$Harvest == "Fall",]
+
+NdYS<-NdY[NdY$Harvest == "Summer",]
+NdYF<-NdY[NdY$Harvest == "Fall",]
+
+NdZS<-NdZ[NdZ$Harvest == "Summer",]
+NdZF<-NdZ[NdZ$Harvest == "Fall",]
+
+#IWG vs ALF 
+NdXSI<-NdXS[NdXS$Crop1 != "Shockwave",]
+NdXSA<-NdXS[NdXS$Crop1 != "IWG",]
+
+NdXFI<-NdXF[NdXF$Crop1 != "Shockwave",]
+NdXFA<-NdXF[NdXF$Crop1 != "IWG",]
+
+NdYSI<-NdYS[NdYS$Crop1 != "Shockwave" ,]
+NdYSA<-NdYS[NdYS$Crop1 != "IWG",]
+
+NdYFI<-NdYF[NdYF$Crop1 != "Shockwave",]
+NdYFA<-NdYF[NdYF$Crop1 != "IWG",]
+
+NdZSI<-NdZS[NdZS$Crop1 != "Shockwave" ,]
+NdZSA<-NdZS[NdZS$Crop1 != "IWG",]
+
+NdZFI<-NdZF[NdZF$Crop1 != "Shockwave",]
+NdZFA<-NdZF[NdZF$Crop1 != "IWG",]
+```
+
+```{r}
+#adding year 1 mn grain to the G column because they were actually dehulled instead of imaged for using the equation
+NdXSInoMN<-NdXSI[NdXSI$Location != "MN",]
+NdXSIMN<-NdXSI[NdXSI$Location == "MN",]
+NdXSIMN$G<-NdXSIMN$X2023MNGrainDeHulledKgHa
+NdXSIG<-rbind(NdXSInoMN, NdXSIMN)
+```
+
+```{r}
+# this chunk subsets to just columns that might be used in a anslysis then combines each year
+
+#  "Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQal", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGRFV", "IWGADF", "IWGaNDF", "ALFaNDF", "ALFRFV", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G"
+
+
+shortenXS <- NdXS[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+
+shortenXF <- NdXF[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+
+shortenYS <- NdYS[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+
+shortenYF <- NdYF[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+
+shortenZS <- NdZS[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+
+shortenZF <- NdZF[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+
+newX <- rbind(shortenXS, shortenXF)
+newY <- rbind(shortenYS, shortenYF)
+newZ <- rbind(shortenZS, shortenZF)
+newXY <- rbind(newX, newY)
+forage_data <- rbind(newXY, newZ)
+
+newXYS <- rbind(shortenXS, shortenYS)
+forage_data_summer <- rbind(newXYS, shortenZS)
+
+newXYF <- rbind(shortenXF, shortenYF)
+forage_data_fall <- rbind(newXYF, shortenZF)
+```
+
+# Optional data viewing
+```{r}
+table(forage_data$Rep, forage_data$P) # make sure replicates are unique to a location
+table(forage_data$P, forage_data$Rep)  # make sure replicates are unique to a location
+table(forage_data$Plot, forage_data$P) # look to see if plot ids are unique to a location (they arn't)
+with(subset(forage_data, !is.na(G)), table(P, Year)) # look at which years have data and how many data points
+with(subset(forage_data, !is.na(G)), table(CROP, N, P, Year)) # for each site-year, look to see if and how many data points exist for each N rate
+table(forage_data$Plot, forage_data$P) # look at each plot name and if and how many data points there are for that plot at each site
+forage_data %>% group_by(P,Rep,Plot)%>%count()%>%View()# makes viewable data frame for each plot within a rep within a location and shows how many data points exisit for that specific plot
+```
+
+
+## Total Forage Yield 
+# anova
+```{r}
+# want N to be numeric
+is.numeric(forage_data$N)
+# want P, CROP, and Year to be factors
+is.factor(forage_data$P)
+is.factor(forage_data$CROP)
+is.character(forage_data$CROP)
+is.factor(forage_data$YearCode)
+is.character(forage_data$YearCode)
+# forage_data$YearCode <- as.factor(forage_data$YearCode)
+# Rep and Plot should also be factors
+is.factor(forage_data$Rep)
+is.factor(forage_data$Plot)
+# forage_data$Plot <- as.character(forage_data$Plot)
+forage_data$YearHarvest <- paste0(forage_data$YearCode, forage_data$Harvest)
+# forage_data$YearHarvest <- as.factor(forage_data$YearHarvest)
+
+# Linear Model
+modTF <- lmer(PlotTotForageKgHa~N*P*CROP*YearHarvest + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data)
+summary(modTF)
+# singularity : (look at random effects) variance on plot level is low compared to residual or rep so plot-to-plot var is essentially zero; stats consulting said this is okay to proceed
+hist(residuals(modTF)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modTF),residuals(modTF)) # check for homoscedasisity; each point distribution, no fan shape
+modTF_resid<-resid(modTF)
+qqnorm(modTF_resid)
+qqline(modTF_resid)
+plot(modTF_resid)
+
+modTFlog <- lmer(log(PlotTotForageKgHa+0.00001)~N*P*CROP*YearHarvest + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data)
+summary(modTFlog)
+hist(residuals(modTFlog)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modTFlog),residuals(modTFlog)) # check for homoscedasisity; each point distribution, no fan shape
+modTFlog_resid<-resid(modTFlog)
+qqnorm(modTFlog_resid)
+qqline(modTFlog_resid)
+plot(modTFlog_resid)
+
+modTFsqrt <- lmer(sqrt(PlotTotForageKgHa)~N*P*CROP*YearHarvest + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data)
+summary(modTFsqrt)
+hist(residuals(modTFsqrt)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modTFsqrt),residuals(modTFsqrt)) # check for homoscedasisity; each point distribution, no fan shape
+modTFsqrt_resid<-resid(modTFsqrt)
+qqnorm(modTFsqrt_resid)
+qqline(modTFsqrt_resid)
+plot(modTFsqrt_resid)
+
+
+
+anova(modTFsqrt) # print anova results
+emmeans(modTFsqrt, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modTFsqrt, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
+emtrends(modTFsqrt, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+```
+
+## Total Forage Summer
+# anova
+```{r}
+# want N to be numeric
+is.numeric(forage_data_summer$N)
+# want P, CROP, and Year to be factors
+is.factor(forage_data_summer$P)
+is.factor(forage_data_summer$CROP)
+is.character(forage_data_summer$CROP)
+is.factor(forage_data_summer$YearCode)
+is.character(forage_data_summer$YearCode)
+# forage_data_summer$YearCode <- as.factor(forage_data_summer$YearCode)
+# Rep and Plot should also be factors
+is.factor(forage_data_summer$Rep)
+is.factor(forage_data_summer$Plot)
+# forage_data_summer$Plot <- as.character(forage_data_summer$Plot)
+
+# Linear Model
+modTFS <- lmer(PlotTotForageKgHa~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_summer)
+summary(modTF)
+# singularity : (look at random effects) variance on plot level is low compared to residual or rep so plot-to-plot var is essentially zero; stats consulting said this is okay to proceed
+hist(residuals(modTFS)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modTFS),residuals(modTFS)) # check for homoscedasisity; each point distribution, no fan shape
+modTFS_resid<-resid(modTFS)
+qqnorm(modTFS_resid)
+qqline(modTFS_resid)
+plot(modTFS_resid)
+
+modTFSlog <- lmer(log(PlotTotForageKgHa+0.00001)~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_summer)
+summary(modTFSlog)
+hist(residuals(modTFSlog)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modTFSlog),residuals(modTFSlog)) # check for homoscedasisity; each point distribution, no fan shape
+modTFSlog_resid<-resid(modTFSlog)
+qqnorm(modTFSlog_resid)
+qqline(modTFSlog_resid)
+plot(modTFSlog_resid)
+
+modTFSsqrt <- lmer(sqrt(PlotTotForageKgHa)~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_summer)
+summary(modTFSsqrt)
+hist(residuals(modTFSsqrt)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modTFSsqrt),residuals(modTFSsqrt)) # check for homoscedasisity; each point distribution, no fan shape
+modTFSsqrt_resid<-resid(modTFSsqrt)
+qqnorm(modTFSsqrt_resid)
+qqline(modTFSsqrt_resid)
+plot(modTFSsqrt_resid)
+
+
+
+
+anova(modTFS) # print anova results
+emmeans(modTFS, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modTFS, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
+emtrends(modTFS, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+  # make this a box and whisker plot; with pairwise comparison on the figure
+```
+# Two quick figures for fun (not cleaned up)
+```{r}
+ggplot(forage_data_summer, aes(x=N, y=PlotTotForageKgHa, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
+
+emmip(modTFS, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
+#emmip(modTFS, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
+```
+# percent change in grain yield per unit increase in nitrogen
+```{r}
+# percent change in grain yield per unit increase in nitrogen
+# (P+CROP) and (P+Year)
+# pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
+
+# N*P*CROP
+# N slopes
+emtrends_result<-emtrends(modTFS,~ P+CROP, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
+# Intercepts at N=0
+emmeans_results<-emmeans(modTFS, ~P+CROP, at=list(N=0)) 
+emmeans_df <- as.data.frame(emmeans_results)
+# Merge slopes and intercepts
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "CROP")) %>%
+  select(P, CROP, emmean, N.trend, SE.x, plvl) 
+View(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+    select(-emmean, -N.trend) 
+sorted_df <- new_df %>%
+  arrange(P, CROP)
+View(sorted_df)
+
+# N:Location:Year
+# N slopes
+emtrends_result<-emtrends(modTFS,~ P+YearCode, var= "N", infer=TRUE) 
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
+# Intercepts at N=0
+emmeans_results<-emmeans(modTFS, ~P+YearCode, at=list(N=0))
+emmeans_df <- as.data.frame(emmeans_results)
+# Merge slopes and intercepts
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "YearCode")) %>%
+  select(P, YearCode, emmean, N.trend, SE.x, plvl) 
+View(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+    select(-emmean, -N.trend) 
+sorted_df <- new_df %>%
+  arrange(P, YearCode)
+View(sorted_df)
+```
+# relationship of location, cropping system, and year
+```{r}
+emtrends(modTFS, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+emmeans(modTFS, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emmeans(modTFS, ~P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+
+# box and wisker plot with post-hoc compact letter display for sig differences?
+
+
+
+#NdYSf$predicted <- predict(modNTCPYS, newdata = NdYSf, re.form = NA)
+TFSemms <- emmeans(modTFS, ~ P*CROP*YearCode, type = "response") # Obtain estimated marginal means
+emms_df <- as.data.frame(TFSemms)
+cld_dataTFS <- cld(TFSemms, Letters=custom_letters)
+cld_df <-as.data.frame(cld_dataTFS)
+merged_df <- merge(emms_df, cld_df,by = c("P", "CROP", "YearCode"))
+# custom cld position 
+merged_df <- merged_df %>%
+  left_join(
+    forage_data_summer %>%
+      group_by(P, CROP, YearCode) %>%
+      dplyr::summarise(label_y = max(PlotTotForageKgHa, na.rm = TRUE) * 0.9, .groups = "drop"),
+    by = c("P", "CROP", "YearCode")
+  )
+# Custom X-axis labels
+#xlabels <- c("X", "Monoculture Alfalfa", "Monoculture IWG")
+TFS_CPY <- ggplot(forage_data_summer, aes(x = YearCode, y = PlotTotForageKgHa, colour= CROP)) +
+  geom_boxplot(position = position_dodge(width = 0.8)) + # blank
+#  geom_text(data = merged_df, aes(x = YearCode, y = emmean.x, label = .group), 
+            #position = position_dodge(width = 0.75),
+#            color = "black", vjust = 0, hjust = 0, size=6)+ 
+  
+  geom_text(data = merged_df, aes(x = YearCode, y = label_y, label = .group, colour = CROP, group = CROP),
+            position = position_dodge(width = 0.8), size = 6, show.legend = FALSE)+
+
+  facet_wrap(~P, scales = "free", ncol = 2) +
+  scale_colour_manual(values = c(inter = "#DDCC77", monoA = "#332288", monoI = "#661100")) +
+  labs(x = "Year", y = "Total Forage (kg/ha)")+ #title=""
+  theme(axis.text.y=element_text(size=14), #change font size of axis text
+        axis.text.x=element_text(size=16),
+        axis.title=element_text(size=22))
+TFS_CPY
+# 1500x1200
+```
+
+## Total Forage Fall
+# anova
+```{r}
+# remove rows where the total forage was 0
+forage_data_fall_2 <- subset(forage_data_fall, PlotTotForageKgHa != 0|is.na(PlotTotForageKgHa)) 
+# MN Year 2 Fall plot 1210 value for total forage is extreme outlier (12091.732 kg/ha when next highest is 3452.477); driven by much higher iwg forage 
+forage_data_fall_2 <- forage_data_fall_2 %>%
+  dplyr::filter(!(YearCode == "Y" &
+           Location == "MN" &
+           Plot == "1210"))
+
+# want N to be numeric
+is.numeric(forage_data_fall_2$N)
+# want P, CROP, and Year to be factors
+is.factor(forage_data_fall_2$P)
+is.factor(forage_data_fall_2$CROP)
+# forage_data_fall_2$CROP <- as.factor(forage_data_fall_2$CROP)
+is.factor(forage_data_fall_2$YearCode)
+# forage_data_fall_2$YearCode <- as.factor(forage_data_fall_2$YearCode)
+# Rep and Plot should also be factors
+is.factor(forage_data_fall_2$Rep)
+is.factor(forage_data_fall_2$Plot)
+# forage_data_fall_2$Plot <- as.character(forage_data_fall_2$Plot)
+
+
+# Linear Model
+modTFF <- lmer(PlotTotForageKgHa~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_fall_2)
+summary(modTFF)
+hist(residuals(modTFF)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modTFF),residuals(modTFF)) # check for homoscedasisity; each point distribution, no fan shape
+modTFF_resid<-resid(modTFF)
+qqnorm(modTFF_resid)
+qqline(modTFF_resid)
+plot(modTFF_resid)
+
+
+modTFFsqrt <- lmer(sqrt(PlotTotForageKgHa)~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_fall)
+summary(modTFFsqrt)
+hist(residuals(modTFFsqrt)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modTFFsqrt),residuals(modTFFsqrt)) # check for homoscedasisity; each point distribution, no fan shape
+modTFFsqrt_resid<-resid(modTFFsqrt)
+qqnorm(modTFFsqrt_resid)
+qqline(modTFFsqrt_resid)
+plot(modTFFsqrt_resid)
+
+
+anova(modTFF) # print anova results
+emmeans(modTFF, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modTFF, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
+emtrends(modTFF, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+```
+# relationship of location, cropping system, and year
+```{r}
+emtrends(modTFF, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+emmeans(modTFF, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emmeans(modTFF, ~P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+
+# box and wisker plot with post-hoc compact letter display for sig differences?
+
+TFFemms <- emmeans(modTFF, ~ P*CROP*YearCode, type = "response") # Obtain estimated marginal means
+emmsTFF_df <- as.data.frame(TFFemms)
+cld_dataTFF <- cld(TFFemms, Letters=custom_letters)
+cldTFF_df <-as.data.frame(cld_dataTFF)
+mergedTFF_df <- merge(emmsTFF_df, cldTFF_df,by = c("P", "CROP", "YearCode"))
+# custom cld position 
+mergedTFF_df <- mergedTFF_df %>%
+  left_join(
+    forage_data_fall_2 %>%
+      group_by(P, CROP, YearCode) %>%
+      dplyr::summarise(label_y = max(PlotTotForageKgHa, na.rm = TRUE) * 0.9, .groups = "drop"),
+    by = c("P", "CROP", "YearCode")
+  )
+# Custom X-axis labels
+TFF_CPY <- ggplot(forage_data_fall_2, aes(x = YearCode, y = PlotTotForageKgHa, colour= CROP)) +
+  geom_boxplot(position = position_dodge(width = 0.8)) + # blank
+  geom_text(data = mergedTFF_df, aes(x = YearCode, y = label_y, label = .group, colour = CROP, group = CROP),
+            position = position_dodge(width = 0.8), size = 6, show.legend = FALSE)+
+  facet_wrap(~P, scales = "free", ncol = 2) +
+  scale_colour_manual(values = c(inter = "#DDCC77", monoA = "#332288", monoI = "#661100")) +
+  labs(x = "Year", y = "Total Forage (kg/ha)")+ #title=""
+  theme(axis.text.y=element_text(size=14), #change font size of axis text
+        axis.text.x=element_text(size=16),
+        axis.title=element_text(size=22))
+TFF_CPY
+# 1500x1200
+```
+
+## Alfalfa Forage Summer
+# anova
+```{r}
+# want N to be numeric
+is.numeric(forage_data_summer$N)
+# want P, CROP, and Year to be factors
+is.factor(forage_data_summer$P)
+is.factor(forage_data_summer$CROP)
+is.character(forage_data_summer$CROP)
+is.factor(forage_data_summer$YearCode)
+is.character(forage_data_summer$YearCode)
+# forage_data_summer$YearCode <- as.factor(forage_data_summer$YearCode)
+# Rep and Plot should also be factors
+is.factor(forage_data_summer$Rep)
+is.factor(forage_data_summer$Plot)
+# forage_data_summer$Plot <- as.character(forage_data_summer$Plot)
+
+# Linear Model
+modAFS <- lmer(PlotAlfDryKgHa~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_summer)
+summary(modAFS)
+hist(residuals(modAFS)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modAFS),residuals(modAFS)) # check for homoscedasisity; each point distribution, no fan shape
+modAFS_resid<-resid(modAFS)
+qqnorm(modAFS_resid)
+qqline(modAFS_resid)
+plot(modAFS_resid)
+
+anova(modAFS) # print anova results
+emmeans(modAFS, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modAFS, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
+emtrends(modAFS, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+```
+# Two quick figures for fun (not cleaned up)
+```{r}
+ggplot(forage_data_summer, aes(x=N, y=PlotAlfDryKgHa, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
+
+emmip(modAFS, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
+#emmip(modTFS, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
+```
+# percent change in grain yield per unit increase in nitrogen
+```{r}
+# percent change in grain yield per unit increase in nitrogen
+# (P+CROP) and (P+Year)
+# pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
+
+# N*P*Year
+# N slopes
+emtrends_result<-emtrends(modAFS,~ P+YearCode, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
+# Intercepts at N=0
+emmeans_results<-emmeans(modAFS, ~P+YearCode, at=list(N=0)) 
+emmeans_df <- as.data.frame(emmeans_results)
+# Merge slopes and intercepts
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "YearCode")) %>%
+  select(P, YearCode, emmean, N.trend, SE.x, plvl) 
+View(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+    select(-emmean, -N.trend) 
+sorted_df <- new_df %>%
+  arrange(P, YearCode)
+View(sorted_df)
+```
+# relationship of location, cropping system, and year
+```{r}
+emtrends(modAFS, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+emmeans(modAFS, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emmeans(modAFS, ~P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+
+# box and wisker plot with post-hoc compact letter display for sig differences?
+
+
+AFSemms <- emmeans(modAFS, ~ P*CROP*YearCode, type = "response") # Obtain estimated marginal means
+emmsAFS_df <- as.data.frame(AFSemms)
+cld_dataAFS <- cld(AFSemms, Letters=custom_letters)
+cldAFS_df <-as.data.frame(cld_dataAFS)
+mergedAFS_df <- merge(emmsAFS_df, cldAFS_df,by = c("P", "CROP", "YearCode"))
+# custom cld position 
+mergedAFS_df <- mergedAFS_df %>%
+  left_join(
+    forage_data_summer %>%
+      group_by(P, CROP, YearCode) %>%
+      dplyr::summarise(label_y = if (all(is.na(PlotAlfDryKgHa))) {NA_real_} else {max(PlotAlfDryKgHa, na.rm = TRUE) * 0.9}, .groups = "drop"),
+    by = c("P", "CROP", "YearCode")
+  )
+# Custom X-axis labels
+AFS_CPY <- ggplot(forage_data_summer, aes(x = YearCode, y = PlotAlfDryKgHa, colour= CROP)) +
+  geom_boxplot(position = position_dodge(width = 0.8)) + # blank
+  geom_text(data = mergedAFS_df, aes(x = YearCode, y = label_y, label = .group, colour = CROP, group = CROP),
+            position = position_dodge(width = 0.8), size = 6, show.legend = FALSE)+
+  facet_wrap(~P, scales = "free", ncol = 2) +
+  scale_colour_manual(values = c(inter = "#DDCC77", monoA = "#332288", monoI = "#661100")) +
+  labs(x = "Year", y = "Alfalfa Forage (kg/ha)")+ #title=""
+  theme(axis.text.y=element_text(size=14), #change font size of axis text
+        axis.text.x=element_text(size=16),
+        axis.title=element_text(size=22))
+AFS_CPY
+# 1500x1200
+```
+
+## Alfalfa Forage Fall
+# anova
+```{r}
+# want N to be numeric
+is.numeric(forage_data_fall$N)
+# want P, CROP, and Year to be factors
+is.factor(forage_data_fall$P)
+is.factor(forage_data_fall$CROP)
+# forage_data_fall$CROP <- as.factor(forage_data_fall$CROP)
+is.factor(forage_data_fall$YearCode)
+# forage_data_fall$YearCode <- as.factor(forage_data_fall$YearCode)
+# Rep and Plot should also be factors
+is.factor(forage_data_fall$Rep)
+is.factor(forage_data_fall$Plot)
+# forage_data_fall$Plot <- as.character(forage_data_fall$Plot)
+
+# Linear Model
+modAFF <- lmer(PlotAlfDryKgHa~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_fall)
+summary(modAFF)
+hist(residuals(modAFF)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modAFF),residuals(modAFF)) # check for homoscedasisity; each point distribution, no fan shape
+modAFF_resid<-resid(modAFF)
+qqnorm(modAFF_resid)
+qqline(modAFF_resid)
+plot(modAFF_resid)
+
+anova(modAFF) # print anova results
+emmeans(modAFF, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modAFF, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
+emtrends(modAFF, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+```
+
+## IWG Forage Summer
+# anova
+```{r}
+# want N to be numeric
+is.numeric(forage_data_summer$N)
+# want P, CROP, and Year to be factors
+is.factor(forage_data_summer$P)
+is.factor(forage_data_summer$CROP)
+# forage_data_summer$CROP <- as.factor(forage_data_summer$CROP)
+is.factor(forage_data_summer$YearCode)
+# forage_data_summer$YearCode <- as.factor(forage_data_summer$YearCode)
+# Rep and Plot should also be factors
+is.factor(forage_data_summer$Rep)
+is.factor(forage_data_summer$Plot)
+# forage_data_summer$Plot <- as.character(forage_data_summer$Plot)
+
+# Linear Model
+modIFS <- lmer(PlotIWGDryKgHa~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_summer)
+summary(modIFS)
+hist(residuals(modIFS)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modIFS),residuals(modIFS)) # check for homoscedasisity; each point distribution, no fan shape
+modIFS_resid<-resid(modIFS)
+qqnorm(modIFS_resid)
+qqline(modIFS_resid)
+plot(modIFS_resid)
+
+anova(modIFS) # print anova results
+emmeans(modIFS, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modIFS, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
+emtrends(modIFS, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+```
+# Two quick figures for fun (not cleaned up)
+```{r}
+ggplot(forage_data_summer, aes(x=N, y=PlotIWGDryKgHa, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
+
+emmip(modIFS, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
+#emmip(modTFS, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
+```
+# percent change in grain yield per unit increase in nitrogen
+```{r}
+# percent change in grain yield per unit increase in nitrogen
+# (P+CROP) and (P+Year)
+# pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
+
+# N*P*Year
+# N slopes
+emtrends_result<-emtrends(modIFS,~ P+YearCode, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
+# Intercepts at N=0
+emmeans_results<-emmeans(modIFS, ~P+YearCode, at=list(N=0)) 
+emmeans_df <- as.data.frame(emmeans_results)
+# Merge slopes and intercepts
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("P", "YearCode")) %>%
+  select(P, YearCode, emmean, N.trend, SE.x, plvl) 
+View(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+    select(-emmean, -N.trend) 
+sorted_df <- new_df %>%
+  arrange(P, YearCode)
+View(sorted_df)
+```
+# relationship of location, cropping system, and year
+```{r}
+emtrends(modIFS, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+emmeans(modIFS, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emmeans(modIFS, ~P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+
+# box and wisker plot with post-hoc compact letter display for sig differences?
+
+
+IFSemms <- emmeans(modIFS, ~ P*CROP*YearCode, type = "response") # Obtain estimated marginal means
+emmsIFS_df <- as.data.frame(IFSemms)
+cld_dataIFS <- cld(IFSemms, Letters=custom_letters)
+cldIFS_df <-as.data.frame(cld_dataIFS)
+mergedIFS_df <- merge(emmsIFS_df, cldIFS_df,by = c("P", "CROP", "YearCode"))
+# custom cld position 
+mergedIFS_df <- mergedIFS_df %>%
+  left_join(
+    forage_data_summer %>%
+      group_by(P, CROP, YearCode) %>%
+      dplyr::summarise(label_y = if (all(is.na(PlotIWGDryKgHa))) {NA_real_} else {max(PlotIWGDryKgHa, na.rm = TRUE) * 0.9}, .groups = "drop"),
+    by = c("P", "CROP", "YearCode")
+  )
+# Custom X-axis labels
+IFS_CPY <- ggplot(forage_data_summer, aes(x = YearCode, y = PlotIWGDryKgHa, colour= CROP)) +
+  geom_boxplot(position = position_dodge(width = 0.8)) + # blank
+  geom_text(data = mergedIFS_df, aes(x = YearCode, y = label_y, label = .group, colour = CROP, group = CROP),
+            position = position_dodge(width = 0.8), size = 6, show.legend = FALSE)+
+  facet_wrap(~P, scales = "free", ncol = 2) +
+  scale_colour_manual(values = c(inter = "#DDCC77", monoA = "#332288", monoI = "#661100")) +
+  labs(x = "Year", y = "IWG Forage (kg/ha)")+ #title=""
+  theme(axis.text.y=element_text(size=14), #change font size of axis text
+        axis.text.x=element_text(size=16),
+        axis.title=element_text(size=22))
+IFS_CPY
+# 1500x1200
+```
+
+## IWG Forage Fall
+# anova
+```{r}
+# remove rows where the total forage was 0
+forage_data_fall_2 <- subset(forage_data_fall, PlotTotForageKgHa != 0|is.na(PlotTotForageKgHa)) 
+# MN Year 2 Fall plot 1210 value for total forage is extreme outlier (12091.732 kg/ha when next highest is 3452.477); driven by much higher iwg forage 
+forage_data_fall_2 <- forage_data_fall_2 %>%
+  dplyr::filter(!(YearCode == "Y" &
+           Location == "MN" &
+           Plot == "1210"))
+
+# want N to be numeric
+is.numeric(forage_data_fall$N)
+# want P, CROP, and Year to be factors
+is.factor(forage_data_fall$P)
+is.factor(forage_data_fall$CROP)
+# forage_data_fall$CROP <- as.factor(forage_data_fall$CROP)
+is.factor(forage_data_fall$YearCode)
+# forage_data_fall$YearCode <- as.factor(forage_data_fall$YearCode)
+# Rep and Plot should also be factors
+is.factor(forage_data_fall$Rep)
+is.factor(forage_data_fall$Plot)
+# forage_data_fall$Plot <- as.character(forage_data_fall$Plot)
+
+# Linear Model
+modIFF <- lmer(PlotIWGDryKgHa~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_fall_2)
+summary(modIFF)
+hist(residuals(modIFF)) # check normality; look for normal distribution, ideally not too narrow
+plot(predict(modIFF),residuals(modIFF)) # check for homoscedasisity; each point distribution, no fan shape
+modIFF_resid<-resid(modIFF)
+qqnorm(modIFF_resid)
+qqline(modIFF_resid)
+plot(modIFF_resid)
+
+anova(modIFF) # print anova results
+emmeans(modIFF, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modIFF, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
+emtrends(modIFF, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+```
+# Two quick figures for fun (not cleaned up)
+```{r}
+ggplot(forage_data_fall_2, aes(x=N, y=PlotIWGDryKgHa, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
+
+emmip(modIFF, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
+#emmip(modTFS, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
+```
+# percent change in grain yield per unit increase in nitrogen
+```{r}
+# percent change in grain yield per unit increase in nitrogen
+# pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
+
+# N*CROP*Year
+# N slopes
+emtrends_result<-emtrends(modIFF,~ CROP+YearCode, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
+# Intercepts at N=0
+emmeans_results<-emmeans(modIFF, ~CROP+YearCode, at=list(N=0)) 
+emmeans_df <- as.data.frame(emmeans_results)
+# Merge slopes and intercepts
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("YearCode", "CROP")) %>%
+  select(YearCode, CROP, emmean, N.trend, SE.x, plvl) 
+View(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+    select(-emmean, -N.trend) 
+sorted_df <- new_df %>%
+  arrange(YearCode, CROP)
+View(sorted_df)
+```
+# relationship of location, cropping system, and year
+```{r}
+emtrends(modIFF, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+emmeans(modIFF, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+emmeans(modIFF, ~P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
+
+# box and wisker plot with post-hoc compact letter display for sig differences?
+
+IFFemms <- emmeans(modIFF, ~ P*CROP*YearCode, type = "response") # Obtain estimated marginal means
+emmsIFF_df <- as.data.frame(IFFemms)
+cld_dataIFF <- cld(IFFemms, Letters=custom_letters)
+cldIFF_df <-as.data.frame(cld_dataIFF)
+mergedIFF_df <- merge(emmsIFF_df, cldIFF_df,by = c("P", "CROP", "YearCode"))
+# custom cld position 
+mergedIFF_df <- mergedIFF_df %>%
+  left_join(
+    forage_data_fall_2 %>%
+      group_by(P, CROP, YearCode) %>%
+      dplyr::summarise(label_y = if (all(is.na(PlotIWGDryKgHa))) {NA_real_} else {max(PlotIWGDryKgHa, na.rm = TRUE) * 0.9}, .groups = "drop"),
+    by = c("P", "CROP", "YearCode")
+  )
+# Custom X-axis labels
+IFF_CPY <- ggplot(forage_data_fall_2, aes(x = YearCode, y = PlotIWGDryKgHa, colour= CROP)) +
+  geom_boxplot(position = position_dodge(width = 0.8)) + # blank
+  geom_text(data = mergedIFF_df, aes(x = YearCode, y = label_y, label = .group, colour = CROP, group = CROP),
+            position = position_dodge(width = 0.8), size = 6, show.legend = FALSE)+
+  facet_wrap(~P, scales = "free", ncol = 2) +
+  scale_colour_manual(values = c(inter = "#DDCC77", monoA = "#332288", monoI = "#661100")) +
+  labs(x = "Year", y = "IWG Forage (kg/ha)")+ #title=""
+  theme(axis.text.y=element_text(size=14), #change font size of axis text
+        axis.text.x=element_text(size=16),
+        axis.title=element_text(size=22))
+IFF_CPY
+# 1500x1200
+```
+
+## Proportion of species in Total Forage Yield
+From Megan: values and analysis of proportion of each species in total forage yield for intercropped plots. Not proportional partial LER, but just proportion of normal yields in the total.
+# proportion of species in Total Forage Yield of intercropped plots calculations
+```{r}
+# Year 1 S - proportion of species in total forage intercropped plots
+NdXSPrIA <- shortenXS %>%
+  filter(Intercropped == "y")%>%
+  group_by(N, P, Plot, Rep, YearCode) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+# Year 1 F - proportion of species in total forage intercropped plots
+NdXFPrIA <- shortenXF %>%
+  filter(Intercropped == "y")%>%
+  group_by(N, P, Plot, Rep, YearCode) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+# Year 2 S - proportion of species in total forage intercropped plots
+NdYSPrIA <- shortenYS %>%
+  filter(Intercropped == "y")%>%
+  group_by(N, P, Plot, Rep, YearCode) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+# Year 2 F - proportion of species in total forage intercropped plots
+NdYFPrIA <- shortenYF %>%
+  filter(Intercropped == "y")%>%
+  group_by(N, P, Plot, Rep, YearCode) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+# Year 3 S - proportion of species in total forage intercropped plots
+NdZSPrIA <- shortenZS %>%
+  filter(Intercropped == "y")%>%
+  group_by(N, P, Plot, Rep, YearCode) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+# Year 3 F - proportion of species in total forage intercropped plots
+NdZFPrIA <- shortenZF %>%
+  filter(Intercropped == "y")%>%
+  filter(!is.na(PlotIWGDryKgHa), !is.na(PlotAlfDryKgHa)) %>%   # drop rows where either forage amount is NA
+  group_by(N, P, Plot, Rep, YearCode) %>%
+  reframe(
+    PropIWG = (PlotIWGDryKgHa) / (PlotTotForageKgHa), 
+    PropALF = (PlotAlfDryKgHa) / (PlotTotForageKgHa), 
+    Tot = (PropIWG + PropALF)
+  )
+
+PrIA1 <- rbind(NdXSPrIA, NdXFPrIA)
+PrIA2 <- rbind(NdYSPrIA, NdYFPrIA)
+PrIA3 <- rbind(NdZSPrIA, NdZFPrIA)
+PrIA4 <- rbind(PrIA1, PrIA2) 
+PrIA <- rbind(PrIA4, PrIA3)
+```
+# anova
+```{r}
+# want N to be numeric
+is.numeric(PrIA$N)
+# want P, CROP, and Year to be factors
+is.factor(PrIA$P)
+is.factor(PrIA$YearCode)
+# PrIA$YearCode <- as.factor(PrIA$YearCode)
+# Rep and Plot should also be factors
+is.factor(PrIA$Rep)
+is.factor(PrIA$Plot)
+# PrIA$Plot <- as.character(PrIA$Plot)
+
+modIPrIA<-lmer(PropIWG~N*P*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data = PrIA) # IWG proportion
+anova(modIPrIA)
+modAPrIA<-lmer(PropALF~N*P*YearCode + (1|Rep)+(1|Plot:Rep:P), data = PrIA) # ALF proportion
+anova(modAPrIA)
+
+# manipulate into long format
+PrIA_long <- PrIA %>%
+  pivot_longer(cols = starts_with("Prop"),
+               names_to = "Species",
+               values_to = "Prop")
+# get mean proportion of each species at a given N within a P
+PrIA_long2 <- PrIA_long %>%
+  dplyr::group_by(YearCode, P, N, Species) %>%
+  dplyr::summarise(meanProp = mean(Prop),
+                   Tot = first(Tot),
+                   .groups = "drop")%>%
+  mutate(N = factor(N))%>%
+  mutate(Species = factor(Species, levels = c("PropIWG", "PropALF")))
+```
+# pairwise comparison
+```{r}
+# IWG pairwise comparisons between N rates
+PrIA$N <- factor(PrIA$N)
+modIPrIA <- update(modIPrIA)
+emmsN <- emmeans(modIPrIA, pairwise ~ N|P+YearCode) 
+cld_dataIPrIA <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataIPrIA$response <- format(cld_dataIPrIA$response, digits = 5)
+rownames(cld_dataIPrIA) <- NULL
+cld_dataIPrIA<- cld_dataIPrIA %>%
+  select(YearCode, N, P, SE, lower.CL, upper.CL, .group)
+cld_dataIPrIA  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+# alfalfa pairwise comparisons between N rates
+modAPrIA <- update(modAPrIA)
+emmsN <- emmeans(modAPrIA, pairwise ~ N|P+YearCode) 
+cld_dataAPrIA <- cld(emmsN, Letters=custom_letters) # Create compact letter display
+cld_dataAPrIA$response <- format(cld_dataAPrIA$response, digits = 5)
+rownames(cld_dataAPrIA) <- NULL
+cld_dataAPrIA<- cld_dataAPrIA %>%
+  select(YearCode, N, SE, lower.CL, upper.CL, .group)
+cld_dataAPrIA  |> 
+  data.frame() |> 
+  kbl(align = "c") |> 
+  kable_paper(full_width = F) |> 
+  column_spec(1, bold = T)
+```
+# visualize
+```{r}
+PrIAplot <- ggplot(PrIA_long2, aes(x = N, y = meanProp, fill = Species)) +
+  geom_bar(stat = "identity", position = "stack")+
+  facet_wrap(P~YearCode, ncol = 3) +
+  labs(y = "Proportion Species", x = "N Rate") +
+  scale_fill_discrete(name = "Species",
+  labels = c(PropALF = "Alfalfa", PropIWG = "IWG"))
+PrIAplot
+```
+
+## LER
+# LER calculations 
+```{r}
+# Nd SW 0 
+#IWG partial LER 
+NdSW0IWGLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERIWGSW0 = (PlotIWGDryKgHa[Treatment == 10]) / (PlotIWGDryKgHa[Treatment == 5])
+  )
+#Alf partial LER 
+NdSW0ALFLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERAlfSW0 = (PlotAlfDryKgHa[Treatment == 10]) / (PlotAlfDryKgHa[Treatment == 15])
+  )
+#Total LER 
+NdSW0TotalLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    TotalLERSW0 = (PlotIWGDryKgHa[Treatment == 10]) / (PlotIWGDryKgHa[Treatment == 5]) + (PlotAlfDryKgHa[Treatment == 10]) / (PlotAlfDryKgHa[Treatment == 15])
+  ) 
+#Join together first two tables
+LERresults1<-left_join(NdSW0IWGLER, NdSW0ALFLER, by = c("Rep", "P", "YearCode", "Harvest"))
+#join together new joined table and third table 
+LERresultsNdSW0<-left_join(LERresults1, NdSW0TotalLER, by = c("Rep", "P", "YearCode", "Harvest"))
+
+# Nd SW 40 
+#IWG partial LER 
+NdSW40IWGLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERIWGSW40 = (PlotIWGDryKgHa[Treatment == 11]) / (PlotIWGDryKgHa[Treatment == 6])
+  )
+#Alf partial LER 
+NdSW40ALFLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERAlfSW40 = (PlotAlfDryKgHa[Treatment == 11]) / (PlotAlfDryKgHa[Treatment == 16])
+  )
+#Total LER 
+NdSW40TotalLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    TotalLERSW40 = (PlotIWGDryKgHa[Treatment == 11]) / (PlotIWGDryKgHa[Treatment == 6]) + (PlotAlfDryKgHa[Treatment == 11]) / (PlotAlfDryKgHa[Treatment == 16])
+  ) 
+#Join together first two tables
+LERresults2<-left_join(NdSW40IWGLER, NdSW40ALFLER, by = c("Rep", "P", "YearCode", "Harvest"))
+#join together new joined table and third table 
+LERresultsNdSW40<-left_join(LERresults2, NdSW40TotalLER, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#Nd SW 80
+#IWG partial LER 
+NdSW80IWGLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERIWGSW80 = (PlotIWGDryKgHa[Treatment == 12]) / (PlotIWGDryKgHa[Treatment == 7])
+  )
+#Alf partial LER 
+NdSW80ALFLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERAlfSW80 = (PlotAlfDryKgHa[Treatment == 12]) / (PlotAlfDryKgHa[Treatment == 17])
+  )
+#Total LER 
+NdSW80TotalLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    TotalLERSW80 = (PlotIWGDryKgHa[Treatment == 12]) / (PlotIWGDryKgHa[Treatment == 7]) + (PlotAlfDryKgHa[Treatment == 12]) / (PlotAlfDryKgHa[Treatment == 17])
+  ) 
+#Join together first two tables
+LERresults3<-left_join(NdSW80IWGLER, NdSW80ALFLER, by = c("Rep", "P", "YearCode", "Harvest"))
+#join together new joined table and third table 
+LERresultsNdSW80<-left_join(LERresults3, NdSW80TotalLER, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#Nd SW 120
+#IWG partial LER 
+NdSW120IWGLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERIWGSW120 = (PlotIWGDryKgHa[Treatment == 13]) / (PlotIWGDryKgHa[Treatment == 8])
+  )
+#Alf partial LER 
+NdSW120ALFLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERAlfSW120 = (PlotAlfDryKgHa[Treatment == 13]) / (PlotAlfDryKgHa[Treatment == 18])
+  )
+#Total LER 
+NdSW120TotalLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    TotalLERSW120 = (PlotIWGDryKgHa[Treatment == 13]) / (PlotIWGDryKgHa[Treatment == 8]) + (PlotAlfDryKgHa[Treatment == 13]) / (PlotAlfDryKgHa[Treatment == 18])
+  ) 
+#Join together first two tables
+LERresults4<-left_join(NdSW120IWGLER, NdSW120ALFLER, by = c("Rep", "P", "YearCode", "Harvest"))
+#join together new joined table and third table 
+LERresultsNdSW120<-left_join(LERresults4, NdSW120TotalLER, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#Nd SW 160
+#IWG partial LER 
+NdSW160IWGLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERIWGSW160= (PlotIWGDryKgHa[Treatment == 14]) / (PlotIWGDryKgHa[Treatment == 9])
+  )
+#Alf partial LER 
+NdSW160ALFLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    PartialLERAlfSW160 = (PlotAlfDryKgHa[Treatment == 14]) / (PlotAlfDryKgHa[Treatment == 19])
+  )
+#Total LER 
+NdSW160TotalLER <- forage_data %>%
+  group_by(Rep, P, YearCode, Harvest) %>%
+  reframe(
+    TotalLERSW160 = (PlotIWGDryKgHa[Treatment == 14]) / (PlotIWGDryKgHa[Treatment == 9]) + (PlotAlfDryKgHa[Treatment == 14]) / (PlotAlfDryKgHa[Treatment == 19])
+  ) 
+#Join together first two tables
+LERresults5<-left_join(NdSW160IWGLER, NdSW160ALFLER, by = c("Rep", "P", "YearCode", "Harvest"))
+#join together new joined table and third table 
+LERresultsNdSW160<-left_join(LERresults5, NdSW160TotalLER, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#merge all LER results into one data frame
+LERresults6<-left_join(LERresultsNdSW0, LERresultsNdSW40, by = c("Rep", "P", "YearCode", "Harvest"))
+LERresults7<-left_join(LERresults6, LERresultsNdSW80, by = c("Rep", "P", "YearCode", "Harvest"))
+LERresults8<-left_join(LERresults7, LERresultsNdSW120, by = c("Rep", "P", "YearCode", "Harvest"))
+LERresultsNdSWALL<-left_join(LERresults8, LERresultsNdSW160, by = c("Rep", "P", "YearCode", "Harvest"))
+
+#Rearrange dataframe
+LERresultsNdSWALL_long <- LERresultsNdSWALL %>%
+  pivot_longer(cols = starts_with("PartialLER") | starts_with("TotalLER"),
+               names_to = "Nrate",
+               values_to = "LER")
+
+#try to make the dataframe more usable
+
+#cut off total and partial 
+LERresultsNdSWALL_long$Type <- sub("^(Partial|Total)", "", LERresultsNdSWALL_long$Nrate)
+LERresultsNdSWALL_long$tot_or_part <- sub("^(Partial|Total).*", "\\1", LERresultsNdSWALL_long$Nrate)
+
+#cut off LERIWGSW and LERAlfSW and LERSW
+LERresultsNdSWALL_long$NRATE <- sub("^(LERIWGSW|LERAlfSW|LERSW)", "", LERresultsNdSWALL_long$Type)
+LERresultsNdSWALL_long$PlotType <- sub("^(LERIWGSW|LERAlfSW|LERSW).*", "\\1", LERresultsNdSWALL_long$Type)
+
+#get rid of pesky NA results (caused by missing plots inherent in year 1 KS summer data)
+LERresultsNdSWALL_longNONA<- na.omit(LERresultsNdSWALL_long)
+
+LERresultsNdSWALL_longNONA$NRATE<-as.numeric(LERresultsNdSWALL_longNONA$NRATE)
+
+#includes total and partial until it doesn't...used for some pairwise comparison thingy. 
+LERResultsAllX<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$YearCode == 'X',]
+LERResultsAllY<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$YearCode == 'Y',]
+LERResultsAllZ<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$YearCode == 'Z',]
+LERResultsAllXS<-LERResultsAllX[LERResultsAllX$Harvest == 'Summer',]
+  LERResultsTotXS<-LERResultsAllXS[LERResultsAllXS$tot_or_part == 'Total',]
+  LERResultsPartIWGXS<-LERResultsAllXS[LERResultsAllXS$tot_or_part == 'Partial' & LERResultsAllXS$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfXS<-LERResultsAllXS[LERResultsAllXS$tot_or_part == 'Partial' & LERResultsAllXS$PlotType == 'LERAlfSW' ,]
+LERResultsAllXF<-LERResultsAllX[LERResultsAllX$Harvest == 'Fall',]
+  LERResultsTotXF<-LERResultsAllXF[LERResultsAllXF$tot_or_part == 'Total',]
+  LERResultsPartIWGXF<-LERResultsAllXF[LERResultsAllXF$tot_or_part == 'Partial' & LERResultsAllXF$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfXF<-LERResultsAllXF[LERResultsAllXF$tot_or_part == 'Partial' & LERResultsAllXF$PlotType == 'LERAlfSW' ,]
+LERResultsAllYS<-LERResultsAllY[LERResultsAllY$Harvest == 'Summer',]
+  LERResultsTotYS<-LERResultsAllYS[LERResultsAllYS$tot_or_part == 'Total',]
+  LERResultsPartIWGYS<-LERResultsAllYS[LERResultsAllYS$tot_or_part == 'Partial' & LERResultsAllYS$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfYS<-LERResultsAllYS[LERResultsAllYS$tot_or_part == 'Partial' & LERResultsAllYS$PlotType == 'LERAlfSW' ,]
+LERResultsAllYF<-LERResultsAllY[LERResultsAllY$Harvest == 'Fall',]
+  LERResultsTotYF<-LERResultsAllYF[LERResultsAllYF$tot_or_part == 'Total',]
+  LERResultsPartIWGYF<-LERResultsAllYF[LERResultsAllYF$tot_or_part == 'Partial' & LERResultsAllYF$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfYF<-LERResultsAllYF[LERResultsAllYF$tot_or_part == 'Partial' & LERResultsAllYF$PlotType == 'LERAlfSW' ,]
+LERResultsAllZS<-LERResultsAllZ[LERResultsAllZ$Harvest == 'Summer',]
+  LERResultsTotZS<-LERResultsAllZS[LERResultsAllZS$tot_or_part == 'Total',]
+  LERResultsPartIWGZS<-LERResultsAllZS[LERResultsAllZS$tot_or_part == 'Partial' & LERResultsAllZS$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfZS<-LERResultsAllZS[LERResultsAllZS$tot_or_part == 'Partial' & LERResultsAllZS$PlotType == 'LERAlfSW' ,]
+LERResultsAllZF<-LERResultsAllZ[LERResultsAllZ$Harvest == 'Fall',]
+  LERResultsTotZF<-LERResultsAllZF[LERResultsAllZF$tot_or_part == 'Total',]
+  LERResultsPartIWGZF<-LERResultsAllZF[LERResultsAllZF$tot_or_part == 'Partial' & LERResultsAllZF$PlotType == 'LERIWGSW' ,]
+  LERResultsPartAlfZF<-LERResultsAllZF[LERResultsAllZF$tot_or_part == 'Partial' & LERResultsAllZF$PlotType == 'LERAlfSW' ,]
+  
+# change Inf values to NA
+LERresultsNdSWALL_longNONA
+LERresultsNdSWALL_longNONA['LER'][LERresultsNdSWALL_longNONA['LER'] == 'Inf'] <- NA
+  
+#okay now I should be able to split by total and partial
+TotalLERresults<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$tot_or_part == 'Total',]
+  TotLERX<-TotalLERresults[TotalLERresults$YearCode == 'X',]
+  TotLERY<-TotalLERresults[TotalLERresults$YearCode == 'Y',]
+  TotLERZ<-TotalLERresults[TotalLERresults$YearCode == 'Z',]
+  TotLERXS<-TotLERX[TotLERX$Harvest == 'Summer',]
+  TotLERXF<-TotLERX[TotLERX$Harvest == 'Fall',]
+  TotLERYS<-TotLERY[TotLERY$Harvest == 'Summer',]
+  TotLERYF<-TotLERY[TotLERY$Harvest == 'Fall',]
+  TotLERZS<-TotLERZ[TotLERZ$Harvest == 'Summer',]
+  TotLERZF<-TotLERZ[TotLERZ$Harvest == 'Fall',]
+IWGPartialLERresults<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$PlotType == 'LERIWGSW',]
+IWGPartialLERresults$NRATE<- as.numeric(IWGPartialLERresults$NRATE)
+  IWGPLERX<-IWGPartialLERresults[IWGPartialLERresults$YearCode == 'X',]
+  IWGPLERY<-IWGPartialLERresults[IWGPartialLERresults$YearCode == 'Y',]
+  IWGPLERZ<-IWGPartialLERresults[IWGPartialLERresults$YearCode == 'Z',]
+  IWGPLERXS<-IWGPLERX[IWGPLERX$Harvest == 'Summer',]
+  IWGPLERXF<-IWGPLERX[IWGPLERX$Harvest == 'Fall',]
+  IWGPLERYS<-IWGPLERY[IWGPLERY$Harvest == 'Summer',]
+  IWGPLERYF<-IWGPLERY[IWGPLERY$Harvest == 'Fall',]
+  IWGPLERZS<-IWGPLERZ[IWGPLERZ$Harvest == 'Summer',]
+  IWGPLERZF<-IWGPLERZ[IWGPLERZ$Harvest == 'Fall',]
+AlfPartialLERresults<-LERresultsNdSWALL_longNONA[LERresultsNdSWALL_longNONA$PlotType == 'LERAlfSW',]
+AlfPartialLERresults$NRATE<- as.numeric(AlfPartialLERresults$NRATE)
+  AlfPLERX<-AlfPartialLERresults[AlfPartialLERresults$YearCode == 'X',]
+  AlfPLERY<-AlfPartialLERresults[AlfPartialLERresults$YearCode == 'Y',]
+  AlfPLERZ<-AlfPartialLERresults[AlfPartialLERresults$YearCode == 'Z',]
+  AlfPLERXS<-AlfPLERX[AlfPLERX$Harvest == 'Summer',]
+  AlfPLERXF<-AlfPLERX[AlfPLERX$Harvest == 'Fall',]
+  AlfPLERYS<-AlfPLERY[AlfPLERY$Harvest == 'Summer',]
+  AlfPLERYF<-AlfPLERY[AlfPLERY$Harvest == 'Fall',]
+  AlfPLERZS<-AlfPLERZ[AlfPLERZ$Harvest == 'Summer',]
+  AlfPLERZF<-AlfPLERZ[AlfPLERZ$Harvest == 'Fall',]
+  
+#Check for outliers
+identify_outliers(TotalLERresults[, 6]) #33 outliers 
+identify_outliers(IWGPartialLERresults[, 6]) #46 outliers
+identify_outliers(AlfPartialLERresults[, 6]) #18 outliers 
+
+#rename variables in dataframes to make life easier 
+# Function to add new columns to a dataframe
+add_new_columns <- function(df) {
+  df$N <- df$NRATE
+  return(df)
+}
+# List of dataframes (replace these with your actual dataframes)
+df_list <- list(TotLERXS, TotLERYS, TotLERZS, 
+                TotLERXF, TotLERYF, TotLERZF, 
+                IWGPLERXS, IWGPLERYS, IWGPLERZS, 
+                IWGPLERXF, IWGPLERYF, IWGPLERZF, 
+                AlfPLERXS, AlfPLERYS, AlfPLERZS,
+                AlfPLERXF, AlfPLERYF, AlfPLERZF)
+# Apply the function to each dataframe in the list
+df_list <- lapply(df_list, add_new_columns)
+# Access the modified dataframes in df_list
+TotLERXS <- df_list[[1]]
+TotLERYS <- df_list[[2]]
+TotLERZS <- df_list[[3]]
+TotLERXF <- df_list[[4]]
+TotLERYF<- df_list[[5]]
+TotLERZF<- df_list[[6]]
+IWGPLERXS<- df_list[[7]]
+IWGPLERYS<- df_list[[8]]
+IWGPLERZS<- df_list[[9]]
+IWGPLERXF<- df_list[[10]]
+IWGPLERYF<- df_list[[11]]
+IWGPLERZF<- df_list[[12]]
+AlfPLERXS<- df_list[[13]]
+AlfPLERYS<- df_list[[14]]
+AlfPLERZS<- df_list[[15]]
+AlfPLERXF<- df_list[[16]]
+AlfPLERYF<- df_list[[17]]
+AlfPLERZF<- df_list[[18]]
+```
+# anova
+```{r}
+TotalLERresults$N<-TotalLERresults$NRATE
+TotalLERresults$N<- as.numeric(TotalLERresults$N)
+#linear
+modTotLER<-lmer(LER~N*P*YearCode + (1|Rep:P), data= TotalLERresults)
+anova(modTotLER)
+```
+# Two quick figures for fun (not cleaned up)
+```{r}
+ggplot(TotalLERresults, aes(x=N, y=LER, color=YearCode))+geom_point()+facet_grid(~P)+geom_smooth(method="lm", se=FALSE)
+
+emmip(modTotLER, YearCode~N | P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
+#emmip(modTFS, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
+```
+# percent change in grain yield per unit increase in nitrogen
+```{r}
+# percent change in grain yield per unit increase in nitrogen
+# pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
+
+# N*Location*Year
+# N slopes
+emtrends_result<-emtrends(modTotLER,~ P+YearCode, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  desired_order_P <- c("MN", "NY", "KS", "WI")
+  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
+# Intercepts at N=0
+emmeans_results<-emmeans(modTotLER, ~P+YearCode, at=list(N=0)) 
+emmeans_df <- as.data.frame(emmeans_results)
+# Merge slopes and intercepts
+merged_df <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("YearCode", "P")) %>%
+  select(YearCode, P, emmean, N.trend, SE.x, plvl) 
+View(merged_df)
+merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
+# Create a new data frame with the calculated column
+new_df <- merged_df %>%
+    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+    select(-emmean, -N.trend) 
+sorted_df <- new_df %>%
+  arrange(YearCode, P)
+View(sorted_df)
+```
+
+## Competitive Ratio of IWG
+(PLER IWG / PLER Alf ) * seeding rate ratio
+our seeding rate ratio is 50/50 so the term is 1
+# Competitive Ratio Calculation
+```{r}
+# SW0, SW40, SW80, SW120, SW160
+CRresultsNdSWALL <- LERresultsNdSWALL %>%
+  select(Rep, P, YearCode, Harvest, PartialLERIWGSW0, TotalLERSW0, PartialLERIWGSW40, TotalLERSW40, PartialLERIWGSW80, TotalLERSW80, PartialLERIWGSW120, TotalLERSW120, PartialLERIWGSW160, TotalLERSW160)%>%
+  mutate(CRSW0 = PartialLERIWGSW0 / TotalLERSW0)%>%
+  mutate(CRSW40 = PartialLERIWGSW40 / TotalLERSW40)%>%
+  mutate(CRSW80 = PartialLERIWGSW80 / TotalLERSW80)%>%
+  mutate(CRSW120 = PartialLERIWGSW120 / TotalLERSW120)%>%
+  mutate(CRSW160 = PartialLERIWGSW160 / TotalLERSW160)%>%
+  select(Rep, P, YearCode, Harvest, CRSW0, CRSW40, CRSW80, CRSW120, CRSW160)
+```
+# Competitive Ratio Compile data
+```{r}
+#Rearrange dataframe
+CRresultsNdSWALL_long <- CRresultsNdSWALL %>%
+  pivot_longer(cols = starts_with("CRSW"),
+               names_to = "Nrate",
+               values_to = "CR")
+
+#try to make the dataframe more usable
+
+#cut off total and partial 
+CRresultsNdSWALL_long$Type <- sub("^(CR)", "", CRresultsNdSWALL_long$Nrate)
+#LERresultsNdSWALL_long$tot_or_part <- sub("^(Partial|Total).*", "\\1", LERresultsNdSWALL_long$Nrate)
+
+#cut off SW
+CRresultsNdSWALL_long$NRATE <- sub("^(SW|SW|SW)", "", CRresultsNdSWALL_long$Type)
+CRresultsNdSWALL_long$PlotType <- sub("^(CRSW|CRSW|CRSW).*", "\\1", CRresultsNdSWALL_long$Type)
+
+#get rid of pesky NA results (caused by missing plots inherent in year 1 KS summer data)
+CRresultsNdSWALL_longNONA<- na.omit(CRresultsNdSWALL_long)
+
+CRresultsNdSWALL_longNONA$NRATE<-as.numeric(CRresultsNdSWALL_longNONA$NRATE)
+
+#includes total and partial until it doesn't...used for some pairwise comparison thingy. 
+CRResultsAllX<-CRresultsNdSWALL_longNONA[CRresultsNdSWALL_longNONA$YearCode == 'X',]
+CRResultsAllY<-CRresultsNdSWALL_longNONA[CRresultsNdSWALL_longNONA$YearCode == 'Y',]
+CRResultsAllZ<-CRresultsNdSWALL_longNONA[CRresultsNdSWALL_longNONA$YearCode == 'Z',]
+CRResultsAllXS<-CRResultsAllX[CRResultsAllX$Harvest == 'Summer',]
+CRResultsAllXF<-CRResultsAllX[CRResultsAllX$Harvest == 'Fall',]
+CRResultsAllYS<-CRResultsAllY[CRResultsAllY$Harvest == 'Summer',]
+CRResultsAllYF<-CRResultsAllY[CRResultsAllY$Harvest == 'Fall',]
+CRResultsAllZS<-CRResultsAllZ[CRResultsAllZ$Harvest == 'Summer',]
+CRResultsAllZF<-CRResultsAllZ[CRResultsAllZ$Harvest == 'Fall',]
+
+#rename variables in dataframes to make life easier 
+# Function to add new columns to a dataframe
+add_new_columns <- function(df) {
+  df$N <- df$NRATE
+  return(df)
+}
+
+# List of dataframes (replace these with your actual dataframes)
+df_list <- list(CRResultsAllXS, CRResultsAllXF, 
+                CRResultsAllYS, CRResultsAllYF, 
+                CRResultsAllZS, CRResultsAllZF)
+
+# Apply the function to each dataframe in the list
+df_list <- lapply(df_list, add_new_columns)
+# Access the modified dataframes in df_list
+CRXS <- df_list[[1]]
+CRXF <- df_list[[2]]
+CRYS <- df_list[[3]]
+CRYF <- df_list[[4]]
+CRZS <- df_list[[5]]
+CRZF <- df_list[[6]]
+```
+# anova
+```{r}
+CRresultsNdSWALL_longNONA$N<-CRresultsNdSWALL_longNONA$NRATE
+CRresultsNdSWALL_longNONA$N<- as.numeric(CRresultsNdSWALL_longNONA$N)
+#linear
+modCR<-lmer(CR~N*P*YearCode + (1|Rep:P), data= CRresultsNdSWALL_longNONA)
+anova(modCR)
+```
+
+
+### STOPED HERE ###
+
+
+## Forage Quality
+#N RFV calculations 
+```{r}
+#IWG 
+forage_data_summer$IWGRFV<-((88.9 - (0.779 * forage_data_summer$IWGADF)) * (120 / forage_data_summer$IWGaNDF) ) / 1.29
+forage_data_fall$IWGRFV<-((88.9 - (0.779 * forage_data_fall$IWGADF)) * (120 / forage_data_fall$IWGaNDF) ) / 1.29
+
+
+#REMOVE outliers KSY314I, KSY315I
+#NdYSI<-NdYSI[-107,]
+#NdYSI<-NdYSI[-107,]
+
+#make big df for deltas 
+NdXSIdf <- forage_data_summer %>%
+  select(YearCode, Rep, P, CROP, N, Harvest, IWGRFV)
+NdXFIdf <- forage_data_fall %>%
+  select(YearCode, Rep, P, CROP, N, Harvest, IWGRFV)
+
+NRFVIdf<-bind_rows(NdXSIdf, NdXFIdf)
+
+
+#Alf
+NdXSA$ALFaNDF<-as.numeric(NdXSA$ALFaNDF)
+NdXFA$ALFaNDF<-as.numeric(NdXFA$ALFaNDF)
+NdYSA$ALFaNDF<-as.numeric(NdYSA$ALFaNDF)
+NdYFA$ALFaNDF<-as.numeric(NdYFA$ALFaNDF)
+
+NdXSA$ALFRFV<-((88.9 - (0.779 * NdXSA$ALFADF)) * (120 / NdXSA$ALFaNDF) ) / 1.29
+NdXFA$ALFRFV<-((88.9 - (0.779 * NdXFA$ALFADF)) * (120 / NdXFA$ALFaNDF) ) / 1.29
+NdYSA$ALFRFV<-((88.9 - (0.779 * NdYSA$ALFADF)) * (120 / NdYSA$ALFaNDF) ) / 1.29
+NdYFA$ALFRFV<-((88.9 - (0.779 * NdYFA$ALFADF)) * (120 / NdYFA$ALFaNDF) ) / 1.29
+
+#REMOVE outliers KSX202A missing, KSX209A
+#NdXSA<-NdXSA[-88,]
+#NdXSA<-NdXSA[-92,]
+
+#REMOVE NYS212A, NYS215A, NYS217A, NYS219A, NYS220A, NYS223A, NYS304A (some already gone... maybe a variety thing)
+#NdYSA<-NdYSA[-17,]
+#NdYSA<-NdYSA[-18,]
+#NdYSA<-NdYSA[-19,]
+
+#make big df for deltas 
+NdXSAdf <- NdXSA %>%
+  select(YearCode, Rep, P, CROP, N, Harvest, ALFRFV)
+NdXFAdf <- NdXFA %>%
+  select(YearCode, Rep, P, CROP, N, Harvest, ALFRFV)
+NdYSAdf <- NdYSA %>%
+  select(YearCode, Rep, P, CROP, N, Harvest, ALFRFV)
+NdYFAdf <- NdYFA %>%
+  select(YearCode, Rep, P, CROP, N, Harvest, ALFRFV)
+NRFVAdf<-bind_rows(NdXSAdf, NdXFAdf)
+NRFVAdf<-bind_rows(NRFVAdf, NdYSAdf)
+NRFVAdf<-bind_rows(NRFVAdf, NdYFAdf)
+```
+
+#making proportion stuff for total FQ CP and RFV 
+```{r}
+#NEEDS TO JUST BE INTERCROPPED PLOTS BUT LIKE ALSO NEED TO COMPARE INTERCROP TO MONOCULTURE SOO LIKE .... WUT 
+#make proportions
+NdXSI$propI<-((NdXSI$PlotIWGDryKgHa)/(NdXSI$PlotTotForageKgHa))
+NdXFI$propI<-((NdXFI$PlotIWGDryKgHa)/(NdXFI$PlotTotForageKgHa))
+NdYSI$propI<-((NdYSI$PlotIWGDryKgHa)/(NdYSI$PlotTotForageKgHa))
+NdYFI$propI<-((NdYFI$PlotIWGDryKgHa)/(NdYFI$PlotTotForageKgHa))
+
+NdXSA$propA<-((NdXSA$PlotAlfDryKgHa)/(NdXSA$PlotTotForageKgHa))
+NdXFA$propA<-((NdXFA$PlotAlfDryKgHa)/(NdXFA$PlotTotForageKgHa))
+NdYSA$propA<-((NdYSA$PlotAlfDryKgHa)/(NdYSA$PlotTotForageKgHa))
+NdYFA$propA<-((NdYFA$PlotAlfDryKgHa)/(NdYFA$PlotTotForageKgHa))
+
+#make adjusted CP values 
+NdXSI$propCPI<-(NdXSI$IWGCP)*(NdXSI$propI)
+NdXFI$propCPI<-(NdXFI$IWGCP)*(NdXFI$propI)
+NdYSI$propCPI<-(NdYSI$IWGCP)*(NdYSI$propI)
+NdYFI$propCPI<-(NdYFI$IWGCP)*(NdYFI$propI)
+
+NdXSA$propCPA<-(NdXSA$ALFCP)*(NdXSA$propA)
+NdXFA$propCPA<-(NdXFA$ALFCP)*(NdXFA$propA)
+NdYSA$propCPA<-(NdYSA$ALFCP)*(NdYSA$propA)
+NdYFA$propCPA<-(NdYFA$ALFCP)*(NdYFA$propA)
+
+#Somehow make CP totals
+  #XS
+NdXSj<- NdXSI %>%
+  select(propCPI, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdXSk<- NdXSA %>%
+  select(propCPA, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdXSf<- merge(NdXSj, NdXSk, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+NdXSf[is.na(NdXSf)] <- 0
+NdXSf$totCP<-((NdXSf$propCPI)+(NdXSf$propCPA))
+  #XF
+NdXFj<- NdXFI %>%
+  select(propCPI, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdXFk<- NdXFA %>%
+  select(propCPA, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdXFf<- merge(NdXFj, NdXFk, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+NdXFf[is.na(NdXFf)] <- 0
+NdXFf$totCP<-((NdXFf$propCPI)+(NdXFf$propCPA))
+  #YS
+NdYSj<- NdYSI %>%
+  select(propCPI, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdYSk<- NdYSA %>%
+  select(propCPA, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdYSf<- merge(NdYSj, NdYSk, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+NdYSf[is.na(NdYSf)] <- 0
+NdYSf$totCP<-((NdYSf$propCPI)+(NdYSf$propCPA))
+  #YF
+NdYFj<- NdYFI %>%
+  select(propCPI, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdYFk<- NdYFA %>%
+  select(propCPA, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdYFf<- merge(NdYFj, NdYFk, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+NdYFf[is.na(NdYFf)] <- 0
+NdYFf$totCP<-((NdYFf$propCPI)+(NdYFf$propCPA))
+
+
+#make adjusted RFV values 
+NdXSI$propRFVI<-(NdXSI$IWGRFV)*(NdXSI$propI)
+NdXFI$propRFVI<-(NdXFI$IWGRFV)*(NdXFI$propI)
+NdYSI$propRFVI<-(NdYSI$IWGRFV)*(NdYSI$propI)
+NdYFI$propRFVI<-(NdYFI$IWGRFV)*(NdYFI$propI)
+
+NdXSA$propRFVA<-(NdXSA$ALFRFV)*(NdXSA$propA)
+NdXFA$propRFVA<-(NdXFA$ALFRFV)*(NdXFA$propA)
+NdYSA$propRFVA<-(NdYSA$ALFRFV)*(NdYSA$propA)
+NdYFA$propRFVA<-(NdYFA$ALFRFV)*(NdYFA$propA)
+
+#Somehow make RFV totals
+  #XS
+NdXSm<- NdXSI %>%
+  select(propRFVI, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdXSn<- NdXSA %>%
+  select(propRFVA, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdXSo<- merge(NdXSm, NdXSn, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+NdXSo[is.na(NdXSo)] <- 0
+NdXSo$totRFV<-((NdXSo$propRFVI)+(NdXSo$propRFVA))
+  #XF
+NdXFm<- NdXFI %>%
+  select(propRFVI, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdXFn<- NdXFA %>%
+  select(propRFVA, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdXFo<- merge(NdXFm, NdXFn, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+NdXFo[is.na(NdXFo)] <- 0
+NdXFo$totRFV<-((NdXFo$propRFVI)+(NdXFo$propRFVA))
+  #YS
+NdYSm<- NdYSI %>%
+  select(propRFVI, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdYSn<- NdYSA %>%
+  select(propRFVA, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdYSo<- merge(NdYSm, NdYSn, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+NdYSo[is.na(NdYSo)] <- 0
+NdYSo$totRFV<-((NdYSo$propRFVI)+(NdYSo$propRFVA))
+  #YF
+NdYFm<- NdYFI %>%
+  select(propRFVI, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdYFn<- NdYFA %>%
+  select(propRFVA, N, P, CROP, Plot, Harvest, YearCode, Rep)
+NdYFo<- merge(NdYFm, NdYFn, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+NdYFo[is.na(NdYFo)] <- 0
+NdYFo$totRFV<-((NdYFo$propRFVI)+(NdYFo$propRFVA))
+```
+
+
+
+
+
+

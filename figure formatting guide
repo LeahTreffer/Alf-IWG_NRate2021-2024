@@ -17,7 +17,9 @@ cols <- c("#000000", "#2F2F2F", "#595959", "#7F7F7F", "#A6A6A6", "#CCCCCC")
 E Order: “KS”, “MN”, “NY”, “WI”
 C Order: intercrop, monoculture Alfalfa, monoculture IWG
 
-
+Colour for intercrop: #DDCC77
+Colour for monoA: #332288
+Colour for monoI: #661100 
 
 
 Equation for log 
@@ -25,9 +27,6 @@ Equation for log
 Equation for linear
   mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
 Equation for sqrt
-  mutate(equation = sprintf("=√G=%.2f+(%.4fN)", emmean, N.trend), SE.x = sprintf("%.4f", SE.x))
-  OR transformed back to linear: 
-  mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x))
-  mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", 100 * (2 * N.trend / emmean)))
+    mutate(equation = sprintf("=(%.2f+(%.4fN))²", emmean, N.trend), SE.x = sprintf("%.4f", SE.x), percent_change = sprintf("%.2f%%", 100 * N.trend^2))%>% # change emmean to response
 
 theme(axis.title = element_blank())
