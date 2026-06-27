@@ -576,14 +576,14 @@ emtrends(modTFsqrt, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope diffe
 ## Total Forage Summer
 # anova
 ```{r}
+# hist(forage_data_summer$PlotTotForageKgHa)
 # want N to be numeric
 is.numeric(forage_data_summer$N)
 # want P, CROP, and Year to be factors
 is.factor(forage_data_summer$P)
 is.factor(forage_data_summer$CROP)
-is.character(forage_data_summer$CROP)
+# forage_data_summer$CROP <- as.factor(forage_data_summer$CROP)
 is.factor(forage_data_summer$YearCode)
-is.character(forage_data_summer$YearCode)
 # forage_data_summer$YearCode <- as.factor(forage_data_summer$YearCode)
 # Rep and Plot should also be factors
 is.factor(forage_data_summer$Rep)
@@ -592,7 +592,7 @@ is.factor(forage_data_summer$Plot)
 
 # Linear Model
 modTFS <- lmer(PlotTotForageKgHa~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_summer)
-summary(modTF)
+summary(modTFS)
 # singularity : (look at random effects) variance on plot level is low compared to residual or rep so plot-to-plot var is essentially zero; stats consulting said this is okay to proceed
 hist(residuals(modTFS)) # check normality; look for normal distribution, ideally not too narrow
 plot(predict(modTFS),residuals(modTFS)) # check for homoscedasisity; each point distribution, no fan shape
@@ -644,7 +644,7 @@ emmip(modTFS, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predict
 
 # N*P*CROP
 # N slopes
-emtrends_result<-emtrends(modTFS,~ P+CROP, var= "N", infer=TRUE)
+emtrends_result<-emtrends(modTFS,~ P*CROP, var= "N", infer=TRUE)
   emtrends_df <- as.data.frame(emtrends_result)
   desired_order_P <- c("MN", "NY", "KS", "WI")
   emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
@@ -654,7 +654,7 @@ emtrends_result<-emtrends(modTFS,~ P+CROP, var= "N", infer=TRUE)
     ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
     ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
 # Intercepts at N=0
-emmeans_results<-emmeans(modTFS, ~P+CROP, at=list(N=0)) 
+emmeans_results<-emmeans(modTFS, ~P*CROP, at=list(N=0)) 
 emmeans_df <- as.data.frame(emmeans_results)
 # Merge slopes and intercepts
 merged_df <- emtrends_df %>%
@@ -664,7 +664,7 @@ View(merged_df)
 merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
 # Create a new data frame with the calculated column
 new_df <- merged_df %>%
-    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.8f", SE.x),  percent_change = sprintf("%.6f%%", N.trend / emmean * 100))%>% # original decimals are 4 for SE and 2 for percent_change
     select(-emmean, -N.trend) 
 sorted_df <- new_df %>%
   arrange(P, CROP)
@@ -672,7 +672,7 @@ View(sorted_df)
 
 # N:Location:Year
 # N slopes
-emtrends_result<-emtrends(modTFS,~ P+YearCode, var= "N", infer=TRUE) 
+emtrends_result<-emtrends(modTFS,~ P*YearCode, var= "N", infer=TRUE) 
   emtrends_df <- as.data.frame(emtrends_result)
   desired_order_P <- c("MN", "NY", "KS", "WI")
   emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
@@ -682,7 +682,7 @@ emtrends_result<-emtrends(modTFS,~ P+YearCode, var= "N", infer=TRUE)
     ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
     ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
 # Intercepts at N=0
-emmeans_results<-emmeans(modTFS, ~P+YearCode, at=list(N=0))
+emmeans_results<-emmeans(modTFS, ~P*YearCode, at=list(N=0))
 emmeans_df <- as.data.frame(emmeans_results)
 # Merge slopes and intercepts
 merged_df <- emtrends_df %>%
@@ -692,7 +692,7 @@ View(merged_df)
 merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
 # Create a new data frame with the calculated column
 new_df <- merged_df %>%
-    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.8f", SE.x),  percent_change = sprintf("%.6f%%", N.trend / emmean * 100))%>% # original decimals are 4 for SE and 2 for percent_change
     select(-emmean, -N.trend) 
 sorted_df <- new_df %>%
   arrange(P, YearCode)
@@ -793,6 +793,14 @@ anova(modTFF) # print anova results
 emmeans(modTFF, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
 emtrends(modTFF, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
 emtrends(modTFF, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
+```
+# Two quick figures for fun (not cleaned up)
+```{r}
+ggplot(forage_data_fall_2, aes(x=N, y=PlotTotForageKgHa, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
+
+emmip(modTFF, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
+#emmip(modTFS, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
 ```
 # relationship of location, cropping system, and year
 ```{r}
@@ -1645,19 +1653,24 @@ sorted_df <- new_df %>%
 View(sorted_df)
 ```
 
+### Re-Do spliting by harvest ###
+
+
+
 ## Competitive Ratio of IWG
 (PLER IWG / PLER Alf ) * seeding rate ratio
 our seeding rate ratio is 50/50 so the term is 1
+
 # Competitive Ratio Calculation
 ```{r}
 # SW0, SW40, SW80, SW120, SW160
 CRresultsNdSWALL <- LERresultsNdSWALL %>%
-  select(Rep, P, YearCode, Harvest, PartialLERIWGSW0, TotalLERSW0, PartialLERIWGSW40, TotalLERSW40, PartialLERIWGSW80, TotalLERSW80, PartialLERIWGSW120, TotalLERSW120, PartialLERIWGSW160, TotalLERSW160)%>%
-  mutate(CRSW0 = PartialLERIWGSW0 / TotalLERSW0)%>%
-  mutate(CRSW40 = PartialLERIWGSW40 / TotalLERSW40)%>%
-  mutate(CRSW80 = PartialLERIWGSW80 / TotalLERSW80)%>%
-  mutate(CRSW120 = PartialLERIWGSW120 / TotalLERSW120)%>%
-  mutate(CRSW160 = PartialLERIWGSW160 / TotalLERSW160)%>%
+  select(Rep, P, YearCode, Harvest, PartialLERIWGSW0, PartialLERAlfSW0, PartialLERIWGSW40, PartialLERAlfSW40, PartialLERIWGSW80, PartialLERAlfSW80, PartialLERIWGSW120, PartialLERAlfSW120, PartialLERIWGSW160, PartialLERAlfSW160)%>%
+  mutate(CRSW0 = PartialLERIWGSW0 / PartialLERAlfSW0)%>%
+  mutate(CRSW40 = PartialLERIWGSW40 / PartialLERAlfSW40)%>%
+  mutate(CRSW80 = PartialLERIWGSW80 / PartialLERAlfSW80)%>%
+  mutate(CRSW120 = PartialLERIWGSW120 / PartialLERAlfSW120)%>%
+  mutate(CRSW160 = PartialLERIWGSW160 / PartialLERAlfSW160)%>%
   select(Rep, P, YearCode, Harvest, CRSW0, CRSW40, CRSW80, CRSW120, CRSW160)
 ```
 # Competitive Ratio Compile data
@@ -1724,6 +1737,45 @@ CRresultsNdSWALL_longNONA$N<- as.numeric(CRresultsNdSWALL_longNONA$N)
 modCR<-lmer(CR~N*P*YearCode + (1|Rep:P), data= CRresultsNdSWALL_longNONA)
 anova(modCR)
 ```
+# Relationshiop of location and year
+```{r}
+emtrends(modCR, pairwise~YearCode|P, var="N", infer=TRUE) # slope different by cropP
+emmeans(modCR, ~N*P*YearCode, cov.reduce=FALSE) # estimated marginal means
+emmeans(modCR, ~P*YearCode, cov.reduce=FALSE) # estimated marginal means
+
+CRemms <- emmeans(modCR, ~ P*YearCode, type = "response") # Obtain estimated marginal means
+emmsCR_df <- as.data.frame(CRemms)
+cld_dataCR <- cld(CRemms, Letters=custom_letters)
+cldCR_df <-as.data.frame(cld_dataCR)
+mergedCR_df <- merge(emmsCR_df, cldCR_df,by = c("P", "YearCode"))
+# custom cld position 
+mergedCR_df <- mergedCR_df %>%
+  left_join(
+    CRresultsNdSWALL_longNONA %>%
+      group_by(P, YearCode) %>%
+      dplyr::summarise(label_y = if (all(is.na(CR))) {NA_real_} else {max(CR, na.rm = TRUE) * 0.9}, .groups = "drop"),
+    by = c("P", "YearCode")
+  )
+# Custom X-axis labels
+CR_PY <- ggplot(CRresultsNdSWALL_longNONA, aes(x = YearCode, y = CR)) +
+  geom_boxplot(position = position_dodge(width = 0.8)) + # blank
+  geom_text(data = mergedCR_df, aes(x = YearCode, y = label_y, label = .group),
+            position = position_dodge(width = 0.8), size = 6, show.legend = FALSE)+
+  facet_wrap(~P, scales = "free", ncol = 2) +
+  #scale_colour_manual(values = c(inter = "#DDCC77", monoA = "#332288", monoI = "#661100")) +
+  labs(x = "Year", y = "Competitive Ratio")+ #title=""
+  theme(axis.text.y=element_text(size=14), #change font size of axis text
+        axis.text.x=element_text(size=16),
+        axis.title=element_text(size=22))
+CR_PY
+# 1500x1200
+```
+
+
+### Re-Do spliting by harvest ###
+
+
+
 
 
 ### STOPED HERE ###

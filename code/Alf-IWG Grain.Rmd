@@ -502,7 +502,7 @@ table(grain_data$Plot, grain_data$P) # look at each plot name and if and how man
 grain_data %>% group_by(P,Rep,Plot)%>%count()%>%View()# makes viewable data frame for each plot within a rep within a location and shows how many data points exisit for that specific plot
 ```
 
-# fixed negative grain yield
+# fixed negative grain yield (need to un hashtag to run)
 ```{r}
 # Year Z S for MN shows plot 1106 has a G value of zero (row 433)
 # Year Z S for MN shows plot 1304 has a negative G value(row 452)
@@ -522,6 +522,8 @@ grain_data %>% group_by(P,Rep,Plot)%>%count()%>%View()# makes viewable data fram
 
 # Grain anovas 
 ```{r}
+# hist(grain_data$G)
+
 # want N to be numeric
 is.numeric(grain_data$N)
 # want P, CROP, and Year to be factors
@@ -581,10 +583,11 @@ emmip(modG, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted
 # percent change in grain yield per unit increase in nitrogen
 # by location (P) or by location, year, and cropping system (P+YearCode+CROP)
 # pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
+# var="" : Character value giving the name of a variable with respect to which a difference quotient of the linear predictors is computed. In order for this to be useful, var should be a numeric predictor that interacts with at least one factor in specs. Then instead of computing EMMs, we compute and compare the slopes of the var trend over levels of the specified other predictor(s). As in EMMs, marginal averages are computed for the predictors in specs and by
+# infer=c(TRUE,TRUE) : return both confidence intervals and p-values
 
 # N slopes
-#emtrends_result<-emtrends(modGsqrt,~ P, var= "N", infer=TRUE)
-emtrends_result<-emtrends(modG,~ P+YearCode+CROP, var= "N", infer=TRUE) # added type="response" to backtransform confidence levels 
+emtrends_result<-emtrends(modG,~ P*YearCode*CROP, var= "N", infer=TRUE) # originally these were all + 
   emtrends_df <- as.data.frame(emtrends_result)
   desired_order_P <- c("MN", "NY", "KS", "WI")
   emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
@@ -594,20 +597,18 @@ emtrends_result<-emtrends(modG,~ P+YearCode+CROP, var= "N", infer=TRUE) # added 
     ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
     ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
 # Intercepts at N=0
-#emmeans_results<-emmeans(modGsqrt, ~P, at=list(N=0))
-emmeans_results<-emmeans(modG, ~P+YearCode+CROP, at=list(N=0)) # added type="response" to backtransform confidence levels
+emmeans_results<-emmeans(modG, ~P*YearCode*CROP, at=list(N=0)) # originally these were all +
 emmeans_df <- as.data.frame(emmeans_results)
 # Merge slopes and intercepts
 merged_df <- emtrends_df %>%
   inner_join(emmeans_df, by = c("P", "YearCode", "CROP")) %>%
-  #select(P, emmean, N.trend, SE.x, plvl)
-  select(P, YearCode, CROP, emmean, N.trend, SE.x, plvl) # change emmean to response
+  dplyr::select(P, YearCode, CROP, emmean, N.trend, SE.x, plvl) # change emmean to response
 View(merged_df)
 merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
 # Create a new data frame with the calculated column
 new_df <- merged_df %>%
-    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
-    select(-emmean, -N.trend) # change emmean to response
+    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.8f", SE.x),  percent_change = sprintf("%.6f%%", N.trend / emmean * 100))%>% # original digits are 4 for SE and 4 for percent_change
+    dplyr::select(-emmean, -N.trend) # change emmean to response
 sorted_df <- new_df %>%
   arrange(P, YearCode)
 View(sorted_df)
@@ -688,18 +689,20 @@ GLER_2 <- GLER%>%dplyr::filter(!(YearCode == "Z" & P == "WI" & Rep == "5" & Type
 ```
 # GPLER anova
 ```{r}
+# hist(GLER_2$LER)
 # want N to be numeric
-is.numeric(GLER$N)
+is.numeric(GLER_2$N)
 # want LER to be numeric
-is.numeric(GLER$LER)
+is.numeric(GLER_2$LER)
 # want P and Year to be factors
-is.factor(GLER$P)
-is.factor(GLER$YearCode)
+is.factor(GLER_2$P)
+is.factor(GLER_2$YearCode)
 # Rep and Plot should also be factors
-is.factor(GLER$Rep)
+is.factor(GLER_2$Rep)
 
 #linear
 modGPLER<-lmer(LER~N*P*YearCode + (1|Rep:P), data= GLER)
+modGPLER<-lmer(LER~N*P*YearCode + (1|Rep:P), data= GLER_2)
 summary(modGPLER)
 hist(residuals(modGPLER)) # check normality; look for normal distribution, ideally not too narrow
 plot(predict(modGPLER),residuals(modGPLER)) # check for homoscedasisity; each point distribution, no fan shape
@@ -713,12 +716,63 @@ emtrends(modGPLER, ~N+P+CROP+YearCode, var="N", infer=TRUE) # slope different th
 emtrends(modGPLER, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
 
 ```
+# Two quick figures for fun (not cleaned up)
+```{r}
+ggplot(GLER_2, aes(x=N, y=LER, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
+
+emmip(modGPLER, YearCode~N | P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
+#emmip(modGsqrt, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
+```
+# relationship of location and year
+```{r}
+# emmeans(...,type = "response") to back-transform results to the response scale
+
+emtrends(modGPLER, pairwise~YearCode|P, var="N", infer=TRUE) # slope different by cropP
+emmeans(modGPLER, ~N*P*YearCode, cov.reduce=FALSE) # estimated marginal means
+emmeans(modGPLER, ~P*YearCode, cov.reduce=FALSE) # estimated marginal means
+
+# box and wisker plot with post-hoc compact letter display for sig differences?
+
+PLERemms <- emmeans(modGPLER, ~ P*YearCode) # Obtain estimated marginal means
+emmsPLER_df <- as.data.frame(PLERemms)
+cld_dataPLER <- cld(PLERemms, Letters=custom_letters)
+cldPLER_df <-as.data.frame(cld_dataPLER)
+mergedPLER_df <- merge(emmsPLER_df, cldPLER_df,by = c("P", "YearCode"))
+# making a quick visual table of contrasts
+tablePLER = flextable(data = mergedPLER_df %>%
+                    select(P, YearCode, emmean.x, SE.x, .group))
+tablePLER
+# custom cld position 
+mergedPLER_df <- mergedPLER_df %>%
+  left_join(
+    GLER_2 %>%
+      group_by(P, YearCode) %>%
+      dplyr::summarise(label_y = max(LER, na.rm = TRUE) * 0.9, .groups = "drop"),
+    by = c("P", "YearCode")
+  )
+# Custom X-axis labels
+PLER_PY <- ggplot(GLER_2, aes(x = YearCode, y = LER, colour= P)) + 
+  geom_boxplot(position = position_dodge(width = 0.8)) + # blank
+  geom_text(data = mergedPLER_df, aes(x = YearCode, y = label_y, label = .group, colour = P, group = P), 
+            position = position_dodge(width = 0.8), size = 6, show.legend = FALSE)+
+  facet_wrap(~P, scales = "free", ncol = 2) +
+#  scale_colour_manual(values = c(inter = "#DDCC77", monoA = "#332288", monoI = "#661100")) +
+  labs(x = "Year", y = "Relative Yield")+ #title=""
+  theme(axis.text.y=element_text(size=14), #change font size of axis text
+        axis.text.x=element_text(size=16),
+        axis.title=element_text(size=22))
+PLER_PY
+# 1500x1200
+```
 
 
 ## Nrate Relative Yield (RY)
 
 # RY math
 ```{r}
+#Intercrop at N=0 compared to monoculture at each N rate
+
 #0
 NGRY0 <- grain_data %>%
   group_by(Rep, P, YearCode, Harvest) %>%
@@ -764,8 +818,10 @@ NGRY_long$P <- as.factor(NGRY_long$P)
 ```
 # RY anova
 ```{r}
+# hist(NGRY_long$GRelativeYield)
 # want N to be numeric
 is.numeric(NGRY_long$N)
+# NGRY_long$N <- as.numeric(NGRY_long$N)
 # want LER to be numeric
 is.numeric(NGRY_long$GRelativeYield)
 # want P and Year to be factors
@@ -804,21 +860,13 @@ emtrends(modGRY, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
 emtrends(modGRY, pairwise~YearCode|P, var="N", infer=TRUE) # slope different by cropP
 
 ```
-
+# Two quick figures for fun (not cleaned up)
 ```{r}
-# average RY
-testX <- NGRY_long %>%
-group_by(P) %>%
-summarise(
-avg_value = mean(GRelativeYield, na.rm = TRUE)
-)
-flextable(data = testX)
-testX <- NGRY_long %>%
-group_by(N) %>%
-summarise(
-avg_value = mean(GRelativeYield, na.rm = TRUE)
-)%>% arrange(as.numeric(N))
-flextable(data = testX)
+ggplot(NGRY_long, aes(x=N, y=GRelativeYield, color=YearCode))+geom_point()+facet_grid(~P)+geom_smooth(method="lm", se=FALSE)
+
+emmip(modGRY, YearCode~N | P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
+#emmip(modGsqrt, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
 ```
 # relationship of location and year
 ```{r}
@@ -828,11 +876,16 @@ emmeans(modGRY, ~P*YearCode, cov.reduce=FALSE) # estimated marginal means
 
 # box and wisker plot with post-hoc compact letter display for sig differences?
 
-RYemms <- emmeans(modGRY, ~ P*YearCode, type = "response") # Obtain estimated marginal means
+RYemms <- emmeans(modGRY, ~ P*YearCode) # Obtain estimated marginal means
 emmsRY_df <- as.data.frame(RYemms)
 cld_dataRY <- cld(RYemms, Letters=custom_letters)
 cldRY_df <-as.data.frame(cld_dataRY)
 mergedRY_df <- merge(emmsRY_df, cldRY_df,by = c("P", "YearCode"))
+# making a quick visual table of contrasts
+tableRY = flextable(data = mergedRY_df %>%
+                    select(P, YearCode, emmean.x, SE.x, .group))
+tableRY
+
 # custom cld position 
 mergedRY_df <- mergedRY_df %>%
   left_join(
