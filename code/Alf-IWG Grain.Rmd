@@ -577,6 +577,48 @@ ggplot(grain_data, aes(x=N, y=G, color=YearCode))+geom_point()+facet_grid(CROP~P
 emmip(modG, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
     scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
 #emmip(modGsqrt, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
+
+emmip(modG, YearCode ~ N | CROP * P,
+      cov.reduce = FALSE, CIs = TRUE) +
+  scale_x_continuous(
+    breaks = c(0, 40, 80, 120, 160),
+    labels = c("0", "40", "80", "120", "160")
+  ) +
+  facet_grid(
+    rows = vars(CROP),
+    cols = vars(P),
+    labeller = labeller(
+      CROP = c(
+        "KS" = "Kansas",
+        "MN" = "Minnesota",
+        "NY" = "New York",
+        "WI" = "Wisconsin"    
+      ),
+      P = c(
+        "inter" = "Intercrop",
+        "monoI" = "Monoculture IWG"
+      )
+    )
+  ) +
+  scale_colour_discrete(labels = c("1", "2", "3"))
+
+
+plotG <- emmip(modG, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
+plotG$facet$params$labeller <- ggplot2::labeller(
+  CROP = c(
+    inter = "Intercrop",
+    monoI = "Monoculture IWG"
+  ),
+  P = c(
+    KS = "Kansas",
+    MN = "Minnesota",
+    NY = "New York",
+    WI = "Wisconsin"
+  )
+)
+plotG +
+  scale_colour_discrete(labels = c("1", "2", "3"))
 ```
 # percent change in grain yield per unit increase in nitrogen
 ```{r}
@@ -613,7 +655,56 @@ sorted_df <- new_df %>%
   arrange(P, YearCode)
 View(sorted_df)
 ```
+# CROP
+```{r}
+emm <- emmeans(
+    modG,
+    ~ CROP | N * P * YearCode,
+    at = list(N = c(0, 40, 80, 120, 160))
+)
+pairs(emm, adjust = "tukey")
+contrast(
+  emmeans(modG, ~ CROP | N * P * YearCode,
+  at = list(N = c(0, 40, 80, 120, 160))),
+  method = "pairwise"
+)
+cmp <- summary(pairs(emm), infer = TRUE)
 
+emm_df <- as.data.frame(emm)
+cmp_df <- cmp %>%
+  mutate(
+    sig = case_when(
+      p.value < 0.001 ~ "***",
+      p.value < 0.01  ~ "**",
+      p.value < 0.05  ~ "*",
+      TRUE            ~ " "
+    )
+  )
+ggplot(emm_df,
+       aes(CROP, emmean,
+           colour = CROP,
+           group = CROP)) +
+
+  geom_point(size = 3) +
+
+  geom_errorbar(aes(ymin = lower.CL,
+                    ymax = upper.CL),
+                width = 0.15) +
+
+  facet_grid(P ~ YearCode + N) +
+
+  geom_text(data = cmp_df,
+            aes(x = 1.5,
+                y = max(emm_df$upper.CL) + 30,
+                label = sig),
+            inherit.aes = FALSE,
+            size = 5) +
+
+  labs(y = "Estimated marginal mean",
+       x = "Crop") +
+
+  theme_bw()
+```
 
 ## Grain PLER  
 
