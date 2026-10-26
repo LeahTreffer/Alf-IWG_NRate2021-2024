@@ -481,7 +481,7 @@ NdXSIG<-rbind(NdXSInoMN, NdXSIMN)
 ```
 
 ```{r}
-# this chunk subsets to just columns that might be used in a anslysis then combines each year
+# this chunk subsets to just columns that might be used in a analysis then combines each year
 
 #  "Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQal", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGRFV", "IWGADF", "IWGaNDF", "ALFaNDF", "ALFRFV", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G"
 
@@ -504,7 +504,7 @@ table(grain_data$Plot, grain_data$P) # look to see if plot ids are unique to a l
 with(subset(grain_data, !is.na(G)), table(P, Year)) # look at which years have data and how many data points
 with(subset(grain_data, !is.na(G)), table(CROP, N, P, Year)) # for each site-year, look to see if and how many data points exist for each N rate
 table(grain_data$Plot, grain_data$P) # look at each plot name and if and how many data points there are for that plot at each site
-grain_data %>% group_by(P,Rep,Plot)%>%count()%>%View()# makes viewable data frame for each plot within a rep within a location and shows how many data points exisit for that specific plot
+#grain_data %>% group_by(P,Rep,Plot)%>%count()%>%View()# makes viewable data frame for each plot within a rep within a location and shows how many data points exisit for that specific plot
 ```
 
 # fixed negative grain yield (need to un hashtag to run)
@@ -582,45 +582,19 @@ emmip(modG, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted
     scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
 #emmip(modGsqrt, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
 
-emmip(modG, YearCode ~ N | CROP * P,
-      cov.reduce = FALSE, CIs = TRUE) +
-  scale_x_continuous(
-    breaks = c(0, 40, 80, 120, 160),
-    labels = c("0", "40", "80", "120", "160")
-  ) +
-  facet_grid(
-    rows = vars(CROP),
-    cols = vars(P),
-    labeller = labeller(
-      CROP = c(
-        "KS" = "Kansas",
-        "MN" = "Minnesota",
-        "NY" = "New York",
-        "WI" = "Wisconsin"    
-      ),
-      P = c(
-        "inter" = "Intercrop",
-        "monoI" = "Monoculture IWG"
-      )
-    )
-  ) +
+# same as above but with Year as 1,2,3 rather than X,Y,Z
+emmip(modG, YearCode ~ N | CROP * P, cov.reduce = FALSE, CIs = TRUE) +
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160")) +
+  facet_grid(rows = vars(CROP), cols = vars(P), labeller = labeller(CROP = c("KS" = "Kansas", "MN" = "Minnesota", "NY" = "New York", "WI" = "Wisconsin"),
+      P = c("inter" = "Intercrop", "monoI" = "Monoculture IWG"))) +
   scale_colour_discrete(labels = c("1", "2", "3"))
 
-
+# same as above but now with spelling out the location and cropping systems
 plotG <- emmip(modG, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
     scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
 plotG$facet$params$labeller <- ggplot2::labeller(
-  CROP = c(
-    inter = "Intercrop",
-    monoI = "Monoculture IWG"
-  ),
-  P = c(
-    KS = "Kansas",
-    MN = "Minnesota",
-    NY = "New York",
-    WI = "Wisconsin"
-  )
-)
+  CROP = c(inter = "Intercrop", monoI = "Monoculture IWG"),
+  P = c(KS = "Kansas", MN = "Minnesota", NY = "New York", WI = "Wisconsin"))
 plotG +
   scale_colour_discrete(labels = c("1", "2", "3"))
 ```
@@ -628,7 +602,7 @@ plotG +
 ```{r}
 # percent change in grain yield per unit increase in nitrogen
 # by location (P) or by location, year, and cropping system (P+YearCode+CROP)
-# pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
+# pvalue is showing slopes that are signifcantly different than zero (significant percent change in yield with N)
 # var="" : Character value giving the name of a variable with respect to which a difference quotient of the linear predictors is computed. In order for this to be useful, var should be a numeric predictor that interacts with at least one factor in specs. Then instead of computing EMMs, we compute and compare the slopes of the var trend over levels of the specified other predictor(s). As in EMMs, marginal averages are computed for the predictors in specs and by
 # infer=c(TRUE,TRUE) : return both confidence intervals and p-values
 
@@ -659,19 +633,38 @@ sorted_df <- new_df %>%
   arrange(P, YearCode)
 View(sorted_df)
 ```
-# CROP
+# N:P:CROP:Year figure (interaction plot of EMMs based on a fitted model)
+The slopes that a significantly different than zero are for NY in year one (both inter and mono) and WI year 2 (both inter and mono)
 ```{r}
-emm <- emmeans(
-    modG,
-    ~ CROP | N * P * YearCode,
-    at = list(N = c(0, 40, 80, 120, 160))
-)
+# this not working, need to get geom text onto figure, with year given its own space
+equations_df <- sorted_df %>%
+  group_by(P, CROP) %>%
+  arrange(YearCode, .by_group = TRUE) %>%
+  mutate(
+    y_pos = 1
+    )
+
+# interaction plot of EMMs based on a fitted model
+plotG <- emmip(modG, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
+    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
+plotG$facet$params$labeller <- ggplot2::labeller(
+  CROP = c(inter = "Intercrop", monoI = "Monoculture IWG"),
+  P = c(KS = "Kansas", MN = "Minnesota", NY = "New York", WI = "Wisconsin"))
+plotG +
+  scale_colour_discrete(labels = c("1", "2", "3"))+
+  
+
+```
+
+# CROP figure
+```{r}
+# cropping system means are estimated and compared conditional on each combination of N, P, and year
+# p-values test whether the estimated marginal means of each cropping system pair differ significantly within a specific N rate + location + year condition
+# level of significance indicated by number of stars
+emm <- emmeans(modG, ~ CROP | N * P * YearCode, at = list(N = c(0, 40, 80, 120, 160)))
 pairs(emm, adjust = "tukey")
-contrast(
-  emmeans(modG, ~ CROP | N * P * YearCode,
-  at = list(N = c(0, 40, 80, 120, 160))),
-  method = "pairwise"
-)
+contrast(emmeans(modG, ~ CROP | N * P * YearCode, at = list(N = c(0, 40, 80, 120, 160))),
+  method = "pairwise")
 cmp <- summary(pairs(emm), infer = TRUE)
 
 emm_df <- as.data.frame(emm)
@@ -684,31 +677,22 @@ cmp_df <- cmp %>%
       TRUE            ~ " "
     )
   )
-ggplot(emm_df,
-       aes(CROP, emmean,
-           colour = CROP,
-           group = CROP)) +
-
+ggplot(emm_df, aes(CROP, emmean, colour = CROP, group = CROP)) +
   geom_point(size = 3) +
-
   geom_errorbar(aes(ymin = lower.CL,
                     ymax = upper.CL),
                 width = 0.15) +
-
   facet_grid(P ~ YearCode + N) +
-
   geom_text(data = cmp_df,
             aes(x = 1.5,
                 y = max(emm_df$upper.CL) + 30,
                 label = sig),
             inherit.aes = FALSE,
             size = 5) +
-
-  labs(y = "Estimated marginal mean",
-       x = "Crop") +
-
+  labs(y = "Estimated marginal mean", x = "Crop") +
   theme_bw()
 ```
+
 
 ## Grain PLER  
 
