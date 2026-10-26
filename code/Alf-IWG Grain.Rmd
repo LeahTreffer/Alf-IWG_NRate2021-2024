@@ -377,6 +377,11 @@ data3$WhSamDH = (0.905045351733363*data3$image_sample_wt_g)-((1.10627799960595E-
 #samples sent for imaging were a subset, so have to apply the conversion factor to the subsample, need to calculate up to the whole plot samples
 data3$G<-((data3$WhSamDH)/(data3$image_sample_wt_g))*(data3$PlotThreshedGrainKgHa)
 
+# MN Year 1 adjustments
+# There is a column called X2023MNGrainDeHulledKgHa
+# This appears to be the grain weight as it should be used in analysis
+data3$G[data3$YearCode == "X" & data3$Location == "MN"] <-
+  data3$X2023MNGrainDeHulledKgHa[data3$YearCode == "X" & data3$Location == "MN"] # row indexing to select column G for just rows where both conditions are true and fill those cells with corresponding data from other grain column 
 
 # Year 3 adjustments 
 # need to have naked seed weights to match the adjustments made in yr 1 and yr 2
@@ -568,7 +573,6 @@ anova(modG) # print anova results
 emmeans(modG, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
 emtrends(modG, ~N+P+CROP+YearCode, var="N", infer=TRUE) # slope different than zero
 emtrends(modG, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
-
 ```
 # Two quick figures for fun (not cleaned up)
 ```{r}
@@ -802,14 +806,14 @@ qqnorm(modGPLER_resid)
 qqline(modGPLER_resid)
 
 anova(modGPLER) # print anova results
-emmeans(modGPLER, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
-emtrends(modGPLER, ~N+P+CROP+YearCode, var="N", infer=TRUE) # slope different than zero
-emtrends(modGPLER, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
-
+summary(modGPLER)
+emmeans(modGPLER, ~N*P*YearCode, cov.reduce=FALSE) # estimated marginal means
+emtrends(modGPLER, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
+emtrends(modGPLER, pairwise~YearCode|P, var="N", infer=TRUE) # slope different by cropP
 ```
 # Two quick figures for fun (not cleaned up)
 ```{r}
-ggplot(GLER_2, aes(x=N, y=LER, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
+ggplot(GLER_2, aes(x=N, y=LER, color=YearCode))+geom_point()+facet_grid(~P)+geom_smooth(method="lm", se=FALSE)
 
 emmip(modGPLER, YearCode~N | P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
     scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))

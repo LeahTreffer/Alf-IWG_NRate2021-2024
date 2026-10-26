@@ -376,6 +376,11 @@ data3$WhSamDH = (0.905045351733363*data3$image_sample_wt_g)-((1.10627799960595E-
 #samples sent for imaging were a subset, so have to apply the conversion factor to the subsample, need to calculate up to the whole plot samples
 data3$G<-((data3$WhSamDH)/(data3$image_sample_wt_g))*(data3$PlotThreshedGrainKgHa)
 
+# MN Year 1 adjustments
+# There is a column called X2023MNGrainDeHulledKgHa
+# This appears to be the grain weight as it should be used in analysis
+data3$G[data3$YearCode == "X" & data3$Location == "MN"] <-
+  data3$X2023MNGrainDeHulledKgHa[data3$YearCode == "X" & data3$Location == "MN"] # row indexing to select column G for just rows where both conditions are true and fill those cells with corresponding data from other grain column 
 
 # Year 3 adjustments 
 # need to have naked seed weights to match the adjustments made in yr 1 and yr 2
@@ -475,7 +480,7 @@ NdXSIG<-rbind(NdXSInoMN, NdXSIMN)
 ```
 
 ```{r}
-# this chunk subsets to just columns that might be used in a anslysis then combines each year
+# this chunk subsets to just columns that might be used in a analysis then combines each year
 
 #  "Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQal", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGRFV", "IWGADF", "IWGaNDF", "ALFaNDF", "ALFRFV", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G"
 
