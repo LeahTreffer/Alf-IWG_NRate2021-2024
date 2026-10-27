@@ -730,6 +730,9 @@ W80GLER <- grain_data %>%
   )
 W80GLER<-W80GLER[W80GLER$Harvest == "Summer",]
 
+# Outlier issue with WI ; remove Year 3 WI rep 5 (Treatment 8 plot 501 and Treatment 13 plot 303
+grain_data <- grain_data %>%
+  filter(!(Plot %in% c(303, 501) & YearCode == "Z" & Location == "WI"))
 #120
 W120GLER <- grain_data %>%
   group_by(Rep, P, YearCode, Harvest) %>%
@@ -772,19 +775,26 @@ GLER<- na.omit(GLER5)
 
 ### WI N120 for year 3 looks weird 
 ### What to do about it????
+# Question: Remove or keep in?
+# NOTE: there is code above that removes outlier plot BEFORE PLER calculation 
 #GLER_2 <- GLER%>%dplyr::filter(!(YearCode == "Z" & P == "WI" & Rep == "5" & Type == "LERGSW120"))
 ```
 # GPLER anova
 ```{r}
 # hist(GLER_2$LER)
 # want N to be numeric
+is.numeric(GLER$N)
 is.numeric(GLER_2$N)
 # want LER to be numeric
+is.numeric(GLER$LER)
 is.numeric(GLER_2$LER)
 # want P and Year to be factors
+is.factor(GLER$P)
 is.factor(GLER_2$P)
+is.factor(GLER$YearCode)
 is.factor(GLER_2$YearCode)
 # Rep and Plot should also be factors
+is.factor(GLER$Rep)
 is.factor(GLER_2$Rep)
 
 #linear
@@ -833,13 +843,13 @@ tablePLER
 # custom cld position 
 mergedPLER_df <- mergedPLER_df %>%
   left_join(
-    GLER_2 %>%
+    GLER %>%
       group_by(P, YearCode) %>%
       dplyr::summarise(label_y = max(LER, na.rm = TRUE) * 0.9, .groups = "drop"),
     by = c("P", "YearCode")
   )
 # Custom X-axis labels
-PLER_PY <- ggplot(GLER_2, aes(x = YearCode, y = LER, colour= P)) + 
+PLER_PY <- ggplot(GLER, aes(x = YearCode, y = LER, colour= P)) + 
   geom_boxplot(position = position_dodge(width = 0.8)) + # blank
   geom_text(data = mergedPLER_df, aes(x = YearCode, y = label_y, label = .group, colour = P, group = P), 
             position = position_dodge(width = 0.8), size = 6, show.legend = FALSE)+
@@ -851,6 +861,11 @@ PLER_PY <- ggplot(GLER_2, aes(x = YearCode, y = LER, colour= P)) +
         axis.title=element_text(size=22))
 PLER_PY
 # 1500x1200
+
+# Question: Should it acutually be P + YearCode instead of P * Yearcode? 
+summary(modGPLER)
+# this shows year three was significant and the year three interaction with MN and WI as significant 
+# but emmeans only shows year 3 KS as significantly different than other site-years
 ```
 
 
@@ -1004,9 +1019,10 @@ RY_PY
 
 
 
-# Old
 
-# do figure and above chunk not broken down to cropping system (just the three way interaction)
+
+
+# Old
 
 ```{r}
 emmip(modGsqrt, YearCode~N | P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
@@ -1045,8 +1061,6 @@ sorted_df <- new_df %>%
   arrange(P, YearCode)
 View(sorted_df)
 ```
-
-# Location:Crop:Year
 
 ```{r}
 emtrends(modGsqrt, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
@@ -1115,8 +1129,6 @@ GPCY <- ggplot(grain_data,
   )
 GPCY
 ```
-
-# N Rate : Location
 
 ```{r}
 # Define the desired order of 'P'
