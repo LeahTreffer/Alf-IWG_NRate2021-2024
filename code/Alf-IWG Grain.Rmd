@@ -636,14 +636,16 @@ View(sorted_df)
 # N:P:CROP:Year figure (interaction plot of EMMs based on a fitted model)
 The slopes that a significantly different than zero are for NY in year one (both inter and mono) and WI year 2 (both inter and mono)
 ```{r}
-# this not working, need to get geom text onto figure, with year given its own space
-equations_df <- sorted_df %>%
-  group_by(P, CROP) %>%
-  arrange(YearCode, .by_group = TRUE) %>%
+# make equation table with mapping position to appear on figure
+equation_df <- sorted_df %>%
   mutate(
-    y_pos = 1
+    eq_label = paste(equation, plvl),
+    vjust_pos = case_when(
+      YearCode == "X" ~ 1.5,
+      YearCode == "Y" ~ 3.5,
+      YearCode == "Z" ~ 5.5
     )
-
+  )
 # interaction plot of EMMs based on a fitted model
 plotG <- emmip(modG, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
     scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
@@ -652,10 +654,12 @@ plotG$facet$params$labeller <- ggplot2::labeller(
   P = c(KS = "Kansas", MN = "Minnesota", NY = "New York", WI = "Wisconsin"))
 plotG +
   scale_colour_discrete(labels = c("1", "2", "3"))+
-  
-
+  geom_text(data = equation_df, aes(x = -Inf, y = Inf, label = eq_label, vjust = vjust_pos, colour = YearCode),
+    inherit.aes = FALSE,
+    hjust = -0.05,
+    size = 2.8
+  )
 ```
-
 # CROP figure
 ```{r}
 # cropping system means are estimated and compared conditional on each combination of N, P, and year
@@ -698,6 +702,10 @@ ggplot(emm_df, aes(CROP, emmean, colour = CROP, group = CROP)) +
 
 # GPLER math 
 ```{r}
+# Treatment 5: Year X has duplicates or multiple plots in the same rep ; delete plot 1201 (row 117) says its rep 14, plot 1320 (row 118) says its rep 15, plot 1404 (row 119) says its rep 16
+grain_data <- grain_data %>%
+  filter(!(Plot %in% c(1201, 1320, 1404) & YearCode == "X" & Location == "MN" & Treatment == 5))
+
 #0 
 W0GLER <- grain_data %>%
   group_by(Rep, P, YearCode, Harvest) %>%
@@ -764,7 +772,7 @@ GLER<- na.omit(GLER5)
 
 ### WI N120 for year 3 looks weird 
 ### What to do about it????
-GLER_2 <- GLER%>%dplyr::filter(!(YearCode == "Z" & P == "WI" & Rep == "5" & Type == "LERGSW120"))
+#GLER_2 <- GLER%>%dplyr::filter(!(YearCode == "Z" & P == "WI" & Rep == "5" & Type == "LERGSW120"))
 ```
 # GPLER anova
 ```{r}
