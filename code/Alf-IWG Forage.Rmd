@@ -1048,17 +1048,17 @@ MN and WI had higher alfalfa yield for both cropping systems in year 3 compared 
 # anova
 ```{r}
 # want N to be numeric
-is.numeric(forage_data_fall$N)
+is.numeric(forage_data_fall_2$N)
 # want P, CROP, and Year to be factors
-is.factor(forage_data_fall$P)
-is.factor(forage_data_fall$CROP)
-# forage_data_fall$CROP <- as.factor(forage_data_fall$CROP)
-is.factor(forage_data_fall$YearCode)
-# forage_data_fall$YearCode <- as.factor(forage_data_fall$YearCode)
+is.factor(forage_data_fall_2$P)
+is.factor(forage_data_fall_2$CROP)
+# forage_data_fall_2$CROP <- as.factor(forage_data_fall_2$CROP)
+is.factor(forage_data_fall_2$YearCode)
+# forage_data_fall_2$YearCode <- as.factor(forage_data_fall_2$YearCode)
 # Rep and Plot should also be factors
-is.factor(forage_data_fall$Rep)
-is.factor(forage_data_fall$Plot)
-# forage_data_fall$Plot <- as.character(forage_data_fall$Plot)
+is.factor(forage_data_fall_2$Rep)
+is.factor(forage_data_fall_2$Plot)
+# forage_data_fall_2$Plot <- as.character(forage_data_fall_2$Plot)
 
 # Linear Model
 modAFF <- lmer(PlotAlfDryKgHa~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_fall_2)
@@ -1078,6 +1078,57 @@ emtrends(modAFF, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope differen
 N:Year
 P:Year
 C:Year
+# relationship of N rate and year
+```{r}
+#N:Year
+# Define the desired order of 'P'
+#desired_order <- c("KS", "MN", "NY", "WI")
+#NdXSI$P <- factor(NdXSI$P, levels = desired_order)
+# finding values for the function for each yr:location  
+emtrends_result<-emtrends(modAFF,~ N*YearCode, var= "N", infer=TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", ""))))
+  #desired_order_P <- c("KS", "MN", "NY", "WI")
+  #emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
+emmeans_results<-emmeans(modAFF, ~N*YearCode, at=list(N=0))
+  emmeans_df <- as.data.frame(emmeans_results)
+merged <- emtrends_df %>%
+  inner_join(emmeans_df, by = c("YearCode")) %>%
+  dplyr::select(YearCode, emmean, N.trend, SE.x, plvl)
+merged$YearCode <- factor(merged$YearCode, levels = c("X", "Y", "Z"))
+df <- merged %>%
+    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
+  select(-emmean, -N.trend)
+sorted <- df %>%
+  arrange(YearCode)
+
+#plot
+comboplotNYr <- ggplot(data=forage_data_fall_2) +
+  geom_point(data = forage_data_fall_2, aes(x = N, y = PlotAlfDryKgHa)) +
+  labs(x = "N-Rate (Kg ha-1)", y = "Alfalfa Forage", linetype = "Year", shape = "Year")+
+  scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
+  ylim(0, 5500) +
+#  facet_wrap(~YearCode, scales = "free_y", ncol = 2,
+             #labeller = as_labeller(c(X='Year 1', Y='Year 2',
+                                      #Z='Year 3'))) +
+  scale_shape_manual(values = c(16, 17, 18),labels = c("Year 1", "Year 2", "Year 3"))+
+  # functions come from equation in sorted
+  geom_function(data=subset(forage_data_fall_2, YearCode== "X"), fun=~1505.44+(-1.0945*.x),color='darkgrey')+
+  geom_function(data=subset(forage_data_fall_2, YearCode== "Y"), fun=~1914.84+(-2.8173*.x),color='darkgrey')+
+  geom_function(data=subset(forage_data_fall_2, YearCode== "Z"), fun=~1346.81+(-0.2509*.x),color='darkgrey')+
+  geom_text(data = sorted, mapping = aes(x = 30, y = 5500, label = equation),  size=3)+ # add equation to figure
+  geom_text(data = sorted, mapping = aes(x = 60, y = 5500, label = plvl))+ # add stars to figure
+# add stars to figure
+  theme(axis.text=element_text(size=12), #change font size of axis text
+        axis.title=element_text(size=18), #change font size of axis titles
+        plot.title=element_text(size=20), #change font size of plot title
+        strip.text.x = element_text(size = 18)) #change font size of facet title
+print(comboplotNYr)
+```
 # relationship of location and year
 ```{r}
 emtrends(modAFS, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
@@ -1146,9 +1197,6 @@ AFF_CPY
 In the first year, there was a higher yield of alfalfa in monoculture systems than in the intercrop
 
 
-### STOPED HERE Oct 27 ###
-
-
 ## IWG Forage Summer
 # anova
 ```{r}
@@ -1163,7 +1211,7 @@ is.factor(forage_data_summer$YearCode)
 # Rep and Plot should also be factors
 is.factor(forage_data_summer$Rep)
 is.factor(forage_data_summer$Plot)
-# forage_data_summer$Plot <- as.character(forage_data_summer$Plot)
+# forage_data_summer$Plot <- as.factor(forage_data_summer$Plot)
 
 # Linear Model
 modIFS <- lmer(PlotIWGDryKgHa~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_summer)
@@ -1180,56 +1228,11 @@ emmeans(modIFS, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
 emtrends(modIFS, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
 emtrends(modIFS, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
 ```
-# Two quick figures for fun (not cleaned up)
-```{r}
-ggplot(forage_data_summer, aes(x=N, y=PlotIWGDryKgHa, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
-
-emmip(modIFS, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
-    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
-#emmip(modTFS, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
-```
-# percent change in grain yield per unit increase in nitrogen
-```{r}
-# percent change in grain yield per unit increase in nitrogen
-# (P+CROP) and (P+Year)
-# pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
-
-# N*P*Year
-# N slopes
-emtrends_result<-emtrends(modIFS,~ P+YearCode, var= "N", infer=TRUE)
-  emtrends_df <- as.data.frame(emtrends_result)
-  desired_order_P <- c("MN", "NY", "KS", "WI")
-  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
-  emtrends_df$plvl <-
-    ifelse(emtrends_df$p.value == 0.05, ".",
-    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
-    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
-    ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
-# Intercepts at N=0
-emmeans_results<-emmeans(modIFS, ~P+YearCode, at=list(N=0)) 
-emmeans_df <- as.data.frame(emmeans_results)
-# Merge slopes and intercepts
-merged_df <- emtrends_df %>%
-  inner_join(emmeans_df, by = c("P", "YearCode")) %>%
-  select(P, YearCode, emmean, N.trend, SE.x, plvl) 
-View(merged_df)
-merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
-# Create a new data frame with the calculated column
-new_df <- merged_df %>%
-    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
-    select(-emmean, -N.trend) 
-sorted_df <- new_df %>%
-  arrange(P, YearCode)
-View(sorted_df)
-```
 # relationship of location, cropping system, and year
 ```{r}
 emtrends(modIFS, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
 emmeans(modIFS, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
 emmeans(modIFS, ~P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
-
-# box and wisker plot with post-hoc compact letter display for sig differences?
-
 
 IFSemms <- emmeans(modIFS, ~ P*CROP*YearCode, type = "response") # Obtain estimated marginal means
 emmsIFS_df <- as.data.frame(IFSemms)
@@ -1249,15 +1252,21 @@ IFS_CPY <- ggplot(forage_data_summer, aes(x = YearCode, y = PlotIWGDryKgHa, colo
   geom_boxplot(position = position_dodge(width = 0.8)) + # blank
   geom_text(data = mergedIFS_df, aes(x = YearCode, y = label_y, label = .group, colour = CROP, group = CROP),
             position = position_dodge(width = 0.8), size = 6, show.legend = FALSE)+
-  facet_wrap(~P, scales = "free", ncol = 2) +
-  scale_colour_manual(values = c(inter = "#DDCC77", monoA = "#332288", monoI = "#661100")) +
+  facet_wrap(~P, scales = "free", ncol = 2, labeller = labeller(P = c(KS = "Kansas", MN = "Minnesota", NY = "New York", WI = "Wisconsin"))) +
+  scale_x_discrete(labels=c("X" = "Year 1", "Y" = "Year 2", "Z" = "Year 3"))+
+  scale_colour_manual(values = c(inter = "forestgreen", monoA = "#332288", monoI = "#661100"), labels = c(inter = "Intercrop", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG")) +
   labs(x = "Year", y = "IWG Forage (kg/ha)")+ #title=""
-  theme(axis.text.y=element_text(size=14), #change font size of axis text
-        axis.text.x=element_text(size=16),
-        axis.title=element_text(size=22))
+  theme(axis.text.y = element_text(size=18),
+        axis.text.x = element_text(size=18),
+        strip.text = element_text(size=22),
+        legend.text = element_text(size=18))
 IFS_CPY
 # 1500x1200
 ```
+If there was a difference between cropping systems within a year, the monoculture IWG yeild was higher than intercrop
+In KS and NY, yield declined for both cropping systems over years
+IN MN, each year was significantly different with year 2 as the highest yield for both cropping systems
+In WI, year 2 was significatnly lower than year 1&2 for both cropping systems
 
 ## IWG Forage Fall
 # anova
@@ -1271,17 +1280,17 @@ forage_data_fall_2 <- forage_data_fall_2 %>%
            Plot == "1210"))
 
 # want N to be numeric
-is.numeric(forage_data_fall$N)
+is.numeric(forage_data_fall_2$N)
 # want P, CROP, and Year to be factors
-is.factor(forage_data_fall$P)
-is.factor(forage_data_fall$CROP)
-# forage_data_fall$CROP <- as.factor(forage_data_fall$CROP)
-is.factor(forage_data_fall$YearCode)
-# forage_data_fall$YearCode <- as.factor(forage_data_fall$YearCode)
+is.factor(forage_data_fall_2$P)
+is.factor(forage_data_fall_2$CROP)
+# forage_data_fall_2$CROP <- as.factor(forage_data_fall_2$CROP)
+is.factor(forage_data_fall_2$YearCode)
+# forage_data_fall_2$YearCode <- as.factor(forage_data_fall_2$YearCode)
 # Rep and Plot should also be factors
-is.factor(forage_data_fall$Rep)
-is.factor(forage_data_fall$Plot)
-# forage_data_fall$Plot <- as.character(forage_data_fall$Plot)
+is.factor(forage_data_fall_2$Rep)
+is.factor(forage_data_fall_2$Plot)
+# forage_data_fall_2$Plot <- as.factor(forage_data_fall_2$Plot)
 
 # Linear Model
 modIFF <- lmer(PlotIWGDryKgHa~N*P*CROP*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data=forage_data_fall_2)
@@ -1298,54 +1307,11 @@ emmeans(modIFF, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
 emtrends(modIFF, ~N+P+YearCode, var="N", infer=TRUE) # slope different than zero
 emtrends(modIFF, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
 ```
-# Two quick figures for fun (not cleaned up)
-```{r}
-ggplot(forage_data_fall_2, aes(x=N, y=PlotIWGDryKgHa, color=YearCode))+geom_point()+facet_grid(CROP~P)+geom_smooth(method="lm", se=FALSE)
-
-emmip(modIFF, YearCode~N | CROP*P, cov.reduce=FALSE, CIs = TRUE)+ #model predicted vales
-    scale_x_continuous(breaks = c(0, 40, 80, 120, 160), labels = c("0", "40", "80", "120", "160"))
-#emmip(modTFS, N~YearCode | CROP*P, cov.reduce=FALSE, CIs = TRUE) #model predicted vales (I don't like this orientation)
-```
-# percent change in grain yield per unit increase in nitrogen
-```{r}
-# percent change in grain yield per unit increase in nitrogen
-# pvalue is showing slopes that are signifcanly different than zero (significant percent change in yield with N)
-
-# N*CROP*Year
-# N slopes
-emtrends_result<-emtrends(modIFF,~ CROP+YearCode, var= "N", infer=TRUE)
-  emtrends_df <- as.data.frame(emtrends_result)
-  desired_order_P <- c("MN", "NY", "KS", "WI")
-  emtrends_df$P <- factor(emtrends_df$P, levels = desired_order_P)
-  emtrends_df$plvl <-
-    ifelse(emtrends_df$p.value == 0.05, ".",
-    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
-    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
-    ifelse(emtrends_df$p.value < 0.001, "***", "")))) # slope different than zero
-# Intercepts at N=0
-emmeans_results<-emmeans(modIFF, ~CROP+YearCode, at=list(N=0)) 
-emmeans_df <- as.data.frame(emmeans_results)
-# Merge slopes and intercepts
-merged_df <- emtrends_df %>%
-  inner_join(emmeans_df, by = c("YearCode", "CROP")) %>%
-  select(YearCode, CROP, emmean, N.trend, SE.x, plvl) 
-View(merged_df)
-merged_df$P <- factor(merged_df$P, levels = c("MN", "NY", "KS", "WI"))  # Preferred order for P
-# Create a new data frame with the calculated column
-new_df <- merged_df %>%
-    mutate(equation = sprintf("=%.2f+(%.4fN)", emmean, N.trend),  SE.x = sprintf("%.4f", SE.x),  percent_change = sprintf("%.2f%%", N.trend / emmean * 100))%>%
-    select(-emmean, -N.trend) 
-sorted_df <- new_df %>%
-  arrange(YearCode, CROP)
-View(sorted_df)
-```
 # relationship of location, cropping system, and year
 ```{r}
 emtrends(modIFF, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
 emmeans(modIFF, ~N*P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
 emmeans(modIFF, ~P*CROP*YearCode, cov.reduce=FALSE) # estimated marginal means
-
-# box and wisker plot with post-hoc compact letter display for sig differences?
 
 IFFemms <- emmeans(modIFF, ~ P*CROP*YearCode, type = "response") # Obtain estimated marginal means
 emmsIFF_df <- as.data.frame(IFFemms)
@@ -1365,15 +1331,24 @@ IFF_CPY <- ggplot(forage_data_fall_2, aes(x = YearCode, y = PlotIWGDryKgHa, colo
   geom_boxplot(position = position_dodge(width = 0.8)) + # blank
   geom_text(data = mergedIFF_df, aes(x = YearCode, y = label_y, label = .group, colour = CROP, group = CROP),
             position = position_dodge(width = 0.8), size = 6, show.legend = FALSE)+
-  facet_wrap(~P, scales = "free", ncol = 2) +
-  scale_colour_manual(values = c(inter = "#DDCC77", monoA = "#332288", monoI = "#661100")) +
+  facet_wrap(~P, scales = "free", ncol = 2, labeller = labeller(P = c(KS = "Kansas", MN = "Minnesota", NY = "New York", WI = "Wisconsin"))) +
+  scale_x_discrete(labels=c("X" = "Year 1", "Y" = "Year 2", "Z" = "Year 3"))+
+  scale_colour_manual(values = c(inter = "forestgreen", monoA = "#332288", monoI = "#661100"), labels = c(inter = "Intercrop", monoA = "Monoculture Alfalfa", monoI = "Monoculture IWG")) +
   labs(x = "Year", y = "IWG Forage (kg/ha)")+ #title=""
-  theme(axis.text.y=element_text(size=16), #change font size of axis text
-        axis.text.x=element_text(size=18),
-        axis.title=element_text(size=24))
+  theme(axis.text.y = element_text(size=18),
+        axis.text.x = element_text(size=18),
+        strip.text = element_text(size=22),
+        legend.text = element_text(size=18))
 IFF_CPY
 # 1500x1200
 ```
+MN year 2 intercrop yield was significatnly higher than year 1&2; if difference between cropping systems, monoculture was higher
+NY year 3 yield for both cropping systems was higher than year 1&2
+WI year 2&3 intercrop yield was higher than year 1, monoculture higher in year 3 than in 1&2; in year 2 the intercrop yieled more than the monoculture
+
+
+### STOPED HERE OCT 30 ###
+
 
 ## Proportion of species in Total Forage Yield
 From Megan: values and analysis of proportion of each species in total forage yield for intercropped plots. Not proportional partial LER, but just proportion of normal yields in the total.
