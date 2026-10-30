@@ -621,7 +621,6 @@ NY Intercrop and IWG Year 2 Summer
 NY IWG Year 1 Summer
 WI IWG every year Summer
 
-if there is going to be response to N rate for total forage, it was more often happening in the monoculture IWG during the summer
 # N:P:CROP:Year figure (interaction plot of EMMs based on a fitted model)
 ```{r}
 # make equation table with mapping position to appear on figure
@@ -675,6 +674,7 @@ plotTF +
     size = 2.8
   )
 ```
+if there is going to be response to N rate for total forage, it was more often happening in the monoculture IWG during the summer
 
 
 ## Total Forage Summer
@@ -1106,29 +1106,48 @@ df <- merged %>%
 sorted <- df %>%
   arrange(YearCode)
 
+sorted <- sorted %>%
+  mutate(
+    eq_label = paste(equation, plvl),
+    y_pos = case_when(
+      YearCode == "X" ~ 5300,
+      YearCode == "Y" ~ 5000,
+      YearCode == "Z" ~ 4700
+    ),
+    line_type = case_when(
+      YearCode == "X" ~ "dashed",
+      YearCode == "Y" ~ "dotdash",
+      YearCode == "Z" ~ "dotted"
+    ),
+    year_name = case_when(
+      YearCode == "X" ~ "Year 1",
+      YearCode == "Y" ~ "Year 2",
+      YearCode == "Z" ~ "Year 3"
+    )
+  )
 #plot
 comboplotNYr <- ggplot(data=forage_data_fall_2) +
   geom_point(data = forage_data_fall_2, aes(x = N, y = PlotAlfDryKgHa)) +
   labs(x = "N-Rate (Kg ha-1)", y = "Alfalfa Forage", linetype = "Year", shape = "Year")+
   scale_x_continuous(breaks = c(0, 40, 80, 120, 160)) +
   ylim(0, 5500) +
-#  facet_wrap(~YearCode, scales = "free_y", ncol = 2,
-             #labeller = as_labeller(c(X='Year 1', Y='Year 2',
-                                      #Z='Year 3'))) +
-  scale_shape_manual(values = c(16, 17, 18),labels = c("Year 1", "Year 2", "Year 3"))+
   # functions come from equation in sorted
-  geom_function(data=subset(forage_data_fall_2, YearCode== "X"), fun=~1505.44+(-1.0945*.x),color='darkgrey')+
-  geom_function(data=subset(forage_data_fall_2, YearCode== "Y"), fun=~1914.84+(-2.8173*.x),color='darkgrey')+
-  geom_function(data=subset(forage_data_fall_2, YearCode== "Z"), fun=~1346.81+(-0.2509*.x),color='darkgrey')+
-  geom_text(data = sorted, mapping = aes(x = 30, y = 5500, label = equation),  size=3)+ # add equation to figure
-  geom_text(data = sorted, mapping = aes(x = 60, y = 5500, label = plvl))+ # add stars to figure
-# add stars to figure
+  geom_function(data=subset(forage_data_fall_2, YearCode== "X"), fun=~1505.44+(-1.0945*.x),color='darkgrey', linetype = "dashed", linewidth = 0.8)+
+  geom_function(data=subset(forage_data_fall_2, YearCode== "Y"), fun=~1914.84+(-2.8173*.x),color='darkgrey', linetype = "dotdash", linewidth = 0.8)+
+  geom_function(data=subset(forage_data_fall_2, YearCode== "Z"), fun=~1346.81+(-0.2509*.x),color='darkgrey', linetype = "dotted", linewidth = 0.8)+
+  # equation and stars
+  geom_text(data = sorted, aes(x = 0, y = y_pos, label = year_name), inherit.aes = FALSE, hjust = 0, vjust = 0.5, size = 2.8) +
+  geom_segment(data = sorted, aes(x = 6, xend = 12, y = y_pos, yend = y_pos, linetype = line_type), color = "darkgrey", linewidth = 0.8, inherit.aes = FALSE) +
+  geom_text(data = sorted, aes(x = 14, y = y_pos, label = eq_label), inherit.aes = FALSE, hjust = 0, vjust = 0.5, size = 2.8) +
+  scale_linetype_identity() +
+# axis labels
   theme(axis.text=element_text(size=12), #change font size of axis text
         axis.title=element_text(size=18), #change font size of axis titles
         plot.title=element_text(size=20), #change font size of plot title
         strip.text.x = element_text(size = 18)) #change font size of facet title
 print(comboplotNYr)
 ```
+Year 2 had a negative response to N Rate: -0.15% change
 # relationship of location and year
 ```{r}
 emtrends(modAFS, pairwise~YearCode|CROP+P, var="N", infer=TRUE) # slope different by cropP
@@ -1163,6 +1182,10 @@ AFF_CPY <- ggplot(forage_data_fall_2, aes(x = P, y = PlotAlfDryKgHa)) +
 AFF_CPY
 # 1500x1200
 ```
+within a year, locations were typically different from each other
+MN had higher yield in year 2 than in yr 1&2
+NY yield went down each year
+WI yield in year 1 was lower than yr 2&3
 # relationship of CROP and year
 ```{r}
 AFFemms <- emmeans(modAFF, ~ CROP*YearCode, type = "response") # Obtain estimated marginal means
@@ -1347,8 +1370,6 @@ NY year 3 yield for both cropping systems was higher than year 1&2
 WI year 2&3 intercrop yield was higher than year 1, monoculture higher in year 3 than in 1&2; in year 2 the intercrop yieled more than the monoculture
 
 
-### STOPED HERE OCT 30 ###
-
 
 ## Proportion of species in Total Forage Yield
 From Megan: values and analysis of proportion of each species in total forage yield for intercropped plots. Not proportional partial LER, but just proportion of normal yields in the total.
@@ -1415,27 +1436,34 @@ PrIA2 <- rbind(NdYSPrIA, NdYFPrIA)
 PrIA3 <- rbind(NdZSPrIA, NdZFPrIA)
 PrIA4 <- rbind(PrIA1, PrIA2) 
 PrIA <- rbind(PrIA4, PrIA3)
+
+# KS Z does not exist
+PrIA_2 <- subset(
+  PrIA,
+  !(P == "KS" & YearCode == "Z")
+)
 ```
 # anova
 ```{r}
 # want N to be numeric
-is.numeric(PrIA$N)
+is.numeric(PrIA_2$N)
+PrIA$N <- as.numeric(PrIA$N)
 # want P, CROP, and Year to be factors
-is.factor(PrIA$P)
-is.factor(PrIA$YearCode)
+is.factor(PrIA_2$P)
+is.factor(PrIA_2$YearCode)
 # PrIA$YearCode <- as.factor(PrIA$YearCode)
 # Rep and Plot should also be factors
-is.factor(PrIA$Rep)
-is.factor(PrIA$Plot)
-# PrIA$Plot <- as.character(PrIA$Plot)
+is.factor(PrIA_2$Rep)
+is.factor(PrIA_2$Plot)
+# PrIA_2$Plot <- as.character(PrIA_2$Plot)
 
-modIPrIA<-lmer(PropIWG~N*P*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data = PrIA) # IWG proportion
+modIPrIA<-lmer(PropIWG~N*P*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data = PrIA_2) # IWG proportion
 anova(modIPrIA)
 modAPrIA<-lmer(PropALF~N*P*YearCode + (1|Rep)+(1|Plot:Rep:P), data = PrIA) # ALF proportion
 anova(modAPrIA)
 
 # manipulate into long format
-PrIA_long <- PrIA %>%
+PrIA_long <- PrIA_2 %>%
   pivot_longer(cols = starts_with("Prop"),
                names_to = "Species",
                values_to = "Prop")
@@ -1445,15 +1473,17 @@ PrIA_long2 <- PrIA_long %>%
   dplyr::summarise(meanProp = mean(Prop),
                    Tot = first(Tot),
                    .groups = "drop")%>%
-  mutate(N = factor(N))%>%
+  mutate(N_factor = factor(N))%>%
   mutate(Species = factor(Species, levels = c("PropIWG", "PropALF")))
 ```
+N - Nitrogen significantly affects proportion
+P:Year - Location differences depend on the year
 # pairwise comparison
 ```{r}
 # IWG pairwise comparisons between N rates
-PrIA$N <- factor(PrIA$N)
-modIPrIA <- update(modIPrIA)
-emmsN <- emmeans(modIPrIA, pairwise ~ N|P+YearCode) 
+#PrIA$N <- factor(PrIA$N)
+#modIPrIA <- update(modIPrIA)
+emmsN <- emmeans(modIPrIA, pairwise ~ N|P*YearCode) # Compare nitrogen treatments (N) separately within each combination of location and year
 cld_dataIPrIA <- cld(emmsN, Letters=custom_letters) # Create compact letter display
 cld_dataIPrIA$response <- format(cld_dataIPrIA$response, digits = 5)
 rownames(cld_dataIPrIA) <- NULL
@@ -1466,12 +1496,12 @@ cld_dataIPrIA  |>
   column_spec(1, bold = T)
 # alfalfa pairwise comparisons between N rates
 modAPrIA <- update(modAPrIA)
-emmsN <- emmeans(modAPrIA, pairwise ~ N|P+YearCode) 
+emmsN <- emmeans(modAPrIA, pairwise ~ N|P*YearCode) 
 cld_dataAPrIA <- cld(emmsN, Letters=custom_letters) # Create compact letter display
 cld_dataAPrIA$response <- format(cld_dataAPrIA$response, digits = 5)
 rownames(cld_dataAPrIA) <- NULL
 cld_dataAPrIA<- cld_dataAPrIA %>%
-  select(YearCode, N, SE, lower.CL, upper.CL, .group)
+  select(YearCode, N, P, SE, lower.CL, upper.CL, .group)
 cld_dataAPrIA  |> 
   data.frame() |> 
   kbl(align = "c") |> 
@@ -1482,12 +1512,85 @@ cld_dataAPrIA  |>
 ```{r}
 PrIAplot <- ggplot(PrIA_long2, aes(x = N, y = meanProp, fill = Species)) +
   geom_bar(stat = "identity", position = "stack")+
-  facet_wrap(P~YearCode, ncol = 3) +
+  facet_wrap(P~YearCode, ncol = 3, labeller = labeller(P = c("KS" = "Kansas", "MN" = "Minnesota", "NY" = "New York", "WI" = "Wisconsin"),
+      YearCode = c("X" = "Year 1", "Y" = "Year 2", "Z" = "Year 3"))) +
   labs(y = "Proportion Species", x = "N Rate") +
   scale_fill_discrete(name = "Species",
   labels = c(PropALF = "Alfalfa", PropIWG = "IWG"))
 PrIAplot
 ```
+# Effect of N on proportion 
+```{r}
+# reducing model - none of the interactions involving N are significant; rank-deficient model matrix and missing combinations
+modIPrIA_reduced <- lmer(PropIWG ~ N + P*YearCode + (1|Rep:P) + (1|Plot:Rep:P), data = PrIA_2)
+summary(modIPrIA_reduced)
+anova(modIPrIA_reduced)
+
+emtrends(modIPrIA_reduced, ~ 1, var = "N", infer = TRUE) # slope different than zero
+
+# finding values for the function
+emtrends_result<-emtrends(modIPrIA_reduced,~ 1, var= "N", infer = TRUE)
+  emtrends_df <- as.data.frame(emtrends_result)
+  emtrends_df$plvl <-
+    ifelse(emtrends_df$p.value == 0.05, ".",
+    ifelse(emtrends_df$p.value < 0.05  & emtrends_df$p.value >= 0.01, "*",
+    ifelse(emtrends_df$p.value < 0.01  & emtrends_df$p.value >= 0.001, "**",
+    ifelse(emtrends_df$p.value < 0.001, "***", ""))))
+# N.trend is the slope of the response to nitrogen (averaged over other variables)
+
+# overall nitrogen regression line
+PrIA_newdata <- expand.grid(N = seq(0, 160, by = 1), P = levels(PrIA_2$P), YearCode = levels(PrIA_2$YearCode))
+PrIA_newdata <- subset(PrIA_newdata, !(P == "KS" & YearCode == "Z"))
+PrIA_newdata$predicted <- predict(modIPrIA_reduced, newdata = PrIA_newdata, re.form = NA)
+marginal_predictions <- aggregate(predicted ~ N, data = PrIA_newdata, FUN = mean)
+
+#plot
+ggplot(PrIA_2, aes(x = N, y = PropIWG)) +
+  geom_point(alpha = 0.4) +
+  geom_line(
+    data = marginal_predictions,
+    aes(x = N, y = predicted),
+    color = "darkgrey",
+    linewidth = 1.2,
+    inherit.aes = FALSE) +
+  labs(
+    x = "N-Rate (kg/ha)",
+    y = "Proportion IWG") +
+  scale_x_continuous(
+    breaks = c(0, 40, 80, 120, 160)) +
+  geom_text(data = emtrends_df, aes(x = 2, y = 1, label = paste("slope= ", N.trend, plvl)), inherit.aes = FALSE, hjust = -0.05, size = 2.8)+
+  theme_classic()
+```
+
+### STOPED HERE OCT 30 ### Trying to make figure ###
+
+# Post-hoc for differences by location
+```{r}
+emtrends(modIPrIA_reduced, pairwise~YearCode|P, var="N", infer=TRUE) # slope different by P
+emm_P <- emmeans(modIPrIA_reduced, pairwise ~ P | YearCode, adjust = "tukey")
+emms <- emmeans(modIPrIA_reduced, ~ P*YearCode) # Obtain estimated marginal means
+emms_df<- as.data.frame(emms)
+cld_data <- cld(emms, Letters=custom_letters, adjust="tukey")
+cld_df <-as.data.frame(cld_data)
+merged_df <- merge(emms_df, cld_df,by = c("P", "YearCode"))
+# making a quick visual table of contrasts
+table = flextable(data = merged_df %>%
+                    select(P, YearCode, emmean.x, SE.x, .group))
+table
+
+#plot - significance of location given year on the proportion of species in mixture
+PrIAplot <- ggplot(PrIA_long2, aes(x = YearCode, y = meanProp, fill = Species)) +
+  geom_bar(stat = "identity", position = "stack")+
+  geom_text(data = merged_df, aes(x = YearCode, y = 1, label = .group, group = P),
+            position = position_dodge(width = 0.8), size = 6, show.legend = FALSE, inherit.aes = FALSE)+
+  facet_wrap(~P, labeller = labeller(P = c("KS" = "Kansas", "MN" = "Minnesota", "NY" = "New York", "WI" = "Wisconsin") ))+#,
+     # YearCode = c("X" = "Year 1", "Y" = "Year 2", "Z" = "Year 3"))) +
+  labs(y = "Proportion Species", x = "Year") +
+  scale_fill_discrete(name = "Species",
+  labels = c(PropALF = "Alfalfa", PropIWG = "IWG"))
+PrIAplot
+```
+
 
 ## LER
 # LER calculations 
