@@ -821,7 +821,7 @@ In KS and NY, year three values for all three cropping systems was significantly
 In MN and WI, the intercrop plots were actually significantly higher yielding in the third year compared to the first two years
 
 ## Total Forage Fall
-# anova
+# fall data clean up
 ```{r}
 # remove rows where the total forage was 0
 forage_data_fall_2 <- subset(forage_data_fall, PlotTotForageKgHa != 0|is.na(PlotTotForageKgHa)) 
@@ -830,7 +830,9 @@ forage_data_fall_2 <- forage_data_fall_2 %>%
   dplyr::filter(!(YearCode == "Y" &
            Location == "MN" &
            Plot == "1210"))
-
+```
+# anova
+```{r}
 # want N to be numeric
 is.numeric(forage_data_fall_2$N)
 # want P, CROP, and Year to be factors
@@ -842,7 +844,7 @@ is.factor(forage_data_fall_2$YearCode)
 # Rep and Plot should also be factors
 is.factor(forage_data_fall_2$Rep)
 is.factor(forage_data_fall_2$Plot)
-# forage_data_fall_2$Plot <- as.character(forage_data_fall_2$Plot)
+# forage_data_fall_2$Plot <- as.factor(forage_data_fall_2$Plot)
 
 
 # Linear Model
@@ -1294,14 +1296,6 @@ In WI, year 2 was significatnly lower than year 1&2 for both cropping systems
 ## IWG Forage Fall
 # anova
 ```{r}
-# remove rows where the total forage was 0
-forage_data_fall_2 <- subset(forage_data_fall, PlotTotForageKgHa != 0|is.na(PlotTotForageKgHa)) 
-# MN Year 2 Fall plot 1210 value for total forage is extreme outlier (12091.732 kg/ha when next highest is 3452.477); driven by much higher iwg forage 
-forage_data_fall_2 <- forage_data_fall_2 %>%
-  dplyr::filter(!(YearCode == "Y" &
-           Location == "MN" &
-           Plot == "1210"))
-
 # want N to be numeric
 is.numeric(forage_data_fall_2$N)
 # want P, CROP, and Year to be factors
@@ -1455,7 +1449,7 @@ is.factor(PrIA_2$YearCode)
 # Rep and Plot should also be factors
 is.factor(PrIA_2$Rep)
 is.factor(PrIA_2$Plot)
-# PrIA_2$Plot <- as.character(PrIA_2$Plot)
+# PrIA_2$Plot <- as.factor(PrIA_2$Plot)
 
 modIPrIA<-lmer(PropIWG~N*P*YearCode + (1|Rep:P)+(1|Plot:Rep:P), data = PrIA_2) # IWG proportion
 anova(modIPrIA)
