@@ -534,13 +534,13 @@ is.numeric(grain_data$N)
 # want P, CROP, and Year to be factors
 is.factor(grain_data$P)
 is.factor(grain_data$CROP)
-# grain_data$CROP <- as.factor(grain_data$CROP)
+grain_data$CROP <- as.factor(grain_data$CROP)
 is.factor(grain_data$YearCode)
 # grain_data$YearCode <- as.factor(grain_data$YearCode)
 # Rep and Plot should also be factors
 is.factor(grain_data$Rep)
 is.factor(grain_data$Plot)
-# grain_data$Plot <- as.character(grain_data$Plot)
+grain_data$Plot <- as.factor(grain_data$Plot)
 
 
 # Linear Model
@@ -923,7 +923,7 @@ NGRY_long$P <- as.factor(NGRY_long$P)
 # hist(NGRY_long$GRelativeYield)
 # want N to be numeric
 is.numeric(NGRY_long$N)
-# NGRY_long$N <- as.numeric(NGRY_long$N)
+NGRY_long$N <- as.numeric(NGRY_long$N)
 # want LER to be numeric
 is.numeric(NGRY_long$GRelativeYield)
 # want P and Year to be factors
