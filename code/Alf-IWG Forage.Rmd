@@ -484,17 +484,17 @@ NdXSIG<-rbind(NdXSInoMN, NdXSIMN)
 #  "Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQal", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGRFV", "IWGADF", "IWGaNDF", "ALFaNDF", "ALFRFV", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G"
 
 
-shortenXS <- NdXS[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+shortenXS <- NdXS[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "IWGCP", "ALFADF", "ALFaNDF", "ALFCP", "C", "CROP", "V", "N", "P", "G")]
 
-shortenXF <- NdXF[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+shortenXF <- NdXF[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "IWGCP", "ALFADF", "ALFaNDF", "ALFCP", "C", "CROP", "V", "N", "P", "G")]
 
-shortenYS <- NdYS[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+shortenYS <- NdYS[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "IWGCP", "ALFADF", "ALFaNDF", "ALFCP", "C", "CROP", "V", "N", "P", "G")]
 
-shortenYF <- NdYF[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+shortenYF <- NdYF[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "IWGCP", "ALFADF", "ALFaNDF", "ALFCP", "C", "CROP", "V", "N", "P", "G")]
 
-shortenZS <- NdZS[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+shortenZS <- NdZS[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "IWGCP", "ALFADF", "ALFaNDF", "ALFCP", "C", "CROP", "V", "N", "P", "G")]
 
-shortenZF <- NdZF[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "ALFADF", "ALFaNDF", "C", "CROP", "V", "N", "P", "G")]
+shortenZF <- NdZF[,c("Year", "YearCode", "Harvest", "Location", "Treatment", "first_value", "second_value", "Crop1", "Plot", "Intercropped", "Monocrop", "IWG", "ALF", "NRate", "Rep", "Date", "QLengthCM", "QWidthCM", "QAreaHa", "RowSpacing", "RowsSampled", "QIWGForWetG", "SIWGForWetG", "SIWGDryG", "IWGQual", "IWGDM", "PlotIWGDryG", "PlotIWGDryKG", "PlotIWGDryKgHa", "QSpikeDryG", "QThreshedGrainDryG", "PlotThreshedGrainKgHa", "QAlfForWetG", "SAlfWetG", "SAlfDryG", "AlfQual", "AlfDM", "PlotAlfDryG", "PlotAlfDryKG", "PlotAlfDryKgHa", "PlotTotForageKgHa", "QWeedsWetG", "QWeedsDryG", "IWGADF", "IWGaNDF", "IWGCP", "ALFADF", "ALFaNDF", "ALFCP", "C", "CROP", "V", "N", "P", "G")]
 
 newX <- rbind(shortenXS, shortenXF)
 newY <- rbind(shortenYS, shortenYF)
@@ -1550,7 +1550,7 @@ ggplot(PrIA_2, aes(x = N, y = PropIWG)) +
   geom_text(data = emtrends_df, aes(x = 2, y = 1, label = paste("slope= ", N.trend, plvl)), inherit.aes = FALSE, hjust = -0.05, size = 2.8)+
   theme_classic()
 ```
-# Post-hoc for differences by location
+# Post-hoc for differences by location (incomplete)
 ```{r}
 emtrends(modIPrIA_reduced, pairwise~YearCode|P, var="N", infer=TRUE) # slope different by P
 emm_P <- emmeans(modIPrIA_reduced, pairwise ~ P | YearCode, adjust = "tukey")
@@ -2988,165 +2988,136 @@ print(comboplotCRF)
 
 ## Forage Quality
 #N RFV calculations 
+some lines to un-hash to run
 ```{r}
-#IWG 
-forage_data_summer$IWGRFV<-((88.9 - (0.779 * forage_data_summer$IWGADF)) * (120 / forage_data_summer$IWGaNDF) ) / 1.29
-forage_data_fall_2$IWGRFV<-((88.9 - (0.779 * forage_data_fall_2$IWGADF)) * (120 / forage_data_fall_2$IWGaNDF) ) / 1.29
+#IWG vs Alf
+forage_SI<-forage_data_summer[forage_data_summer$Crop1 != "Shockwave",] #NdXSI
+forage_SA<-forage_data_summer[forage_data_summer$Crop1 != "IWG",] #NdXSA
+forage_FI<-forage_data_fall_2[forage_data_fall_2$Crop1 != "Shockwave",]
+forage_FA<-forage_data_fall_2[forage_data_fall_2$Crop1 != "IWG",]
 
+#IWG
+forage_SI$IWGRFV<-((88.9 - (0.779 * forage_SI$IWGADF)) * (120 / forage_SI$IWGaNDF) ) / 1.29
+forage_FI$IWGRFV<-((88.9 - (0.779 * forage_FI$IWGADF)) * (120 / forage_FI$IWGaNDF) ) / 1.29
 
 #REMOVE outliers KSY314I, KSY315I
-#NdYSI<-NdYSI[-107,]
-#NdYSI<-NdYSI[-107,]
+# unsure these are actually outliers
+#forage_data_summer <- forage_data_summer[-c(396,397),] # if truly outliers
 
 #make big df for deltas 
-NdXSIdf <- forage_data_summer %>%
+forage_SIdf <- forage_SI %>%
   select(YearCode, Rep, P, CROP, N, Harvest, IWGRFV)
-NdXFIdf <- forage_data_fall_2 %>%
+forage_FIdf <- forage_FI %>%
   select(YearCode, Rep, P, CROP, N, Harvest, IWGRFV)
-
-NRFVIdf<-bind_rows(NdXSIdf, NdXFIdf)
-
+RFVIdf<-bind_rows(forage_SIdf, forage_FIdf) # NRFVIdf
 
 #Alf
-NdXSA$ALFaNDF<-as.numeric(NdXSA$ALFaNDF)
-NdXFA$ALFaNDF<-as.numeric(NdXFA$ALFaNDF)
-NdYSA$ALFaNDF<-as.numeric(NdYSA$ALFaNDF)
-NdYFA$ALFaNDF<-as.numeric(NdYFA$ALFaNDF)
+forage_SA$ALFaNDF<-as.numeric(forage_SA$ALFaNDF) # NdXSA
+forage_FA$ALFaNDF<-as.numeric(forage_FA$ALFaNDF) # NdXFA
 
-NdXSA$ALFRFV<-((88.9 - (0.779 * NdXSA$ALFADF)) * (120 / NdXSA$ALFaNDF) ) / 1.29
-NdXFA$ALFRFV<-((88.9 - (0.779 * NdXFA$ALFADF)) * (120 / NdXFA$ALFaNDF) ) / 1.29
-NdYSA$ALFRFV<-((88.9 - (0.779 * NdYSA$ALFADF)) * (120 / NdYSA$ALFaNDF) ) / 1.29
-NdYFA$ALFRFV<-((88.9 - (0.779 * NdYFA$ALFADF)) * (120 / NdYFA$ALFaNDF) ) / 1.29
+forage_SA$ALFRFV<-((88.9 - (0.779 * forage_SA$ALFADF)) * (120 / forage_SA$ALFaNDF) ) / 1.29
+forage_FA$ALFRFV<-((88.9 - (0.779 * forage_FA$ALFADF)) * (120 / forage_FA$ALFaNDF) ) / 1.29
 
 #REMOVE outliers KSX202A missing, KSX209A
-#NdXSA<-NdXSA[-88,]
-#NdXSA<-NdXSA[-92,]
+## unsure these are actually outliers
+#forage_SA <- forage_SA[-c(88,93),]
 
 #REMOVE NYS212A, NYS215A, NYS217A, NYS219A, NYS220A, NYS223A, NYS304A (some already gone... maybe a variety thing)
-#NdYSA<-NdYSA[-17,]
-#NdYSA<-NdYSA[-18,]
-#NdYSA<-NdYSA[-19,]
+#forage_SA <- forage_SA[-c(172,174,176),] # ALWAYS DOUBLE CHECK THESE ROW NUMBERS
 
 #make big df for deltas 
-NdXSAdf <- NdXSA %>%
+forage_SAdf <- forage_SA %>%
   select(YearCode, Rep, P, CROP, N, Harvest, ALFRFV)
-NdXFAdf <- NdXFA %>%
+forage_FAdf <- forage_FA %>%
   select(YearCode, Rep, P, CROP, N, Harvest, ALFRFV)
-NdYSAdf <- NdYSA %>%
-  select(YearCode, Rep, P, CROP, N, Harvest, ALFRFV)
-NdYFAdf <- NdYFA %>%
-  select(YearCode, Rep, P, CROP, N, Harvest, ALFRFV)
-NRFVAdf<-bind_rows(NdXSAdf, NdXFAdf)
-NRFVAdf<-bind_rows(NRFVAdf, NdYSAdf)
-NRFVAdf<-bind_rows(NRFVAdf, NdYFAdf)
+RFVAdf<-bind_rows(forage_SAdf, forage_FAdf)
 ```
-
 #making proportion stuff for total FQ CP and RFV 
 ```{r}
-#NEEDS TO JUST BE INTERCROPPED PLOTS BUT LIKE ALSO NEED TO COMPARE INTERCROP TO MONOCULTURE SOO LIKE .... WUT 
 #make proportions
-NdXSI$propI<-((NdXSI$PlotIWGDryKgHa)/(NdXSI$PlotTotForageKgHa))
-NdXFI$propI<-((NdXFI$PlotIWGDryKgHa)/(NdXFI$PlotTotForageKgHa))
-NdYSI$propI<-((NdYSI$PlotIWGDryKgHa)/(NdYSI$PlotTotForageKgHa))
-NdYFI$propI<-((NdYFI$PlotIWGDryKgHa)/(NdYFI$PlotTotForageKgHa))
-
-NdXSA$propA<-((NdXSA$PlotAlfDryKgHa)/(NdXSA$PlotTotForageKgHa))
-NdXFA$propA<-((NdXFA$PlotAlfDryKgHa)/(NdXFA$PlotTotForageKgHa))
-NdYSA$propA<-((NdYSA$PlotAlfDryKgHa)/(NdYSA$PlotTotForageKgHa))
-NdYFA$propA<-((NdYFA$PlotAlfDryKgHa)/(NdYFA$PlotTotForageKgHa))
+forage_SI$propI<-((forage_SI$PlotIWGDryKgHa)/(forage_SI$PlotTotForageKgHa))
+forage_FI$propI<-((forage_FI$PlotIWGDryKgHa)/(forage_FI$PlotTotForageKgHa))
+forage_SA$propA<-((forage_SA$PlotAlfDryKgHa)/(forage_SA$PlotTotForageKgHa))
+forage_FA$propA<-((forage_FA$PlotAlfDryKgHa)/(forage_FA$PlotTotForageKgHa))
 
 #make adjusted CP values 
-NdXSI$propCPI<-(NdXSI$IWGCP)*(NdXSI$propI)
-NdXFI$propCPI<-(NdXFI$IWGCP)*(NdXFI$propI)
-NdYSI$propCPI<-(NdYSI$IWGCP)*(NdYSI$propI)
-NdYFI$propCPI<-(NdYFI$IWGCP)*(NdYFI$propI)
-
-NdXSA$propCPA<-(NdXSA$ALFCP)*(NdXSA$propA)
-NdXFA$propCPA<-(NdXFA$ALFCP)*(NdXFA$propA)
-NdYSA$propCPA<-(NdYSA$ALFCP)*(NdYSA$propA)
-NdYFA$propCPA<-(NdYFA$ALFCP)*(NdYFA$propA)
+forage_SI$propCPI<-(forage_SI$IWGCP)*(forage_SI$propI)
+forage_FI$propCPI<-(forage_FI$IWGCP)*(forage_FI$propI)
+forage_SA$propCPA<-(forage_SA$ALFCP)*(forage_SA$propA)
+forage_FA$propCPA<-(forage_FA$ALFCP)*(forage_FA$propA)
 
 #Somehow make CP totals
-  #XS
-NdXSj<- NdXSI %>%
+#Summer
+forageSj<- forage_SI %>%
   select(propCPI, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdXSk<- NdXSA %>%
+forageSk<- forage_SA %>%
   select(propCPA, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdXSf<- merge(NdXSj, NdXSk, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
-NdXSf[is.na(NdXSf)] <- 0
-NdXSf$totCP<-((NdXSf$propCPI)+(NdXSf$propCPA))
-  #XF
-NdXFj<- NdXFI %>%
+forageSf<- merge(forageSj, forageSk, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+forageSf[is.na(forageSf)] <- 0
+forageSf$totCP<-((forageSf$propCPI)+(forageSf$propCPA))
+#Fall
+forageFj<- forage_FI %>%
   select(propCPI, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdXFk<- NdXFA %>%
+forageFk<- forage_FA %>%
   select(propCPA, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdXFf<- merge(NdXFj, NdXFk, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
-NdXFf[is.na(NdXFf)] <- 0
-NdXFf$totCP<-((NdXFf$propCPI)+(NdXFf$propCPA))
-  #YS
-NdYSj<- NdYSI %>%
-  select(propCPI, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdYSk<- NdYSA %>%
-  select(propCPA, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdYSf<- merge(NdYSj, NdYSk, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
-NdYSf[is.na(NdYSf)] <- 0
-NdYSf$totCP<-((NdYSf$propCPI)+(NdYSf$propCPA))
-  #YF
-NdYFj<- NdYFI %>%
-  select(propCPI, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdYFk<- NdYFA %>%
-  select(propCPA, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdYFf<- merge(NdYFj, NdYFk, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
-NdYFf[is.na(NdYFf)] <- 0
-NdYFf$totCP<-((NdYFf$propCPI)+(NdYFf$propCPA))
-
+forageFf<- merge(forageFj, forageFk, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+forageFf[is.na(forageFf)] <- 0
+forageFf$totCP<-((forageFf$propCPI)+(forageFf$propCPA))
 
 #make adjusted RFV values 
-NdXSI$propRFVI<-(NdXSI$IWGRFV)*(NdXSI$propI)
-NdXFI$propRFVI<-(NdXFI$IWGRFV)*(NdXFI$propI)
-NdYSI$propRFVI<-(NdYSI$IWGRFV)*(NdYSI$propI)
-NdYFI$propRFVI<-(NdYFI$IWGRFV)*(NdYFI$propI)
-
-NdXSA$propRFVA<-(NdXSA$ALFRFV)*(NdXSA$propA)
-NdXFA$propRFVA<-(NdXFA$ALFRFV)*(NdXFA$propA)
-NdYSA$propRFVA<-(NdYSA$ALFRFV)*(NdYSA$propA)
-NdYFA$propRFVA<-(NdYFA$ALFRFV)*(NdYFA$propA)
+forage_SI$propRFVI<-(forage_SI$IWGRFV)*(forage_SI$propI)
+forage_FI$propRFVI<-(forage_FI$IWGRFV)*(forage_FI$propI)
+forage_SA$propRFVA<-(forage_SA$ALFRFV)*(forage_SA$propA)
+forage_FA$propRFVA<-(forage_FA$ALFRFV)*(forage_FA$propA)
 
 #Somehow make RFV totals
-  #XS
-NdXSm<- NdXSI %>%
+#Summer
+forageSm<- forage_SI %>%
   select(propRFVI, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdXSn<- NdXSA %>%
+forageSn<- forage_SA %>%
   select(propRFVA, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdXSo<- merge(NdXSm, NdXSn, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
-NdXSo[is.na(NdXSo)] <- 0
-NdXSo$totRFV<-((NdXSo$propRFVI)+(NdXSo$propRFVA))
-  #XF
-NdXFm<- NdXFI %>%
+forageSo<- merge(forageSm, forageSn, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+forageSo[is.na(forageSo)] <- 0
+forageSo$totRFV<-((forageSo$propRFVI)+(forageSo$propRFVA))
+#Fall
+forageFm<- forage_FI %>%
   select(propRFVI, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdXFn<- NdXFA %>%
+forageFn<- forage_FA %>%
   select(propRFVA, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdXFo<- merge(NdXFm, NdXFn, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
-NdXFo[is.na(NdXFo)] <- 0
-NdXFo$totRFV<-((NdXFo$propRFVI)+(NdXFo$propRFVA))
-  #YS
-NdYSm<- NdYSI %>%
-  select(propRFVI, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdYSn<- NdYSA %>%
-  select(propRFVA, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdYSo<- merge(NdYSm, NdYSn, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
-NdYSo[is.na(NdYSo)] <- 0
-NdYSo$totRFV<-((NdYSo$propRFVI)+(NdYSo$propRFVA))
-  #YF
-NdYFm<- NdYFI %>%
-  select(propRFVI, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdYFn<- NdYFA %>%
-  select(propRFVA, N, P, CROP, Plot, Harvest, YearCode, Rep)
-NdYFo<- merge(NdYFm, NdYFn, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
-NdYFo[is.na(NdYFo)] <- 0
-NdYFo$totRFV<-((NdYFo$propRFVI)+(NdYFo$propRFVA))
+forageFo<- merge(forageFm, forageFn, by = c("N", "P", "CROP", "Plot", "Harvest", "YearCode", "Rep"), all = TRUE)
+forageFo[is.na(forageFo)] <- 0
+forageFo$totRFV<-((forageFo$propRFVI)+(forageFo$propRFVA))
 ```
 
+# Crude Protein Summer
+# anova
+```{r}
+#REMOVE rows with 0 for totCP
+forageSf<-forageSf[forageSf$totCP != 0,]
+# model
+modNTCPS<-lmer(totCP~N*P*CROP*YearCode + (1|Rep), data=forageSf)
+anova(modNTCPS)
+#check assumptions 
+NTCPS_resid<-resid(modNTCPS)
+qqnorm(NTCPS_resid)
+qqline(NTCPS_resid)
+plot(modNTCPS)
+```
+
+# Crude Protein Fall
+# anova
+```{r}
+#REMOVE rows with 0 for totCP
+forageFf<-forageFf[forageFf$totCP != 0,]
+# model
+modNTCPF<-lmer(totCP~N*P*CROP*YearCode + (1|Rep), data=forageFf)
+anova(modNTCPF)
+#check assumptions 
+NTCPF_resid<-resid(modNTCPF)
+qqnorm(NTCPF_resid)
+qqline(NTCPF_resid)
+plot(modNTCPF)
+```
 
 
 
